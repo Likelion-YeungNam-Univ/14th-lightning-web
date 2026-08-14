@@ -5,8 +5,6 @@
 
 ## Team
 
-## Team
-
 |                              P&D / Leader                               |                                  BE                                  |                                BE                                |                                   FE                                    |                                FE                               |                                 FE                                  |
 | :---------------------------------------------------------------------: | :------------------------------------------------------------------: | :--------------------------------------------------------------: | :---------------------------------------------------------------------: | :-------------------------------------------------------------: | :-----------------------------------------------------------------: |
 | <img src="https://github.com/Duyeon-Kang.png" width="100" height="100" /> | <img src="https://github.com/ryu2293.png" width="100" height="100" /> | <img src="https://github.com/mujang3.png" width="100" height="100" /> | <img src="https://github.com/rlaalstj1012.png" width="100" height="100" /> | <img src="https://github.com/ose0919.png" width="100" height="100" /> | <img src="https://github.com/dlwleasy.png" width="100" height="100" /> |
