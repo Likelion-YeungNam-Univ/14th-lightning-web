@@ -102,7 +102,7 @@ export default function App() {
         sessionLoading={sessionLoading}
         onLoginClick={() => setLoginOpen(true)}
       />
-      <main id="main" className="px-6 pt-24">
+      <main id="main" className="px-6 pt-16">
         <MarketNav
           markets={markets}
           activeMarket={activeMarket}
