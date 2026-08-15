@@ -1,133 +1,100 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 
-type MarketTab = "해외" | "국내";
-type Period = "오늘" | "이번 주" | "이번 달";
 
-interface VideoCard {
+type MarketTab = "국내" | "해외";
+
+interface Stock {
   id: string;
-  rank: number;
-  title: string;
-  channel: string;
-  views: string;
-  uploadedAt: string;
-  duration: string;
+  name: string;
 }
 
-const STOCK_PILLS = ["삼성전자", "SK하이닉스", "삼성전자우", "SK스퀘어"];
-const KEYWORD_PILLS = ["유튜브랭킹", "공시(DART)", "국제 동향", "한국은행", "미국 Fed", "저널일"];
-
-const CARDS: VideoCard[] = [
-  {
-    id: "1",
-    rank: 1,
-    title: "원본 영상 제목, 두 줄을 넘어갈 시 ...으로 처리, 두 줄을 넘어갈 시 ...으로 처리",
-    channel: "채널명",
-    views: "xx.x만",
-    uploadedAt: "x일 전",
-    duration: "xx:xx",
-  },
-  {
-    id: "2",
-    rank: 2,
-    title: "원본 영상 제목, 두 줄을 넘어갈 시 ...으로 처리, 두 줄을 넘어갈 시 ...으로 처리",
-    channel: "채널명",
-    views: "xx.x만",
-    uploadedAt: "x일 전",
-    duration: "xx:xx",
-  },
+// TODO: 실제로는 검색 API로 종목을 조회 (여기서는 추가 가능한 종목 풀만 예시로 정의)
+const AVAILABLE_STOCKS: Stock[] = [
+  { id: "005930", name: "삼성전자" },
+  { id: "000660", name: "SK하이닉스" },
+  { id: "005380", name: "현대차" },
+  { id: "035420", name: "NAVER" },
+  { id: "035720", name: "카카오" },
+  { id: "005935", name: "삼성전자우" },
 ];
 
-function StarIcon() {
-  return (
-    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.6">
-      <path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.2 1 5.9-5.2-2.8-5.2 2.8 1-5.9-4.3-4.2 5.9-.8L12 3.5z" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
-function ChevronIcon() {
-  return (
-    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
-function PlusIcon() {
-  return (
-    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M12 5v14M5 12h14" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function VideoCardItem({ card }: { card: VideoCard }) {
-  return (
-    <article className="overflow-hidden rounded-xl border border-slate-200 bg-white transition hover:-translate-y-0.5 hover:shadow-md">
-      <div className="relative aspect-video bg-gradient-to-br from-slate-700 to-slate-900">
-        <span
-          className={`absolute left-2 top-2 rounded px-2 py-0.5 text-xs font-bold text-white ${
-            card.rank === 1 ? "bg-blue-500" : "bg-slate-400"
-          }`}
-        >
-          {card.rank}위
-        </span>
-        <button
-          aria-label="즐겨찾기 추가"
-          className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded bg-slate-900/55 text-white hover:bg-slate-900/80"
-        >
-          <StarIcon />
-        </button>
-        <span className="absolute bottom-2 right-2 rounded bg-slate-900/75 px-1.5 py-0.5 text-[11px] font-semibold text-white">
-          {card.duration}
-        </span>
-      </div>
-      <div className="p-3">
-        <p className="mb-2 line-clamp-2 text-sm font-semibold leading-snug text-slate-900">{card.title}</p>
-        <p className="mb-0.5 text-xs font-medium text-slate-600">{card.channel}</p>
-        <p className="text-xs text-slate-400">
-          조회수 {card.views}회 · {card.uploadedAt}
-        </p>
-      </div>
-    </article>
-  );
-}
-
 export default function App() {
-  const [marketTab, setMarketTab] = useState<MarketTab>("해외");
-  const [activeStock, setActiveStock] = useState("삼성전자");
-  const [activeKeyword, setActiveKeyword] = useState<string | null>(null);
-  const [period, setPeriod] = useState<Period>("이번 주");
+  const [activeTab, setActiveTab] = useState<MarketTab>("국내");
+
+  // 등록된 종목이 없는 디폴트 상태로 시작
+  const [stocks, setStocks] = useState<Stock[]>([]);
+  const [selectedStock, setSelectedStock] = useState<string | null>(null);
+
+  const [isAddMenuOpen, setIsAddMenuOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const addMenuRef = useRef<HTMLDivElement>(null);
+
+  // 메뉴 바깥 클릭 시 닫기
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        addMenuRef.current &&
+        !addMenuRef.current.contains(e.target as Node)
+      ) {
+        setIsAddMenuOpen(false);
+        setQuery("");
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // TODO: 종목 클릭 시 공시 / 유튜브 / 기타 정보 카테고리 패널 + 각 API 연결
+  const handleSelectStock = (stockId: string) => {
+    setSelectedStock(stockId);
+  };
+
+  const handleAddStock = (stock: Stock) => {
+    setStocks((prev) => [...prev, stock]);
+    setSelectedStock(stock.id);
+    setIsAddMenuOpen(false);
+    setQuery("");
+  };
+
+  const handleRemoveStock = (stockId: string) => {
+    setStocks((prev) => prev.filter((s) => s.id !== stockId));
+    if (selectedStock === stockId) {
+      setSelectedStock(null);
+    }
+  };
+
+  const addedIds = new Set(stocks.map((s) => s.id));
+  const candidates = AVAILABLE_STOCKS.filter(
+    (s) => !addedIds.has(s.id) && s.name.toLowerCase().includes(query.toLowerCase())
+  );
+
+  const currentStock = stocks.find((s) => s.id === selectedStock);
+  const hasStocks = stocks.length > 0;
 
   return (
-    <div className="flex min-h-screen flex-col bg-slate-100 text-slate-900">
-      {/* 상단바 */}
-      <header className="flex items-center justify-between border-b border-slate-800 bg-slate-950 px-6 py-3 text-white">
-        <div className="flex items-center gap-2">
-          <span className="flex h-6 w-6 items-center justify-center rounded-md bg-blue-500 text-sm font-bold">a</span>
-          <span className="text-sm font-bold">
-            assit <span className="ml-1.5 text-xs font-normal text-slate-400">asset + insight</span>
-          </span>
-        </div>
-        <div className="flex items-center gap-2.5">
-          <span className="mr-1 text-xs text-slate-400">업데이트: 오전 08:20:47</span>
-          <button className="flex items-center gap-1.5 rounded-md border border-slate-700 px-3.5 py-1.5 text-xs font-medium text-slate-200 hover:bg-white/5">
-            <span className="h-1.5 w-1.5 rounded-full bg-green-400" /> 새로고침
-          </button>
-          <button className="rounded-md bg-blue-500 px-3.5 py-1.5 text-xs font-medium text-white hover:bg-blue-600">
-            로그인
-          </button>
-        </div>
+    <div className="min-h-screen bg-[#0A0B10] text-white font-sans">
+      {/* 헤더 */}
+      <header className="flex items-center justify-between px-6 py-4 border-b border-white/5">
+        <span className="text-2xl font-extrabold tracking-tight">
+          <span className="text-[#3B82F6]">a</span>
+          <span className="text-white">ssit</span>
+        </span>
+
+        <button className="px-4 py-1.5 rounded-md text-sm font-medium bg-[#3B82F6] text-white hover:bg-[#2f6fe0] transition-colors">
+          로그인
+        </button>
       </header>
 
-      {/* 해외/국내 탭 */}
-      <nav className="flex gap-1 border-b border-slate-800 bg-slate-950 px-6">
-        {(["해외", "국내"] as MarketTab[]).map((tab) => (
+      {/* 국내 / 해외 탭 */}
+      <nav className="flex items-center gap-2 px-6 pt-4">
+        {(["국내", "해외"] as MarketTab[]).map((tab) => (
           <button
             key={tab}
-            onClick={() => setMarketTab(tab)}
-            className={`-mb-px border-b-2 px-4 py-2.5 text-sm font-semibold ${
-              marketTab === tab ? "border-blue-500 text-white" : "border-transparent text-slate-400"
+            onClick={() => setActiveTab(tab)}
+            className={`px-4 py-2 text-sm font-semibold rounded-md transition-colors ${
+              activeTab === tab
+                ? "bg-white/10 text-white"
+                : "text-gray-500 hover:text-gray-300"
             }`}
           >
             {tab}
@@ -135,74 +102,102 @@ export default function App() {
         ))}
       </nav>
 
-      <main className="mx-auto w-full max-w-6xl flex-1 px-6 py-5">
-        {/* 종목 필터 */}
-        <div className="mb-3 flex flex-wrap gap-2">
-          {STOCK_PILLS.map((stock) => (
-            <button
-              key={stock}
-              onClick={() => setActiveStock(stock)}
-              className={`rounded-full border px-4 py-1.5 text-sm font-medium ${
-                activeStock === stock
-                  ? "border-blue-500 bg-blue-500 text-white"
-                  : "border-slate-200 bg-white text-slate-600"
-              }`}
-            >
-              {stock}
-            </button>
-          ))}
-          <button
-            aria-label="종목 추가"
-            className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-400"
+      {/* 종목 칩 리스트 */}
+      <div className="flex items-center gap-2 px-6 py-4 flex-wrap">
+        {stocks.map((stock) => (
+          <div
+            key={stock.id}
+            className={`group flex items-center gap-1.5 pl-4 pr-2 py-1.5 rounded-full text-sm font-medium border transition-colors ${
+              selectedStock === stock.id
+                ? "bg-[#3B82F6] border-[#3B82F6] text-white"
+                : "bg-transparent border-white/15 text-gray-300 hover:border-white/30"
+            }`}
           >
-            <PlusIcon />
-          </button>
-        </div>
-
-        {/* 키워드 필터 + 정렬/기간 */}
-        <div className="mb-5 flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 pb-4">
-          <div className="flex flex-1 flex-wrap gap-2">
-            {KEYWORD_PILLS.map((kw) => (
-              <button
-                key={kw}
-                onClick={() => setActiveKeyword(activeKeyword === kw ? null : kw)}
-                className={`rounded-full border px-4 py-1.5 text-sm font-medium ${
-                  activeKeyword === kw
-                    ? "border-blue-500 bg-blue-50 text-blue-500"
-                    : "border-slate-200 bg-white text-slate-600"
-                }`}
-              >
-                {kw}
-              </button>
-            ))}
-          </div>
-
-          <div className="flex items-center gap-2.5">
-            <button className="flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-600">
-              조회수순 <ChevronIcon />
+            <button onClick={() => handleSelectStock(stock.id)}>
+              {stock.name}
             </button>
-            <div className="flex overflow-hidden rounded-md border border-slate-200 bg-white">
-              {(["오늘", "이번 주", "이번 달"] as Period[]).map((p) => (
-                <button
-                  key={p}
-                  onClick={() => setPeriod(p)}
-                  className={`px-3.5 py-1.5 text-sm font-medium ${
-                    period === p ? "bg-blue-500 text-white" : "text-slate-600"
-                  }`}
-                >
-                  {p}
-                </button>
-              ))}
-            </div>
+            <button
+              onClick={() => handleRemoveStock(stock.id)}
+              className={`rounded-full p-0.5 transition-colors ${
+                selectedStock === stock.id
+                  ? "hover:bg-white/20"
+                  : "hover:bg-white/10"
+              }`}
+              aria-label={`${stock.name} 삭제`}
+            >
+              <span className="w-3 h-3">✕</span>
+            </button>
           </div>
+        ))}
+
+        {/* 종목 추가 버튼 + 드롭다운 */}
+        <div className="relative" ref={addMenuRef}>
+          <button
+            onClick={() => setIsAddMenuOpen((prev) => !prev)}
+            className="flex items-center gap-1 px-4 py-1.5 rounded-full text-sm font-medium border border-dashed border-white/25 text-gray-300 hover:border-white/40 hover:text-white transition-colors"
+          >
+            <span>+</span>
+            종목 추가
+          </button>
+
+          {isAddMenuOpen && (
+            <div className="absolute left-0 top-full mt-2 w-56 rounded-lg border border-white/10 bg-[#12131A] shadow-xl z-10 overflow-hidden">
+              <div className="p-2 border-b border-white/5">
+                <input
+                  autoFocus
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="종목명 검색"
+                  className="w-full px-2.5 py-1.5 rounded-md bg-white/5 text-sm text-white placeholder-gray-500 outline-none focus:ring-1 focus:ring-[#3B82F6]"
+                />
+              </div>
+              <div className="max-h-56 overflow-y-auto">
+                {candidates.length > 0 ? (
+                  candidates.map((stock) => (
+                    <button
+                      key={stock.id}
+                      onClick={() => handleAddStock(stock)}
+                      className="w-full text-left px-3 py-2 text-sm text-gray-200 hover:bg-white/5 transition-colors"
+                    >
+                      {stock.name}
+                    </button>
+                  ))
+                ) : (
+                  <p className="px-3 py-3 text-xs text-gray-600">
+                    검색 결과가 없어요
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* 카드 그리드 */}
-        <section className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-4">
-          {CARDS.map((card) => (
-            <VideoCardItem key={card.id} card={card} />
-          ))}
-        </section>
+        {!hasStocks && (
+          <span className="text-xs text-gray-600">등록된 종목이 없어요</span>
+        )}
+      </div>
+
+      {/* 메인 영역 - 종목 미등록 시 안내, 등록 시 공시/유튜브/기타 카테고리 + API 연동 예정 */}
+      <main className="px-6 py-10 border-t border-white/5">
+        {hasStocks && currentStock ? (
+          <>
+            <p className="text-sm text-gray-400">
+              선택된 종목:{" "}
+              <span className="text-white font-semibold">
+                {currentStock.name}
+              </span>
+            </p>
+            <p className="text-xs text-gray-600 mt-2">
+              공시 / 유튜브 / 기타 정보 카테고리는 추후 API 연동 후 이곳에
+              표시됩니다.
+            </p>
+          </>
+        ) : (
+          <p className="text-sm text-gray-600">
+            관심 종목을 추가하면 공시, 유튜브, 기타 정보를 이곳에서 확인할
+            수 있어요.
+          </p>
+        )}
       </main>
     </div>
   );
