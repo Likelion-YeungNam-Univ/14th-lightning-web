@@ -3,6 +3,7 @@ import { getApi, postApi } from "./api/client";
 import { Header } from "./components/Header";
 import { LoginModal } from "./components/LoginModal";
 import { MarketNav } from "./components/MarketNav";
+import { SourceNav } from "./components/SourceNav";
 import { StockList } from "./components/StockList";
 import type {
   MarketInfo,
@@ -114,6 +115,11 @@ export default function App() {
           stocksLoading={stocksLoading}
           stocksError={stocksError}
           onSelectStock={setActiveStockCode}
+        />
+        <SourceNav
+          key={activeMarket}
+          market={activeMarket}
+          disabled={stocksLoading || !activeStockCode}
         />
         {marketsError && (
           <p role="status" className="mt-4 text-sm text-[#f0a868]">
