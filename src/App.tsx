@@ -3,6 +3,7 @@ import { getApi, postApi } from "./api/client";
 import { Header } from "./components/Header";
 import { LoginModal } from "./components/LoginModal";
 import { MarketNav } from "./components/MarketNav";
+import { SourceNav } from "./components/SourceNav";
 import { StockList } from "./components/StockList";
 import type {
   MarketInfo,
@@ -43,7 +44,9 @@ export default function App() {
       try {
         const marketResponse = await getApi<MarketsResponse>("/markets");
         setMarkets(marketResponse.markets);
-        setActiveMarket((current) => current || marketResponse.markets[0]?.market || "");
+        setActiveMarket(
+          (current) => current || marketResponse.markets[0]?.market || "",
+        );
       } catch (error) {
         setMarketsError(
           error instanceof Error
@@ -64,6 +67,7 @@ export default function App() {
       setStocksLoading(true);
       setStocksError("");
       try {
+        // 국내 해외 api 가져오기 및 4개 종목 연결 api
         const response = await getApi<MyStocksResponse>(
           `/me/stocks?market=${encodeURIComponent(activeMarket)}`,
         );
@@ -75,14 +79,16 @@ export default function App() {
         setActiveStockCode((current) =>
           ordered.some((stock) => stock.stock_code === current)
             ? current
-            : ordered[0]?.stock_code ?? "",
+            : (ordered[0]?.stock_code ?? ""),
         );
       } catch (error) {
         if (cancelled) return;
         setMarketStocks([]);
         setActiveStockCode("");
         setStocksError(
-          error instanceof Error ? error.message : "종목을 불러오지 못했습니다.",
+          error instanceof Error
+            ? error.message
+            : "종목을 불러오지 못했습니다.",
         );
       } finally {
         if (!cancelled) setStocksLoading(false);
@@ -101,7 +107,7 @@ export default function App() {
         sessionLoading={sessionLoading}
         onLoginClick={() => setLoginOpen(true)}
       />
-      <main id="main" className="px-6 pt-24">
+      <main id="main" className="px-6 pt-16">
         <MarketNav
           markets={markets}
           activeMarket={activeMarket}
@@ -114,6 +120,11 @@ export default function App() {
           stocksLoading={stocksLoading}
           stocksError={stocksError}
           onSelectStock={setActiveStockCode}
+        />
+        <SourceNav
+          key={activeMarket}
+          market={activeMarket}
+          disabled={stocksLoading || !activeStockCode}
         />
         {marketsError && (
           <p role="status" className="mt-4 text-sm text-[#f0a868]">

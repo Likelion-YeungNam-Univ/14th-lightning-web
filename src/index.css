@@ -1,11 +1,33 @@
 @import "tailwindcss";
 
+@font-face {
+  font-family: "Noto Sans KR";
+  src: url("/fonts/NotoSansKR-Regular.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Noto Sans KR";
+  src: url("/fonts/NotoSansKR-Medium.otf") format("opentype");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Noto Sans KR";
+  src: url("/fonts/NotoSansKR-Bold.otf") format("opentype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   color-scheme: dark;
   font-family:
-    Pretendard,
     "Noto Sans KR",
-    Inter,
     system-ui,
     -apple-system,
     BlinkMacSystemFont,
@@ -45,7 +67,7 @@ body {
 
 button,
 input {
-  font: inherit;
+  font-family: inherit;
 }
 
 button:not(:disabled) {

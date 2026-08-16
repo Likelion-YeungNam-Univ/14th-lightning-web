@@ -48,7 +48,7 @@ export function LoginModal({ onClose, onLoginSuccess }: LoginModalProps) {
         aria-modal="true"
         aria-labelledby="login-title"
         onMouseDown={(event) => event.stopPropagation()}
-        className="relative w-full max-w-[430px] rounded-2xl border border-[#303744] bg-[#1c2029] p-8 shadow-2xl"
+        className="relative w-full max-w-[550px] rounded-2xl border border-[#303744] bg-[#1c2029] p-8 shadow-2xl"
       >
         <button
           aria-label="닫기"
@@ -62,10 +62,13 @@ export function LoginModal({ onClose, onLoginSuccess }: LoginModalProps) {
           로그인
         </h2>
         <p className="mb-6 text-sm text-[#9aa3b2]">
-          저장한 종목과 자료를 다음에도 이어서 확인하세요.
+          저장한 카드를 다음에도 보려면 로그인이 필요해요.
         </p>
         <form onSubmit={submitLogin}>
-          <label htmlFor="login-id" className="mb-2 block text-xs text-[#c8ccd4]">
+          <label
+            htmlFor="login-id"
+            className="mb-2 block text-xs text-[#c8ccd4]"
+          >
             아이디
           </label>
           <input
@@ -93,8 +96,8 @@ export function LoginModal({ onClose, onLoginSuccess }: LoginModalProps) {
             className="h-12 w-full rounded-lg border border-[#3a4250] bg-[#12151b] px-3 text-sm outline-none focus:border-[#4d9fff]"
           />
           {loginError && (
-            <p role="alert" className="mt-3 text-sm text-[#f0a868]">
-              {loginError}
+            <p role="alert" className="mt-5 text-sm text-[#c64848]">
+              아이디 또는 비밀번호가 일치하지 않습니다.
             </p>
           )}
           <button
