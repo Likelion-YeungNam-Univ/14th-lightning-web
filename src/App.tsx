@@ -44,7 +44,9 @@ export default function App() {
       try {
         const marketResponse = await getApi<MarketsResponse>("/markets");
         setMarkets(marketResponse.markets);
-        setActiveMarket((current) => current || marketResponse.markets[0]?.market || "");
+        setActiveMarket(
+          (current) => current || marketResponse.markets[0]?.market || "",
+        );
       } catch (error) {
         setMarketsError(
           error instanceof Error
@@ -65,6 +67,7 @@ export default function App() {
       setStocksLoading(true);
       setStocksError("");
       try {
+        // 국내 해외 api 가져오기 및 4개 종목 연결 api
         const response = await getApi<MyStocksResponse>(
           `/me/stocks?market=${encodeURIComponent(activeMarket)}`,
         );
@@ -76,14 +79,16 @@ export default function App() {
         setActiveStockCode((current) =>
           ordered.some((stock) => stock.stock_code === current)
             ? current
-            : ordered[0]?.stock_code ?? "",
+            : (ordered[0]?.stock_code ?? ""),
         );
       } catch (error) {
         if (cancelled) return;
         setMarketStocks([]);
         setActiveStockCode("");
         setStocksError(
-          error instanceof Error ? error.message : "종목을 불러오지 못했습니다.",
+          error instanceof Error
+            ? error.message
+            : "종목을 불러오지 못했습니다.",
         );
       } finally {
         if (!cancelled) setStocksLoading(false);
