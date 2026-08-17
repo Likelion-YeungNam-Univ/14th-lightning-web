@@ -69,3 +69,6 @@ export type StockAddResponse = {
   added: AddedStock[];
   already_registered: string[];
 };
+
+/** 종목 추가 모달에서 저장할 추가·삭제 종목 코드 목록을 나타낸다. */
+export type StockChanges = { add: string[]; remove: string[] };
