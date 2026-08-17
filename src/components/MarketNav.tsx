@@ -1,13 +1,7 @@
 import { marketLabels } from "../constants/market";
-import type { MarketInfo } from "../types/api";
+import type { MarketNavProps } from "../types/market";
 
-type MarketNavProps = {
-  markets: MarketInfo[];
-  activeMarket: string;
-  marketsLoading: boolean;
-  onSelectMarket: (market: string) => void;
-};
-
+/** GET /markets로 받은 시장을 국내·해외 선택 탭으로 표시한다. */
 export function MarketNav({
   markets,
   activeMarket,
@@ -19,12 +13,14 @@ export function MarketNav({
       aria-label="시장 선택"
       className="-mx-6 flex h-[70px] items-center gap-1.5 px-6 max-[760px]:h-[60px] max-[760px]:px-[18px]"
     >
+      {/* 시장 조회 중에는 실제 탭과 같은 크기의 스켈레톤을 표시한다. */}
       {marketsLoading ? (
         <>
           <span className="h-10 w-[66px] animate-pulse rounded-lg bg-[#171a21]" />
           <span className="h-10 w-[66px] animate-pulse rounded-lg bg-[#171a21]" />
         </>
       ) : (
+        // API 식별자는 유지하고 화면에는 사용자용 한글 이름을 표시한다.
         markets.map((market) => (
           <button
             key={market.market}

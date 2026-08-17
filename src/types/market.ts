@@ -13,3 +13,10 @@ export type MarketInfo = {
 
 // 값 확인
 export type MarketsResponse = { markets: MarketInfo[] };
+
+export type MarketNavProps = {
+  markets: MarketInfo[];
+  activeMarket: string;
+  marketsLoading: boolean;
+  onSelectMarket: (market: string) => void;
+};
