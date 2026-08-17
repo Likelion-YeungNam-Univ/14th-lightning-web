@@ -1,7 +1,6 @@
-// stocks 종목 추가 모달창(검색, 관심종목) && my-stocks 사용자 종목 처리
+// 종목 조회, 추가, 검색, 노출 순서 API에서 사용하는 타입을 정의한다.
 
-/** GET /me/stocks : 관심 종목, 순서 */
-// 요청
+/** GET /me/stocks 응답의 관심 종목 한 건을 나타낸다. */
 export type MyStockItem = {
   stock_code: string;
   name: string;
@@ -10,10 +9,22 @@ export type MyStockItem = {
   is_default: boolean;
 };
 
-// 응답
+/** StockList가 종목 상태와 사용자 동작을 전달받는 속성을 정의한다. */
+export type StockListProps = {
+  stocks: MyStockItem[];
+  activeStockCode: string;
+  stocksLoading: boolean;
+  stocksError: string;
+  onSelectStock: (stockCode: string) => void;
+  onAddStock?: () => void;
+  onReorderStocks?: (stockCodes: string[]) => void;
+  reordering?: boolean;
+};
+
+// GET /me/stocks의 종목 목록 응답을 나타낸다.
 export type MyStocksResponse = { items: MyStockItem[] };
 
-/** PUT /me/stocks/order  종목코드 순서*/
+/** PUT /me/stocks/order에 시장과 전체 종목 코드 순서를 전달한다. */
 export type StockOrderRequest = {
   market: string;
   stock_codes: string[];
@@ -22,7 +33,7 @@ export type StockOrderResponse = {
   stocks: string[];
 };
 
-// api/stocks/search
+// GET /stocks/search의 검색 결과 한 건을 나타낸다.
 export type StockSearchItem = {
   stock_code: string;
   name: string;
@@ -34,7 +45,7 @@ export type StockSearchResponse = {
   reason?: string | null;
 };
 
-/** GET /stocks/popular 인기종목 */
+/** GET /stocks/popular의 인기 종목 한 건을 나타낸다. */
 export type PopularStockItem = {
   stock_code: string;
   name: string;
@@ -42,19 +53,18 @@ export type PopularStockItem = {
   already_added: boolean;
 };
 
-/** POST /me/stocks  종목 추가 (로그인) */
+/** POST /me/stocks에 추가할 전체 종목 코드 목록을 전달한다. */
 export type StockAddRequest = {
   stock_codes: string[];
 };
-// 응답
-// (+ 시장)
+// POST /me/stocks로 추가된 종목 한 건을 나타낸다.
 export type AddedStock = {
   stock_code: string;
   name: string;
   market: string;
 };
 
-// 이미 등록된 카드
+// POST /me/stocks의 추가 결과와 이미 등록된 종목 코드를 나타낸다.
 export type StockAddResponse = {
   added: AddedStock[];
   already_registered: string[];
