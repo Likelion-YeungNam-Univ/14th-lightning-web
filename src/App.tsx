@@ -1,12 +1,8 @@
 import { useState } from "react";
 import { Header } from "./components/Header";
-import { MarketNav } from "./components/MarketNav";
 import type { SourceTab } from "./components/SourceNav";
-import { StockList } from "./components/StockList";
 import { AppModals } from "./components/AppModals";
-import { EmptyStocks } from "./components/EmptyStocks";
-import { StatusBanner } from "./components/StatusBanner";
-import { StockFeedSection } from "./components/StockFeedSection";
+import { MainPage } from "./components/MainPage";
 import { useSession } from "./hooks/useSession";
 import { useMarkets } from "./hooks/useMarkets";
 import { useStocks } from "./hooks/useStocks";
@@ -15,7 +11,6 @@ import { useSavedCards } from "./hooks/useSavedCards";
 import { useCardActions } from "./hooks/useCardActions";
 import { useStockActions } from "./hooks/useStockActions";
 import { useCardDetail } from "./hooks/useCardDetail";
-import { savedItemToCard } from "./utils/card";
 
 /** 세션부터 시장·종목·카드·로그인 모달까지 메인 화면의 전체 흐름을 연결한다. */
 export default function App() {
@@ -101,80 +96,39 @@ export default function App() {
         sessionLoading={sessionLoading}
         onLoginClick={() => setLoginOpen(true)}
       />
-      <main id="main" className="px-6 pt-16">
-        <MarketNav
-          markets={markets}
-          activeMarket={activeMarket}
-          marketsLoading={marketsLoading}
-          onSelectMarket={selectMarket}
-        />
-        <StockList
-          stocks={marketStocks}
-          activeStockCode={activeStockCode}
-          stocksLoading={stocksLoading}
-          stocksError={stocksError}
-          onSelectStock={setActiveStockCode}
-          onAddStock={openStockModal}
-          onReorderStocks={(stockCodes) => void reorderStocks(stockCodes)}
-          reordering={reordering}
-        />
-        {reorderError && (
-          <StatusBanner
-            tone="error"
-            message={`종목 순서를 저장하지 못했습니다: ${reorderError}`}
-          />
-        )}
-        {stockActionError && (
-          <StatusBanner
-            tone="error"
-            message={`종목을 추가하지 못했습니다: ${stockActionError}`}
-          />
-        )}
-        {stockActionNotice && (
-          <StatusBanner tone="info" message={stockActionNotice} />
-        )}
-        {!stocksLoading && marketStocks.length === 0 && !stocksError ? (
-          <EmptyStocks market={activeMarket} onAddStock={openStockModal} />
-        ) : (
-          <StockFeedSection
-            market={activeMarket}
-            tabs={activeMarketInfo?.tabs}
-            disabled={stocksLoading || !activeStockCode}
-            activeTab={activeTab}
-            onSelectTab={setActiveTab}
-            saveError={saveError}
-            savedItems={savedResponse?.items ?? []}
-            savedLoading={savedLoading}
-            savedError={savedError}
-            onRemoveSaved={(item) => void removeSavedCard(item)}
-            onOpenSaved={(item) => {
-              const card = savedItemToCard(item);
-              if (card) openDetail(card, item.tab);
-            }}
-            cards={canLoadCards ? (cardResponse?.items ?? []) : []}
-            cardsLoading={canLoadCards && cardsLoading}
-            cardsError={canLoadCards ? cardsError : ""}
-            cardsReason={canLoadCards ? (cardResponse?.reason ?? null) : null}
-            cardsDisclaimer={canLoadCards && (cardResponse?.disclaimer ?? false)}
-            linkSentence={
-              canLoadCards ? (cardResponse?.link_sentence ?? null) : null
-            }
-            onToggleSave={(card) => void toggleCardSave(card)}
-            onOpenCard={(card) => openDetail(card, activeTab)}
-          />
-        )}
-        {marketsError && (
-          <p className="mt-4 text-sm text-[#f0a868]">
-            시장 정보를 불러오지 못했습니다: {marketsError}
-          </p>
-        )}
-        {sessionError && (
-          <StatusBanner
-            tone="error"
-            message={`API 서버 연결 실패: ${sessionError}`}
-          />
-        )}
-      </main>
+      <MainPage
+        markets={markets}
+        activeMarket={activeMarket}
+        marketsLoading={marketsLoading}
+        marketsError={marketsError}
+        activeMarketInfo={activeMarketInfo}
+        onSelectMarket={selectMarket}
+        marketStocks={marketStocks}
+        activeStockCode={activeStockCode}
+        stocksLoading={stocksLoading}
+        stocksError={stocksError}
+        onSelectStock={setActiveStockCode}
+        onAddStock={openStockModal}
+        onReorderStocks={(stockCodes) => void reorderStocks(stockCodes)}
+        reordering={reordering}
+        reorderError={reorderError}
+        stockActionError={stockActionError}
+        stockActionNotice={stockActionNotice}
+        activeTab={activeTab}
+        onSelectTab={setActiveTab}
+        saveError={saveError}
+        savedResponse={savedResponse}
+        savedLoading={savedLoading}
+        savedError={savedError}
+        onRemoveSaved={(item) => void removeSavedCard(item)}
+        cardResponse={cardResponse}
+        cardsLoading={cardsLoading}
+        cardsError={cardsError}
+        canLoadCards={canLoadCards}
+        onToggleSave={(card) => void toggleCardSave(card)}
+        onOpenDetail={openDetail}
+        sessionError={sessionError}
+      />
       <AppModals
         loginOpen={loginOpen}
         onLoginClose={() => setLoginOpen(false)}
