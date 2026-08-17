@@ -1,31 +1,62 @@
 import { useState } from "react";
 
-type SourceTab = "youtube" | "dart" | "policy" | "bok" | "fed" | "saved";
+export type SourceTab =
+  | "youtube"
+  | "disclosure"
+  | "regulation"
+  | "bok"
+  | "fed"
+  | "saved";
 
 type SourceNavProps = {
   market: string;
+  tabs?: string[];
   disabled: boolean;
+  activeTab?: SourceTab;
+  onSelectTab?: (tab: SourceTab) => void;
 };
 
-const tabsByMarket: Record<string, { id: Exclude<SourceTab, "saved">; label: string }[]> = {
-  domestic: [
-    { id: "youtube", label: "유튜브" },
-    { id: "dart", label: "공시(DART)" },
-    { id: "policy", label: "규제동향" },
-    { id: "bok", label: "한국은행" },
-    { id: "fed", label: "미국 Fed" },
-  ],
-  overseas: [
-    { id: "youtube", label: "유튜브" },
-    { id: "dart", label: "공시(SEC)" },
-    { id: "policy", label: "규제동향" },
-    { id: "fed", label: "미국 Fed" },
-  ],
+const fallbackTabs: Record<string, Exclude<SourceTab, "saved">[]> = {
+  domestic: ["youtube", "disclosure", "regulation", "bok", "fed"],
+  overseas: ["youtube", "disclosure", "regulation", "fed"],
 };
 
-export function SourceNav({ market, disabled }: SourceNavProps) {
-  const [activeTab, setActiveTab] = useState<SourceTab>("youtube");
-  const sourceTabs = tabsByMarket[market] ?? tabsByMarket.domestic;
+const sourceTabIds = new Set<Exclude<SourceTab, "saved">>([
+  "youtube",
+  "disclosure",
+  "regulation",
+  "bok",
+  "fed",
+]);
+
+function isSourceTab(value: string): value is Exclude<SourceTab, "saved"> {
+  return sourceTabIds.has(value as Exclude<SourceTab, "saved">);
+}
+
+function sourceLabel(tab: Exclude<SourceTab, "saved">, market: string) {
+  if (tab === "youtube") return "유튜브";
+  if (tab === "disclosure") return market === "overseas" ? "공시(SEC)" : "공시(DART)";
+  if (tab === "regulation") return "규제동향";
+  if (tab === "bok") return "한국은행";
+  return "미국 Fed";
+}
+
+export function SourceNav({
+  market,
+  tabs,
+  disabled,
+  activeTab: controlledActiveTab,
+  onSelectTab,
+}: SourceNavProps) {
+  const [internalActiveTab, setInternalActiveTab] =
+    useState<SourceTab>("youtube");
+  const activeTab = controlledActiveTab ?? internalActiveTab;
+  const sourceTabs = (tabs ?? fallbackTabs[market] ?? fallbackTabs.domestic).filter(isSourceTab);
+
+  const selectTab = (tab: SourceTab) => {
+    if (onSelectTab) onSelectTab(tab);
+    else setInternalActiveTab(tab);
+  };
 
   const tabClass = (active: boolean) =>
     `shrink-0 whitespace-nowrap rounded-full border px-3.5 py-2 text-[13px] font-bold transition-colors duration-[180ms] ease-[cubic-bezier(.23,1,.32,1)] max-[760px]:px-[11px] max-[760px]:py-[7px] ${
@@ -41,14 +72,14 @@ export function SourceNav({ market, disabled }: SourceNavProps) {
     >
       {sourceTabs.map((source) => (
         <button
-          key={source.id}
+          key={source}
           type="button"
           disabled={disabled}
-          aria-pressed={activeTab === source.id}
-          className={tabClass(activeTab === source.id)}
-          onClick={() => setActiveTab(source.id)}
+          aria-pressed={activeTab === source}
+          className={tabClass(activeTab === source)}
+          onClick={() => selectTab(source)}
         >
-          {source.label}
+          {sourceLabel(source, market)}
         </button>
       ))}
       <button
@@ -56,7 +87,7 @@ export function SourceNav({ market, disabled }: SourceNavProps) {
         disabled={disabled}
         aria-pressed={activeTab === "saved"}
         className={`${tabClass(activeTab === "saved")} inline-flex items-center gap-[5px]`}
-        onClick={() => setActiveTab("saved")}
+        onClick={() => selectTab("saved")}
       >
         <span aria-hidden="true" className="text-base leading-none">☆</span>
         즐겨찾기
