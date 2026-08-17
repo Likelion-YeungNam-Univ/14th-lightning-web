@@ -6,7 +6,11 @@ type HeaderProps = {
   onLoginClick: () => void;
 };
 
-export function Header({ authenticated, sessionLoading, onLoginClick }: HeaderProps) {
+export function Header({
+  authenticated,
+  sessionLoading,
+  onLoginClick,
+}: HeaderProps) {
   return (
     <header className="fixed inset-x-0 top-0 z-50 flex h-16 items-center justify-between bg-[#12151b] px-6 shadow-[0_1px_0_#20242c]">
       <Logo />
