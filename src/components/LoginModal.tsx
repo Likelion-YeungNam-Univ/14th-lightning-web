@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { postApi } from "../api/client";
-import type { LoginResponse } from "../types/api";
+import type { LoginResponse } from "../types/session";
 import { Logo } from "./Logo";
 
 type LoginModalProps = {
@@ -8,6 +8,7 @@ type LoginModalProps = {
   onLoginSuccess: () => void;
 };
 
+/** 모의 로그인 계정을 입력받아 POST /auth/mock-login을 호출한다. */
 export function LoginModal({ onClose, onLoginSuccess }: LoginModalProps) {
   const [id, setId] = useState("");
   const [password, setPassword] = useState("");
