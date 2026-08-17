@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-type SourceTab =
+export type SourceTab =
   | "youtube"
   | "disclosure"
   | "regulation"
@@ -12,6 +12,8 @@ type SourceNavProps = {
   market: string;
   tabs?: string[];
   disabled: boolean;
+  activeTab?: SourceTab;
+  onSelectTab?: (tab: SourceTab) => void;
 };
 
 const fallbackTabs: Record<string, Exclude<SourceTab, "saved">[]> = {
@@ -39,9 +41,22 @@ function sourceLabel(tab: Exclude<SourceTab, "saved">, market: string) {
   return "미국 Fed";
 }
 
-export function SourceNav({ market, tabs, disabled }: SourceNavProps) {
-  const [activeTab, setActiveTab] = useState<SourceTab>("youtube");
+export function SourceNav({
+  market,
+  tabs,
+  disabled,
+  activeTab: controlledActiveTab,
+  onSelectTab,
+}: SourceNavProps) {
+  const [internalActiveTab, setInternalActiveTab] =
+    useState<SourceTab>("youtube");
+  const activeTab = controlledActiveTab ?? internalActiveTab;
   const sourceTabs = (tabs ?? fallbackTabs[market] ?? fallbackTabs.domestic).filter(isSourceTab);
+
+  const selectTab = (tab: SourceTab) => {
+    if (onSelectTab) onSelectTab(tab);
+    else setInternalActiveTab(tab);
+  };
 
   const tabClass = (active: boolean) =>
     `shrink-0 whitespace-nowrap rounded-full border px-3.5 py-2 text-[13px] font-bold transition-colors duration-[180ms] ease-[cubic-bezier(.23,1,.32,1)] max-[760px]:px-[11px] max-[760px]:py-[7px] ${
@@ -62,7 +77,7 @@ export function SourceNav({ market, tabs, disabled }: SourceNavProps) {
           disabled={disabled}
           aria-pressed={activeTab === source}
           className={tabClass(activeTab === source)}
-          onClick={() => setActiveTab(source)}
+          onClick={() => selectTab(source)}
         >
           {sourceLabel(source, market)}
         </button>
@@ -72,7 +87,7 @@ export function SourceNav({ market, tabs, disabled }: SourceNavProps) {
         disabled={disabled}
         aria-pressed={activeTab === "saved"}
         className={`${tabClass(activeTab === "saved")} inline-flex items-center gap-[5px]`}
-        onClick={() => setActiveTab("saved")}
+        onClick={() => selectTab("saved")}
       >
         <span aria-hidden="true" className="text-base leading-none">☆</span>
         즐겨찾기
