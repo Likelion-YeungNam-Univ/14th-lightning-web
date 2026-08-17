@@ -70,12 +70,12 @@ export async function postApi<T>(path: string, body?: object): Promise<T> {
     method: "POST",
     credentials: "include",
     headers: { "Content-Type": "application/json" },
-    body: body ? JSON.stringify(body) : undefined,
+    body: body ? JSON.stringify(body) : undefined, //json형식 사용
   });
   return parseApiResponse<T>(response);
 }
 
-/** F-3.7 관심 종목 노출 순서 변경 요청에 사용합니다. */
+/** F-3.7 관심 종목 노출 순서 변경 요청에 사용합니다. -> 아직 연결 하지 않음 */
 export async function putApi<T>(path: string, body?: object): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${path}`, {
     method: "PUT",
