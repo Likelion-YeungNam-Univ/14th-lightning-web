@@ -71,7 +71,7 @@ export function SourceNav({
   return (
     <nav
       aria-label="출처 탭"
-      className="-mx-6 flex min-h-[50px] items-center gap-2 overflow-x-auto bg-[#0f1115] px-6 py-2 [scrollbar-width:none] max-[760px]:min-h-[58px] max-[760px]:px-[18px] [&::-webkit-scrollbar]:hidden"
+      className="-mx-6 flex min-h-12.5 items-center gap-2 overflow-x-auto bg-[#0f1115] px-6 py-2 scrollbar-none max-[760px]:min-h-14.5 max-[760px]:px-4.5 [&::-webkit-scrollbar]:hidden"
     >
       {sourceTabs.map((source) => (
         <button
@@ -89,7 +89,7 @@ export function SourceNav({
         type="button"
         disabled={disabled}
         aria-pressed={activeTab === "saved"}
-        className={`${tabClass(activeTab === "saved")} inline-flex items-center gap-[5px]`}
+        className={`${tabClass(activeTab === "saved")} inline-flex items-center gap-1.25`}
         onClick={() => selectTab("saved")}
       >
         <span aria-hidden="true" className="text-base leading-none">☆</span>
@@ -99,7 +99,7 @@ export function SourceNav({
         type="button"
         disabled={disabled}
         aria-pressed={activeTab === "community"}
-        className={`${tabClass(activeTab === "community")} inline-flex items-center gap-[7px]`}
+        className={`${tabClass(activeTab === "community")} inline-flex items-center gap-1.75`}
         onClick={() => selectTab("community")}
       >
         <svg

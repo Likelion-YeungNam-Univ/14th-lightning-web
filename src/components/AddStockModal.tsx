@@ -36,7 +36,7 @@ export function AddStockModal({
 
   return (
     <div
-      className="fixed inset-0 z-[60] grid place-items-center bg-black/70 p-5 backdrop-blur-sm"
+      className="fixed inset-0 z-60 grid place-items-center bg-black/70 p-5 backdrop-blur-sm"
       onMouseDown={onClose}
     >
       <section
@@ -44,7 +44,7 @@ export function AddStockModal({
         aria-modal="true"
         aria-labelledby="add-title"
         onMouseDown={(event) => event.stopPropagation()}
-        className="relative max-h-[calc(100vh-24px)] w-full max-w-[680px] overflow-y-auto rounded-xl border border-[#303744] bg-[#1b1f29] px-9 py-8 shadow-2xl max-[640px]:px-5"
+        className="relative max-h-[calc(100vh-24px)] w-full max-w-170 overflow-y-auto rounded-xl border border-[#303744] bg-[#1b1f29] px-9 py-8 shadow-2xl max-[640px]:px-5"
       >
         <button
           type="button"
@@ -65,7 +65,7 @@ export function AddStockModal({
             지금 보고 있는 구분에서만 검색돼요
           </span>
         </div>
-        <label className="mt-10 flex h-[58px] items-center gap-3 rounded-xl border border-[#3a4250] bg-[#12151b] px-4 focus-within:border-[#4d9fff]">
+        <label className="mt-10 flex h-14.5 items-center gap-3 rounded-xl border border-[#3a4250] bg-[#12151b] px-4 focus-within:border-[#4d9fff]">
           <span aria-hidden="true" className="text-2xl text-[#9aa3b2]">
             ⌕
           </span>
