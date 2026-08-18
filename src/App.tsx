@@ -11,6 +11,7 @@ import { useSavedCards } from "./hooks/useSavedCards";
 import { useCardActions } from "./hooks/useCardActions";
 import { useStockActions } from "./hooks/useStockActions";
 import { useCardDetail } from "./hooks/useCardDetail";
+import { usePoints } from "./hooks/usePoints";
 
 
 /** 세션부터 시장·종목·카드·로그인 모달까지 메인 화면의 전체 흐름을 연결한다. */
@@ -19,6 +20,7 @@ export default function App() {
   const { authenticated, setAuthenticated, sessionLoading, sessionError } =
     useSession();
   const [loginOpen, setLoginOpen] = useState(false);
+  const points = usePoints(authenticated);
   const {
     markets,
     activeMarket,
@@ -99,6 +101,7 @@ export default function App() {
       <Header
         authenticated={authenticated}
         sessionLoading={sessionLoading}
+        points={points}
         onLoginClick={() => setLoginOpen(true)}
       />
       <MainPage
