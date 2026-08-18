@@ -12,6 +12,7 @@ import { useCardActions } from "./hooks/useCardActions";
 import { useStockActions } from "./hooks/useStockActions";
 import { useCardDetail } from "./hooks/useCardDetail";
 
+
 /** 세션부터 시장·종목·카드·로그인 모달까지 메인 화면의 전체 흐름을 연결한다. */
 export default function App() {
   // 첫 진입 세션과 로그인 모달 표시 상태를 관리한다.
