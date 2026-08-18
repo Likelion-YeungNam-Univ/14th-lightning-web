@@ -1,4 +1,6 @@
 import type { Card } from "../types/card";
+ 
+
 
 type CardFeedProps = {
   cards: Card[];
