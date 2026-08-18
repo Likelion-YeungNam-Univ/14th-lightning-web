@@ -2,6 +2,7 @@ import { SourceNav, type SourceTab } from "./SourceNav";
 import { SavedCardFeed } from "./SavedCardFeed";
 import { CardFeed } from "./CardFeed";
 import { StatusBanner } from "./StatusBanner";
+import { CommunityFeed } from "./CommunityFeed";
 import type { Card, SavedCardItem } from "../types/card";
 
 type StockFeedSectionProps = {
@@ -64,7 +65,9 @@ export function StockFeedSection({
           message={`즐겨찾기를 변경하지 못했습니다: ${saveError}`}
         />
       )}
-      {activeTab === "saved" ? (
+      {activeTab === "community" ? (
+        <CommunityFeed />
+      ) : activeTab === "saved" ? (
         <SavedCardFeed
           items={savedItems}
           loading={savedLoading}

@@ -16,11 +16,19 @@ export function useCards(
   );
   const [cardsLoading, setCardsLoading] = useState(false);
   const [cardsError, setCardsError] = useState("");
-  const canLoadCards = Boolean(activeStockCode && activeTab !== "saved");
+  const canLoadCards = Boolean(
+    activeStockCode && activeTab !== "saved" && activeTab !== "community",
+  );
 
   // 종목 또는 출처 탭이 바뀌면 해당 조합으로 GET /cards를 호출한다.
   useEffect(() => {
-    if (!activeStockCode || activeTab === "saved") return;
+    if (
+      !activeStockCode ||
+      activeTab === "saved" ||
+      activeTab === "community"
+    ) {
+      return;
+    }
     let cancelled = false;
     const loadCards = async () => {
       setCardsLoading(true);
