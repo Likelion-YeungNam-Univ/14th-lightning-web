@@ -41,7 +41,7 @@ export function LoginModal({ onClose, onLoginSuccess }: LoginModalProps) {
 
   return (
     <div
-      className="fixed inset-0 z-[60] grid place-items-center bg-black/70 p-5 backdrop-blur-sm"
+      className="fixed inset-0 z-60 grid place-items-center bg-black/70 p-5 backdrop-blur-sm"
       onMouseDown={onClose}
     >
       <section
@@ -49,7 +49,7 @@ export function LoginModal({ onClose, onLoginSuccess }: LoginModalProps) {
         aria-modal="true"
         aria-labelledby="login-title"
         onMouseDown={(event) => event.stopPropagation()}
-        className="relative w-full max-w-[550px] rounded-2xl border border-[#303744] bg-[#1c2029] p-8 shadow-2xl"
+        className="relative w-full max-w-137.5 rounded-2xl border border-[#303744] bg-[#1c2029] p-8 shadow-2xl"
       >
         <button
           aria-label="닫기"

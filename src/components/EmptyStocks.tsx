@@ -23,10 +23,10 @@ export function EmptyStocks({ market, onAddStock }: EmptyStocksProps) {
       <span className="mt-6 text-[11px] font-bold tracking-[0.14em] text-[#4d9fff]">
         {overseas ? "OVERSEAS STOCKS" : "MY STOCKS"}
       </span>
-      <h1 className="mb-0 mt-3 text-[22px] font-bold tracking-[-0.05em] text-[#f2f3f5]">
+      <h1 className="mb-0 mt-3 text-[22px] font-bold tracking-tighter text-[#f2f3f5]">
         아직 담아둔 {overseas ? "해외 " : ""}종목이 없어요
       </h1>
-      <p className="mb-0 mt-3 max-w-[520px] text-sm leading-6 text-[#c8ccd4]">
+      <p className="mb-0 mt-3 max-w-130 text-sm leading-6 text-[#c8ccd4]">
         종목을 담으면 유튜브·공시·규제 동향
         {/* 한국은행 탭이 없는 해외 시장에는 금리 소식 문구를 붙이지 않는다. */}
         {!overseas && "·금리 소식"}을 한자리에서 볼 수 있어요.

@@ -1,6 +1,4 @@
 import type { Card } from "../types/card";
- 
-
 
 type CardFeedProps = {
   cards: Card[];
@@ -76,7 +74,7 @@ function LoadingCards() {
           key={index}
           className="overflow-hidden rounded-xl bg-[#1c2029]"
         >
-          <div className="h-[180px] animate-pulse bg-[#2a2e36]" />
+          <div className="h-45 animate-pulse bg-[#2a2e36]" />
           <div className="space-y-3 p-4">
             <div className="h-4 w-full animate-pulse rounded bg-[#2a2e36]" />
             <div className="h-4 w-3/4 animate-pulse rounded bg-[#2a2e36]" />
@@ -137,7 +135,7 @@ export function CardFeed({
     <section className="py-5">
       {disclaimer && (
         <aside className="mb-4 flex items-start gap-3 rounded-lg bg-[#171a21] px-4 py-3 text-sm text-[#c8ccd4]">
-          <span aria-hidden="true" className="text-[#4d9fff]">
+          <span aria-hidden="true" className="text-[#639ddf]">
             ⓘ
           </span>
           <p className="m-0">
@@ -150,7 +148,7 @@ export function CardFeed({
       )}
       {linkSentence && (
         <aside className="mb-4 rounded-lg border border-[#2c3644] bg-[#171d26] px-4 py-3">
-          <span className="text-xs font-bold text-[#4d9fff]">내 종목엔</span>
+          <span className="text-xs font-bold text-[#2a78d1]">내 종목엔</span>
           <p className="mb-0 mt-1 text-sm leading-6 text-[#c8ccd4]">
             {linkSentence}
           </p>
@@ -180,7 +178,7 @@ export function CardFeed({
               className={`group overflow-hidden rounded-xl bg-[#1c2029] transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_12px_26px_rgba(0,0,0,.35)] focus-visible:outline-2 focus-visible:outline-[#4d9fff] ${onOpenCard ? "cursor-pointer" : ""}`}
             >
               {videoCard && (
-                <div className="relative h-[180px] overflow-hidden bg-[#2a2e36]">
+                <div className="relative h-45 overflow-hidden bg-[#2a2e36]">
                   {card.thumbnail_url ? (
                     <img
                       src={card.thumbnail_url}
@@ -209,7 +207,7 @@ export function CardFeed({
                   </button>
                 </div>
               )}
-              <div className={videoCard ? "p-4" : "min-h-[194px] p-4"}>
+              <div className={videoCard ? "p-4" : "min-h-48.5 p-4"}>
                 {!videoCard && (
                   <div className="mb-3 flex items-start justify-between gap-2">
                     <div className="flex flex-wrap items-center gap-1.5">

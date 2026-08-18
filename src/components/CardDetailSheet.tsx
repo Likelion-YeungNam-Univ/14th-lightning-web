@@ -157,7 +157,7 @@ export function CardDetailSheet({
 
   return (
     <div
-      className="fixed inset-0 z-[70] flex items-center justify-center bg-black/75 p-6 backdrop-blur-[2px] max-[640px]:p-3"
+      className="fixed inset-0 z-70 flex items-center justify-center bg-black/75 p-6 backdrop-blur-[2px] max-[640px]:p-3"
       onMouseDown={onClose}
     >
       <section
@@ -165,7 +165,7 @@ export function CardDetailSheet({
         aria-modal="true"
         aria-labelledby="card-detail-title"
         onMouseDown={(event) => event.stopPropagation()}
-        className="relative max-h-[calc(100vh-48px)] w-full max-w-[950px] overflow-y-auto rounded-[20px] border border-[#303746] bg-[#1b1f2b] px-10 pb-10 pt-10 shadow-[0_28px_90px_rgba(0,0,0,.55)] max-[640px]:max-h-[calc(100vh-24px)] max-[640px]:rounded-2xl max-[640px]:px-5 max-[640px]:pb-6 max-[640px]:pt-6"
+        className="relative max-h-[calc(100vh-48px)] w-full max-w-237.5 overflow-y-auto rounded-[20px] border border-[#303746] bg-[#1b1f2b] px-10 pb-10 pt-10 shadow-[0_28px_90px_rgba(0,0,0,.55)] max-[640px]:max-h-[calc(100vh-24px)] max-[640px]:rounded-2xl max-[640px]:px-5 max-[640px]:pb-6 max-[640px]:pt-6"
       >
         <button
           type="button"
@@ -190,7 +190,7 @@ export function CardDetailSheet({
         </div>
         <h1
           id="card-detail-title"
-          className="mb-0 mt-6 max-w-[650px] text-[28px] font-bold leading-[1.38] tracking-[-0.052em] text-[#f4f6fa] max-[640px]:text-2xl"
+          className="mb-0 mt-6 max-w-162.5 text-[28px] font-bold leading-[1.38] tracking-[-0.052em] text-[#f4f6fa] max-[640px]:text-2xl"
         >
           {card.title}
         </h1>
@@ -211,11 +211,11 @@ export function CardDetailSheet({
         )}
 
         {card.details && card.details.length > 0 && (
-          <div className="mt-6 grid overflow-hidden rounded-[10px] bg-[#282d38] [grid-template-columns:repeat(auto-fit,minmax(130px,1fr))]">
+          <div className="mt-6 grid overflow-hidden rounded-[10px] bg-[#282d38] grid-cols-[repeat(auto-fit,minmax(130px,1fr))]">
             {card.details.map((detail, index) => (
               <div
                 key={`${detail.label}-${index}`}
-                className="min-h-[82px] border-b border-r border-[#343a47] px-[18px] py-[17px]"
+                className="min-h-20.5 border-b border-r border-[#343a47] px-4.5 py-4.25"
               >
                 <span className="block text-xs text-[#a8b1c0]">
                   {detail.label}
@@ -257,7 +257,7 @@ export function CardDetailSheet({
         </div>
 
         {card.label_reason && (
-          <aside className="mt-6 rounded-[10px] bg-[#282d38] px-5 py-[18px]">
+          <aside className="mt-6 rounded-[10px] bg-[#282d38] px-5 py-4.5">
             <strong className="text-xs text-[#aab3c1]">
               {reasonTitle(card.label)}
             </strong>
@@ -316,7 +316,7 @@ export function CardDetailSheet({
           </p>
         )}
 
-        <footer className="mt-7 flex min-h-[58px] items-center justify-between gap-4 border-t border-[#313744] pt-5 max-[540px]:items-stretch max-[540px]:flex-col">
+        <footer className="mt-7 flex min-h-14.5 items-center justify-between gap-4 border-t border-[#313744] pt-5 max-[540px]:items-stretch max-[540px]:flex-col">
           <span className="text-[13px] text-[#b4bdca]">
             {[card.source_name, publishedAt].filter(Boolean).join(" · ")}
           </span>

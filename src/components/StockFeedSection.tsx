@@ -2,7 +2,7 @@ import { SourceNav, type SourceTab } from "./SourceNav";
 import { SavedCardFeed } from "./SavedCardFeed";
 import { CardFeed } from "./CardFeed";
 import { StatusBanner } from "./StatusBanner";
-import { CommunityFeed } from "./CommunityFeed";
+import CommunityFeed from './CommunityFeed';
 import type { Card, SavedCardItem } from "../types/card";
 
 type StockFeedSectionProps = {
@@ -66,7 +66,7 @@ export function StockFeedSection({
         />
       )}
       {activeTab === "community" ? (
-        <CommunityFeed />
+        <CommunityFeed stockName={market} />
       ) : activeTab === "saved" ? (
         <SavedCardFeed
           items={savedItems}
