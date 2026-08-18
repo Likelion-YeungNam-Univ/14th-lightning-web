@@ -1,5 +1,7 @@
+import { useState } from 'react';
 import type { CommunityPrediction, CommunityCurrency } from '../types/community';
 import CommunityCard from './CommunityCard';
+import CommunityCreateModal, { type CommunityCreateFormData } from './CommunityCreateModal';
 
 // 종목별 기준 정보 (실제 API 연결 전까지 쓰는 임시 매핑)
 const STOCK_MOCK_CONFIG: Record<string, { currency: CommunityCurrency; basePrice: number }> = {
@@ -77,10 +79,17 @@ function generatePredictions(stockName: string): CommunityPrediction[] {
 
 interface CommunityFeedProps {
   stockName: string;
+  pointBalance?: number; // 실제 포인트 API 연결 전까지는 기본값 사용
 }
 
-export default function CommunityFeed({ stockName }: CommunityFeedProps) {
+export default function CommunityFeed({ stockName, pointBalance = 7200 }: CommunityFeedProps) {
   const predictions = generatePredictions(stockName);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+
+  function handleCreateSubmit(data: CommunityCreateFormData) {
+    console.log('제출된 폼 데이터:', data); // TODO: 실제 저장 API 연결 지점 (postApi 등)
+    setIsCreateOpen(false);
+  }
 
   return (
     <div>
@@ -96,11 +105,12 @@ export default function CommunityFeed({ stockName }: CommunityFeedProps) {
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
-           <span className="text-xs text-blue-400 font-bold px-3.5 py-2 rounded border border-black/50 bg-white/[0.03]">
+          <span className="text-xs text-blue-400 font-bold px-3.5 py-2 rounded border border-black/50 bg-white/[0.03]">
             진행 중
           </span>
           <button
             type="button"
+            onClick={() => setIsCreateOpen(true)}
             className="text-sm font-semibold px-6 py-3 rounded-lg bg-blue-400 text-black"
           >
             + 커뮤니티 만들기
@@ -114,6 +124,16 @@ export default function CommunityFeed({ stockName }: CommunityFeedProps) {
           <CommunityCard key={prediction.id} prediction={prediction} />
         ))}
       </div>
+
+      {/* 커뮤니티 만들기 모달 */}
+      {isCreateOpen && (
+        <CommunityCreateModal
+          stockName={stockName}
+          pointBalance={pointBalance}
+          onClose={() => setIsCreateOpen(false)}
+          onSubmit={handleCreateSubmit}
+        />
+      )}
     </div>
   );
 }
