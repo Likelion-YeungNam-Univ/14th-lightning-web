@@ -82,7 +82,11 @@ export default function App() {
     const nextMarket = markets.find((item) => item.market === market);
     setActiveMarket(market);
     setActiveTab((current) => {
-      if (current === "saved" || nextMarket?.tabs.includes(current)) {
+      if (
+        current === "saved" ||
+        current === "community" ||
+        nextMarket?.tabs.includes(current)
+      ) {
         return current;
       }
       return (nextMarket?.tabs[0] as SourceTab | undefined) ?? "youtube";

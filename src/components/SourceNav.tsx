@@ -6,7 +6,10 @@ export type SourceTab =
   | "regulation"
   | "bok"
   | "fed"
-  | "saved";
+  | "saved"
+  | "community";
+
+type ContentSourceTab = Exclude<SourceTab, "saved" | "community">;
 
 type SourceNavProps = {
   market: string;
@@ -16,12 +19,12 @@ type SourceNavProps = {
   onSelectTab?: (tab: SourceTab) => void;
 };
 
-const fallbackTabs: Record<string, Exclude<SourceTab, "saved">[]> = {
+const fallbackTabs: Record<string, ContentSourceTab[]> = {
   domestic: ["youtube", "disclosure", "regulation", "bok", "fed"],
   overseas: ["youtube", "disclosure", "regulation", "fed"],
 };
 
-const sourceTabIds = new Set<Exclude<SourceTab, "saved">>([
+const sourceTabIds = new Set<ContentSourceTab>([
   "youtube",
   "disclosure",
   "regulation",
@@ -29,11 +32,11 @@ const sourceTabIds = new Set<Exclude<SourceTab, "saved">>([
   "fed",
 ]);
 
-function isSourceTab(value: string): value is Exclude<SourceTab, "saved"> {
-  return sourceTabIds.has(value as Exclude<SourceTab, "saved">);
+function isSourceTab(value: string): value is ContentSourceTab {
+  return sourceTabIds.has(value as ContentSourceTab);
 }
 
-function sourceLabel(tab: Exclude<SourceTab, "saved">, market: string) {
+function sourceLabel(tab: ContentSourceTab, market: string) {
   if (tab === "youtube") return "유튜브";
   if (tab === "disclosure") return market === "overseas" ? "공시(SEC)" : "공시(DART)";
   if (tab === "regulation") return "규제동향";
@@ -91,6 +94,25 @@ export function SourceNav({
       >
         <span aria-hidden="true" className="text-base leading-none">☆</span>
         즐겨찾기
+      </button>
+      <button
+        type="button"
+        disabled={disabled}
+        aria-pressed={activeTab === "community"}
+        className={`${tabClass(activeTab === "community")} inline-flex items-center gap-[7px]`}
+        onClick={() => selectTab("community")}
+      >
+        <svg
+          aria-hidden="true"
+          viewBox="0 0 20 20"
+          className="size-4 shrink-0 text-[#d8ccff]"
+        >
+          <path
+            fill="currentColor"
+            d="M10 2.5c-4.14 0-7.5 2.67-7.5 5.96 0 1.86 1.08 3.52 2.76 4.61l-.7 2.66a.65.65 0 0 0 .94.73l3.05-1.75c.47.08.96.12 1.45.12 4.14 0 7.5-2.67 7.5-5.96S14.14 2.5 10 2.5Z"
+          />
+        </svg>
+        커뮤니티
       </button>
     </nav>
   );
