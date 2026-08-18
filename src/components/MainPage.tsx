@@ -3,6 +3,7 @@ import { StockList } from "./StockList";
 import { EmptyStocks } from "./EmptyStocks";
 import { StatusBanner } from "./StatusBanner";
 import { StockFeedSection } from "./StockFeedSection";
+import { EconKnowledgeStrip } from "./EconKnowledgeStrip";
 import type { SourceTab } from "./SourceNav";
 import { savedItemToCard } from "../utils/card";
 import type { Card, CardListResponse, SavedCardItem, SavedCardListResponse } from "../types/card";
@@ -85,6 +86,7 @@ export function MainPage({
 }: Props) {
   return (
     <main id="main" className="px-6 pt-16">
+      <EconKnowledgeStrip />
       <MarketNav
         markets={markets}
         activeMarket={activeMarket}
