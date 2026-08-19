@@ -37,12 +37,12 @@ jobs:
 
       - name: Upload build files
         run: |
-          scp \
+          scp -v \
             -P "${{ secrets.SERVER_SSH_PORT }}" \
             -i ~/.ssh/id_rsa \
             -r dist/* \
             "${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_HOST }}:/var/www/14th-lightning-web/"
-
+            
       - name: Validate and reload Nginx
         run: |
           ssh \
