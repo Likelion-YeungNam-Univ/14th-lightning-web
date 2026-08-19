@@ -226,9 +226,7 @@ export function CardDetailSheet({
 
         {videoCard && (
           <div
-            className={`relative mt-6 flex items-center justify-center overflow-hidden rounded-xl bg-[#252b34] ${
-              isVideoPlaying ? "aspect-video w-full" : "min-h-52"
-            }`}
+            className="relative mt-6 flex aspect-video w-full items-center justify-center overflow-hidden rounded-xl bg-[#252b34]"
           >
             {isVideoPlaying && embedUrl ? (
               <iframe
