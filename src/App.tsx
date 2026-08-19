@@ -102,8 +102,9 @@ export default function App() {
         authenticated={authenticated}
         sessionLoading={sessionLoading}
         points={points}
-        onLoginClick={() => setLoginOpen(true)}
-      />
+        onLoginClick={() => setLoginOpen(true)} onLogoutClick={function (): void {
+          throw new Error("Function not implemented.");
+        } }      />
       <MainPage
         markets={markets}
         activeMarket={activeMarket}
