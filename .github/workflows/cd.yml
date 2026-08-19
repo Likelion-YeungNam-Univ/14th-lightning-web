@@ -38,6 +38,7 @@ jobs:
           strip_components: 1
           overwrite: true
           timeout: "120s"
+          debug: true
 
       - name: Validate and reload Nginx
         uses: appleboy/ssh-action@v1
