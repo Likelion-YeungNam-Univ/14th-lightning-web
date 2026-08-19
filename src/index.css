@@ -85,42 +85,6 @@ button:disabled {
   cursor: not-allowed;
 }
 
-.community-input {
-  display: block;
-  width: 100%;
-  height: 34px;
-  border: 1px solid #303744;
-  border-radius: 6px;
-  background: #12151b;
-  padding: 0 10px;
-  color: #f2f3f5;
-  font-size: 11px;
-  outline: none;
-}
-
-.community-input::placeholder {
-  color: #7f8998;
-}
-
-.community-input:focus,
-.community-input:focus-within {
-  border-color: #4d9fff;
-}
-
-.community-attachment {
-  border: 1px solid #303744;
-  border-radius: 999px;
-  background: #252a34;
-  padding: 5px 8px;
-  color: #c8ccd4;
-  font-size: 10px;
-}
-
-.community-attachment:hover {
-  border-color: #4d9fff;
-  color: #ffffff;
-}
-
 ::selection {
   background: rgb(77 159 255 / 32%);
   color: #ffffff;

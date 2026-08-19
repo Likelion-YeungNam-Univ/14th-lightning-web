@@ -1,85 +1,257 @@
-import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react";
-import type { CommunityCurrency, CommunityDirection } from "../types/community";
+import { useState } from 'react';
+import type { CommunityDirection } from '../types/community';
 
 export interface CommunityCreateFormData {
   stockName: string;
   title: string;
   expectedPrice: number;
-  deadlineDate: string;
+  deadlineDate: string; // YYYY-MM-DD
   content: string;
   direction: CommunityDirection;
   betAmount: number;
   maxParticipants: number;
-  imageFile: File | null;
-  attachCurrentCard: boolean;
 }
 
-type Props = { stockName: string; currency: CommunityCurrency; defaultPrice: number; pointBalance: number; onClose: () => void; onSubmit: (data: CommunityCreateFormData) => void };
+interface CommunityCreateModalProps {
+  stockName: string;
+  pointBalance: number;
+  onClose: () => void;
+  onSubmit: (data: CommunityCreateFormData) => void;
+}
 
 const MAX_BET_PER_ROUND = 1000;
-const PARTICIPANT_OPTIONS = [2, 3, 4];
-const formatNumber = (value: string) => (value ? Number(value).toLocaleString("ko-KR") : "");
+const MIN_PARTICIPANTS = 2;
+const MAX_PARTICIPANTS = 20;
+const DEFAULT_PARTICIPANTS = 4;
 
-export default function CommunityCreateModal({ stockName, currency, defaultPrice, pointBalance, onClose, onSubmit }: Props) {
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [title, setTitle] = useState("");
-  const [expectedPrice, setExpectedPrice] = useState(String(defaultPrice));
-  const [deadlineDate, setDeadlineDate] = useState("");
-  const [content, setContent] = useState("");
-  const [direction, setDirection] = useState<CommunityDirection>("up");
-  const [betAmount, setBetAmount] = useState("500");
-  const [maxParticipants, setMaxParticipants] = useState(4);
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [attachCurrentCard, setAttachCurrentCard] = useState(false);
-  const [formError, setFormError] = useState("");
-  const numericPrice = Number(expectedPrice) || 0;
-  const numericBet = Number(betAmount) || 0;
-  const unit = currency === "USD" ? "달러" : "원";
-  const today = new Date().toISOString().slice(0, 10);
+export default function CommunityCreateModal({
+  stockName,
+  pointBalance,
+  onClose,
+  onSubmit,
+}: CommunityCreateModalProps) {
+  const [title, setTitle] = useState('');
+  const [expectedPrice, setExpectedPrice] = useState('');
+  const [deadlineDate, setDeadlineDate] = useState('');
+  const [content, setContent] = useState('');
+  const [direction, setDirection] = useState<CommunityDirection>('up');
+  const [betAmount, setBetAmount] = useState(500);
+  const [maxParticipants, setMaxParticipants] = useState(DEFAULT_PARTICIPANTS);
 
-  useEffect(() => {
-    const closeOnEscape = (event: KeyboardEvent) => event.key === "Escape" && onClose();
-    window.addEventListener("keydown", closeOnEscape);
-    return () => window.removeEventListener("keydown", closeOnEscape);
-  }, [onClose]);
+  const canSubmit =
+    title.trim().length > 0 &&
+    expectedPrice.trim().length > 0 &&
+    deadlineDate.trim().length > 0 &&
+    betAmount > 0 &&
+    betAmount <= MAX_BET_PER_ROUND &&
+    betAmount <= pointBalance;
 
-  const updateNumeric = (event: ChangeEvent<HTMLInputElement>, setValue: (value: string) => void) => setValue(event.target.value.replace(/\D/g, ""));
-  const selectImage = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0] ?? null;
-    if (!file) return;
-    if (!file.type.startsWith("image/")) { setFormError("이미지 파일만 첨부할 수 있어요."); event.target.value = ""; return; }
-    setImageFile(file); setFormError("");
-  };
-  const submit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (!title.trim() || !numericPrice || !deadlineDate) { setFormError("방 제목, 예상 가격, 판가름 날짜를 입력해주세요."); return; }
-    if (deadlineDate < today) { setFormError("판가름 날짜는 오늘 이후로 선택해주세요."); return; }
-    if (!numericBet || numericBet > MAX_BET_PER_ROUND) { setFormError(`참여 포인트는 1P 이상 ${MAX_BET_PER_ROUND.toLocaleString()}P 이하로 입력해주세요.`); return; }
-    if (numericBet > pointBalance) { setFormError("보유 포인트보다 큰 금액은 참여할 수 없어요."); return; }
-    onSubmit({ stockName, title: title.trim(), expectedPrice: numericPrice, deadlineDate, content: content.trim(), direction, betAmount: numericBet, maxParticipants, imageFile, attachCurrentCard });
-  };
+  function handleParticipantsChange(delta: number) {
+    setMaxParticipants((prev) =>
+      Math.min(MAX_PARTICIPANTS, Math.max(MIN_PARTICIPANTS, prev + delta)),
+    );
+  }
 
-  return <div className="fixed inset-0 z-60 grid place-items-center overflow-y-auto bg-black/70 p-4 backdrop-blur-sm" onMouseDown={onClose}>
-    <section role="dialog" aria-modal="true" aria-labelledby="community-create-title" onMouseDown={(event) => event.stopPropagation()} className="w-full max-w-97.5 rounded-xl border border-[#303744] bg-[#1c2029] p-4.5 shadow-2xl">
-      <div className="mb-6 flex items-center justify-between"><h2 id="community-create-title" className="text-sm font-bold text-[#f2f3f5]">{stockName} 커뮤니티 만들기</h2><button type="button" aria-label="닫기" onClick={onClose} className="text-lg leading-none text-[#9aa3b2] hover:text-white">×</button></div>
-      <form onSubmit={submit} className="space-y-4.5">
-        <div><FieldLabel label="종목" /><div className="flex h-8.5 items-center justify-between rounded-md bg-[#15181e] px-2.5 text-[10px]"><strong className="text-[#e7eaf0]">{stockName}</strong><span className="text-[#8b94a3]">상단에서 선택한 종목이에요</span></div></div>
-        <div><FieldLabel label="방 제목" /><input autoFocus value={title} maxLength={60} onChange={(event) => setTitle(event.target.value)} placeholder={`예) 9월 말까지 ${formatNumber(expectedPrice || "0")}${unit} 간다`} className="community-input" /></div>
-        <div className="grid grid-cols-2 gap-3"><div><FieldLabel label="기준 가격" /><label className="community-input flex items-center gap-0.5"><input value={formatNumber(expectedPrice)} inputMode="numeric" onChange={(event) => updateNumeric(event, setExpectedPrice)} aria-label="기준 가격" className="min-w-0 flex-1 bg-transparent outline-none" /><span className="text-[11px] text-[#8b94a3]">{unit}</span></label></div><div><FieldLabel label="결과일" /><input type="date" value={deadlineDate} min={today} onChange={(event) => setDeadlineDate(event.target.value)} className="community-input [color-scheme:dark]" /></div></div>
-        <div><FieldLabel label="방을 만든 이유" /><textarea value={content} maxLength={500} onChange={(event) => setContent(event.target.value)} placeholder="왜 그렇게 보는지 적어주세요. 사진과 링크를 함께 올릴 수 있어요." className="community-input h-18 resize-none py-2.5 leading-5" /><div className="mt-2 flex flex-wrap items-center gap-2"><input ref={fileInputRef} type="file" accept="image/*" onChange={selectImage} className="hidden" /><button type="button" onClick={() => fileInputRef.current?.click()} className="community-attachment">▣ 사진 첨부</button><button type="button" onClick={() => setAttachCurrentCard((current) => !current)} aria-pressed={attachCurrentCard} className={`community-attachment ${attachCurrentCard ? "border-[#4d9fff] text-[#8cc4ff]" : ""}`}>⌁ 자료 카드 첨부</button>{imageFile && <span className="max-w-35 truncate text-[10px] text-[#9aa3b2]">{imageFile.name}</span>}{attachCurrentCard && <span className="text-[10px] text-[#8cc4ff]">현재 자료 카드 첨부됨</span>}</div></div>
-        <div className="grid grid-cols-[1fr_82px] gap-3"><div><FieldLabel label="내 의견" /><div className="flex h-8.5 rounded-md border border-[#303744] bg-[#171a21] p-0.5"><DirectionButton active={direction === "up"} tone="up" onClick={() => setDirection("up")}>간다</DirectionButton><DirectionButton active={direction === "down"} tone="down" onClick={() => setDirection("down")}>안 간다</DirectionButton></div></div><div><FieldLabel label="참여 포인트" /><label className="community-input flex items-center gap-0.5 px-2.5"><input value={formatNumber(betAmount)} inputMode="numeric" onChange={(event) => updateNumeric(event, setBetAmount)} aria-label="참여 포인트" className="min-w-0 flex-1 bg-transparent outline-none" /><span className="text-[10px] text-[#8b94a3]">P</span></label></div></div>
-        <p className="-mt-2 text-[10px] text-[#7f8998]">최대 1,000P · 현재 보유 포인트 {pointBalance.toLocaleString()}P</p>
-        <div><FieldLabel label="참여 인원" /><p className="-mt-1.5 mb-2 text-[10px] text-[#8b94a3]">방장은 포함해 2~4명으로 정할 수 있어요.</p><div className="grid grid-cols-3 gap-1.5">{PARTICIPANT_OPTIONS.map((count) => <button key={count} type="button" onClick={() => setMaxParticipants(count)} className={`rounded-md border px-2 py-2 text-left transition ${maxParticipants === count ? "border-[#4d9fff] bg-[#18365c] text-white" : "border-[#3a4250] bg-[#1a1e27] text-[#c8ccd4] hover:border-[#5d6675]"}`}><strong className="block text-sm">{count}명</strong><span className="block text-[9px] text-[#9aa3b2]">{count === 2 ? "둘이서 바로 나누기" : count === 3 ? "친구와 셋이 모이기" : "여러 의견 함께 보기"}</span></button>)}</div></div>
-        <p className="border-t border-[#303744] pt-3 text-[10px] leading-4 text-[#9aa3b2]">참여 포인트를 정하고 내 의견을 고르면 방장이 받은 쪽은 먼저 나뉘어 보여요. 참여자는 같은 금액을 내요.</p>
-        {formError && <p role="alert" className="text-xs text-[#ff8d72]">{formError}</p>}
-        <button type="submit" className="h-8.5 w-full rounded-md bg-[#4d9fff] text-[11px] font-bold text-[#0f1115] transition hover:bg-[#71b0ff]">커뮤니티 만들고 {formatNumber(betAmount || "0")}P 내기</button>
-      </form>
-    </section>
-  </div>;
-}
+  function handleSubmit() {
+    if (!canSubmit) return;
+    onSubmit({
+      stockName,
+      title: title.trim(),
+      expectedPrice: Number(expectedPrice),
+      deadlineDate,
+      content: content.trim(),
+      direction,
+      betAmount,
+      maxParticipants,
+    });
+  }
 
-function FieldLabel({ label }: { label: string }) { return <label className="mb-1.5 block text-[10px] font-medium text-[#aeb7c5]">{label}</label>; }
-function DirectionButton({ active, tone, onClick, children }: { active: boolean; tone: CommunityDirection; onClick: () => void; children: string }) {
-  const activeClass = tone === "up" ? "border-[#42d994] bg-[#123422] text-[#4cde9a]" : "border-[#ff9a43] bg-[#412a16] text-[#ffad5d]";
-  return <button type="button" onClick={onClick} className={`flex-1 rounded px-2 text-[11px] font-bold ${active ? `border ${activeClass}` : "text-[#8b94a3]"}`}>{children}</button>;
+  return (
+    <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 px-4 py-10 overflow-y-auto">
+      <div className="w-full max-w-md rounded-2xl bg-[#171a21] border border-white/[0.06] p-6">
+        {/* 헤더 */}
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-white text-lg font-bold">
+            {stockName} 커뮤니티 만들기
+          </h2>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="닫기"
+            className="text-white/40 hover:text-white/70 text-lg leading-none"
+          >
+            ✕
+          </button>
+        </div>
+
+        <div className="space-y-5">
+          {/* 종목 (읽기 전용) */}
+          <div>
+            <label className="block text-xs text-white/40 mb-1.5">종목</label>
+            <div className="flex items-center justify-between rounded-lg bg-[#131417] border border-white/[0.06] px-3.5 py-3">
+              <span className="text-white font-semibold text-sm">{stockName}</span>
+              <span className="text-xs text-white/30">상단에서 선택한 종목이에요</span>
+            </div>
+          </div>
+
+          {/* 방 제목 */}
+          <div>
+            <label className="block text-xs text-white/40 mb-1.5">방 제목</label>
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="예) 9월 말까지 8만원 간다"
+              className="w-full rounded-lg bg-[#131417] border border-white/[0.06] px-3.5 py-3 text-sm text-white placeholder:text-white/30 outline-none focus:border-sky-500/50"
+            />
+          </div>
+
+          {/* 생성자 예상 가격 + 판가름 날짜 */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs text-white/40 mb-1.5">
+                생성자 예상 가격
+              </label>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={expectedPrice}
+                onChange={(e) => setExpectedPrice(e.target.value.replace(/[^0-9]/g, ''))}
+                placeholder="80,000원"
+                className="w-full rounded-lg bg-[#131417] border border-white/[0.06] px-3.5 py-3 text-sm text-white placeholder:text-white/30 outline-none focus:border-sky-500/50"
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-white/40 mb-1.5">판가름 날짜</label>
+              <input
+                type="date"
+                value={deadlineDate}
+                onChange={(e) => setDeadlineDate(e.target.value)}
+                className="w-full rounded-lg bg-[#131417] border border-white/[0.06] px-3.5 py-3 text-sm text-white outline-none focus:border-sky-500/50 [color-scheme:dark]"
+              />
+            </div>
+          </div>
+
+          {/* 게시글 작성 */}
+          <div>
+            <label className="block text-xs text-white/40 mb-1.5">게시글 작성</label>
+            <textarea
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              rows={3}
+              placeholder="왜 그렇게 보는지 적어주세요. 사진과 링크를 함께 올릴 수 있어요."
+              className="w-full resize-none rounded-lg bg-[#131417] border border-white/[0.06] px-3.5 py-3 text-sm text-white placeholder:text-white/30 outline-none focus:border-sky-500/50"
+            />
+            <div className="flex gap-2 mt-2">
+              <button
+                type="button"
+                className="text-xs text-white/50 border border-white/10 rounded-md px-2.5 py-1.5 hover:text-white/80"
+              >
+                📎 사진 첨부
+              </button>
+              <button
+                type="button"
+                className="text-xs text-white/50 border border-white/10 rounded-md px-2.5 py-1.5 hover:text-white/80"
+              >
+                🔗 자료 카드 첨부
+              </button>
+            </div>
+          </div>
+
+          {/* 생성자 예상 방향 */}
+          <div>
+            <label className="block text-xs text-white/40 mb-4">
+              생성자 예상 방향
+            </label>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setDirection('up')}
+                className={`px-5 py-1 rounded-full text-sm font-semibold transition-colors ${
+                  direction === 'up'
+                    ? ' text-emerald-300 border'
+                    : 'bg-[#131417] text-white/50 border border-white/[0.06]'
+                }`}
+              >
+                간다
+              </button>
+              <button
+                type="button"
+                onClick={() => setDirection('down')}
+                className={`px-5 py-1 rounded-full text-sm font-semibold transition-colors ${
+                  direction === 'down'
+                    ? ' text-orange-300 border'
+                    : 'bg-[#131417] text-white/50 border border-white/[0.06]'
+                }`}
+              >
+                안 간다
+              </button>
+            </div>
+          </div>
+
+          {/* 참여 인원 (신규) */}
+          <div>
+            <label className="block text-xs text-white/40 mb-1.5">참여 인원</label>
+            <div className="flex items-center justify-between rounded-lg bg-[#131417] border border-white/[0.06] px-3.5 py-2.5">
+              <span className="text-sm text-white/50">
+                최소 {MIN_PARTICIPANTS}명 ~ 최대 {MAX_PARTICIPANTS}명
+              </span>
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => handleParticipantsChange(-1)}
+                  disabled={maxParticipants <= MIN_PARTICIPANTS}
+                  className="size-7 rounded-full bg-white/[0.06] text-white disabled:opacity-30 disabled:cursor-default hover:bg-white/[0.1]"
+                >
+                  −
+                </button>
+                <span className="text-white font-semibold text-sm w-6 text-center">
+                  {maxParticipants}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => handleParticipantsChange(1)}
+                  disabled={maxParticipants >= MAX_PARTICIPANTS}
+                  className="size-7 rounded-full bg-white/[0.06] text-white disabled:opacity-30 disabled:cursor-default hover:bg-white/[0.1]"
+                >
+                  +
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* 참여 금액 */}
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="text-xs text-white/40">참여 금액</label>
+              <span className="text-xs text-white/30">
+                1회 최대 {MAX_BET_PER_ROUND.toLocaleString()}P · 내 포인트{' '}
+                {pointBalance.toLocaleString()}P
+              </span>
+            </div>
+            <input
+              type="text"
+              inputMode="numeric"
+              value={betAmount}
+              onChange={(e) => {
+                const value = Number(e.target.value.replace(/[^0-9]/g, '')) || 0;
+                setBetAmount(Math.min(value, MAX_BET_PER_ROUND));
+              }}
+              className="w-full rounded-lg bg-[#131417] border border-white/[0.06] px-3.5 py-3 text-sm text-white outline-none focus:border-sky-500/50"
+            />
+          </div>
+
+          {/* 제출 */}
+          <button
+            type="button"
+            disabled={!canSubmit}
+            onClick={handleSubmit}
+            className="w-full rounded-full bg-[#2161c9] text-white font-semibold text-sm py-3.5 hover:bg-[#2563eb] transition-colors disabled:opacity-40 disabled:cursor-default"
+          >
+            커뮤니티 만들고 {betAmount.toLocaleString()}P 참여하기
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }
