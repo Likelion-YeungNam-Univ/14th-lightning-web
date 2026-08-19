@@ -44,7 +44,7 @@ type Props = {
   cardsLoading: boolean;
   cardsError: string;
   canLoadCards: boolean;
-  onToggleSave: (card: Card) => void;
+  onToggleSave: (card: Card, tab: string) => void;
   onOpenDetail: (card: Card, tab: string) => void;
 
   sessionError: string;
@@ -144,7 +144,7 @@ export function MainPage({
           linkSentence={
             canLoadCards ? (cardResponse?.link_sentence ?? null) : null
           }
-          onToggleSave={onToggleSave}
+          onToggleSave={(card) => onToggleSave(card, activeTab)}
           onOpenCard={(card) => onOpenDetail(card, activeTab)}
         />
       )}

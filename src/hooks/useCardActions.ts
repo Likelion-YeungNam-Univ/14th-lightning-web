@@ -8,6 +8,7 @@ import type {
   SavedCardItem,
   SavedCardListResponse,
 } from "../types/card";
+import { canSaveCardFromTab } from "../utils/savedCards";
 
 type UseCardActionsParams = {
   activeStockCode: string;
@@ -29,6 +30,7 @@ export function useCardActions({
   const [pendingSave, setPendingSave] = useState<{
     card: Card;
     stockCode: string;
+    tab: string;
   } | null>(null);
 
   // 일반 카드 목록과 열린 상세 카드의 저장 상태를 함께 갱신한다.
@@ -49,7 +51,8 @@ export function useCardActions({
   };
 
   // 카드를 저장하고 401 응답이면 요청 정보를 보관한 뒤 로그인을 요청한다.
-  const saveCard = async (card: Card, stockCode: string) => {
+  const saveCard = async (card: Card, stockCode: string, tab: string) => {
+    if (!canSaveCardFromTab(tab)) return;
     setSaveError("");
     try {
       const response = await postApi<SavedCardAddResponse>("/me/saved-cards", {
@@ -66,7 +69,7 @@ export function useCardActions({
       setPendingSave(null);
     } catch (error) {
       if (error instanceof ApiError && error.status === 401) {
-        setPendingSave({ card, stockCode });
+        setPendingSave({ card, stockCode, tab });
         onRequireLogin();
         return;
       }
@@ -77,11 +80,11 @@ export function useCardActions({
   };
 
   // 카드의 현재 저장 상태에 따라 저장 또는 저장 해제를 실행한다.
-  const toggleCardSave = async (card: Card) => {
+  const toggleCardSave = async (card: Card, tab: string) => {
     if (!activeStockCode) return;
     setSaveError("");
     if (!card.is_saved) {
-      await saveCard(card, activeStockCode);
+      await saveCard(card, activeStockCode, tab);
       return;
     }
     try {

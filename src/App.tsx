@@ -130,7 +130,7 @@ export default function App() {
         cardsLoading={cardsLoading}
         cardsError={cardsError}
         canLoadCards={canLoadCards}
-        onToggleSave={(card) => void toggleCardSave(card)}
+        onToggleSave={(card, tab) => void toggleCardSave(card, tab)}
         onOpenDetail={openDetail}
         sessionError={sessionError}
       />
@@ -142,7 +142,11 @@ export default function App() {
           setAuthenticated(true);
           setLoginOpen(false);
           if (pendingSave) {
-            void saveCard(pendingSave.card, pendingSave.stockCode);
+            void saveCard(
+              pendingSave.card,
+              pendingSave.stockCode,
+              pendingSave.tab,
+            );
           }
           if (pendingStockChanges) {
             void retryPendingStockAdd(pendingStockChanges);
@@ -157,7 +161,7 @@ export default function App() {
         detailCard={detailCard}
         detailTab={detailTab}
         onDetailClose={closeDetail}
-        onToggleSave={(card) => void toggleCardSave(card)}
+        onToggleSave={(card, tab) => void toggleCardSave(card, tab)}
       />
     </div>
   );

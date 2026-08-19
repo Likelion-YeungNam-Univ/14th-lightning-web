@@ -17,7 +17,7 @@ type Props = {
   detailCard: Card | null;
   detailTab: string;
   onDetailClose: () => void;
-  onToggleSave: (card: Card) => void;
+  onToggleSave: (card: Card, tab: string) => void;
 };
 
 /** 로그인, 종목 추가, 카드 상세 모달을 열림 상태에 따라 조건부로 렌더링한다. */
@@ -55,7 +55,7 @@ export function AppModals({
           card={detailCard}
           tab={detailTab}
           onClose={onDetailClose}
-          onToggleSave={onToggleSave}
+          onToggleSave={(card) => onToggleSave(card, detailTab)}
         />
       )}
     </>

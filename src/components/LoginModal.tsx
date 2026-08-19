@@ -59,12 +59,9 @@ export function LoginModal({ onClose, onLoginSuccess }: LoginModalProps) {
           ×
         </button>
         <Logo />
-        <h2 id="login-title" className="mb-2 mt-7 text-2xl font-bold">
+        <h2 id="login-title" className="mb-6 mt-7 text-2xl font-bold">
           로그인
         </h2>
-        <p className="mb-6 text-sm text-[#9aa3b2]">
-          저장한 카드를 다음에도 보려면 로그인이 필요해요.
-        </p>
         <form onSubmit={submitLogin}>
           <label
             htmlFor="login-id"
