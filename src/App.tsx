@@ -106,6 +106,7 @@ export default function App() {
           throw new Error("Function not implemented.");
         } }      />
       <MainPage
+        authenticated={authenticated}
         markets={markets}
         activeMarket={activeMarket}
         marketsLoading={marketsLoading}
