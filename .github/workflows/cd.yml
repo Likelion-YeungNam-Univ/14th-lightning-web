@@ -2,8 +2,7 @@ name: Continuous Deployment
 
 on:
   push:
-    branches: ["main"]
-
+    branches: ["main","develop"] # main 및 develop 브랜치에 push 시 실행
 permissions:
   contents: read
 
