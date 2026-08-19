@@ -95,8 +95,9 @@ function generatePredictions(stockName: string): CommunityPrediction[] {
 interface CommunityFeedProps {
   stockName: string;
   stockCode: string;
+  market: string; 
   pointBalance?: number; // 실제 포인트 API 연결 전까지는 기본값 사용
-  authenticated: boolean;
+  authenticated?: boolean; 
 }
 
 export default function CommunityFeed({
@@ -123,7 +124,7 @@ export default function CommunityFeed({
         if (!cancelled) setChartSymbol(symbol);
       })
       .catch(() => {
-        console.error('심볼 조회 실패:', error);
+        console.error('심볼 조회 실패:', Error);
         if (!cancelled) setChartSymbol(null);
       });
     return () => {
