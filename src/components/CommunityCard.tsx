@@ -2,6 +2,7 @@ import type { CommunityPrediction } from '../types/community';
 
 interface CommunityCardProps {
   prediction: CommunityPrediction;
+  onClick: (id: string) => void;
 }
 
 function formatPrice(price: number, currency: 'KRW' | 'USD') {
@@ -10,11 +11,15 @@ function formatPrice(price: number, currency: 'KRW' | 'USD') {
     : `${price.toLocaleString()}원`;
 }
 
-export default function CommunityCard({ prediction }: CommunityCardProps) {
+export default function CommunityCard({ prediction, onClick }: CommunityCardProps) {
   const isUp = prediction.direction === 'up';
 
   return (
-    <div className="bg-[#1c2029] rounded-2xl p-5 border border-white/[0.06] w-full">
+    <button
+      type="button"
+      onClick={() => onClick(prediction.id)}
+      className="text-left bg-[#1c2029] rounded-2xl p-5 border border-white/[0.06] w-full hover:border-white/[0.15] transition-colors"
+    >
       {/* 상단: 뱃지 + 판가름 날짜 */}
       <div className="flex items-center gap-2 mb-3.5">
         <span
@@ -56,6 +61,6 @@ export default function CommunityCard({ prediction }: CommunityCardProps) {
           style={{ width: `${Math.round(prediction.upRatio * 100)}%` }}
         />
       </div>
-    </div>
+    </button>
   );
 }

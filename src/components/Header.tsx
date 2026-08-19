@@ -1,12 +1,23 @@
 import { useEffect, useRef, useState } from "react";
 import { Logo } from "./Logo";
-import type { PointBalanceResponse } from "../types/points";
+import PointChargeModal from "./PointChargeModal";
+import GiftRedeemModal from "./GiftRedeemModal";
+import PointHistoryModal from "./PointHistoryModal";
+import type { PointBalanceResponse, PointHistoryEntry } from "../types/points";
+
+// 실제 내역 API 연결 전까지 쓰는 임시 목업
+const MOCK_HISTORY_ENTRIES: PointHistoryEntry[] = [
+  { id: "1", label: "삼성전자 · 베팅 정산 획득", amount: 1000, date_label: "08.10" },
+  { id: "2", label: "삼성전자 · 간다 베팅", amount: -500, date_label: "08.05" },
+  { id: "3", label: "피자 기프티콘 교환", amount: -18000, date_label: "지난달" },
+];
 
 type HeaderProps = {
   authenticated: boolean;
   sessionLoading: boolean;
   points: PointBalanceResponse | null;
   onLoginClick: () => void;
+  onLogoutClick: () => void; // 추가
 };
 
 export function Header({
@@ -14,8 +25,12 @@ export function Header({
   sessionLoading,
   points,
   onLoginClick,
+  onLogoutClick, // 추가
 }: HeaderProps) {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [isChargeOpen, setIsChargeOpen] = useState(false);
+  const [isRedeemOpen, setIsRedeemOpen] = useState(false);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const balance = points?.balance ?? 0;
   const held = points?.pizza_progress.held ?? balance;
@@ -40,6 +55,35 @@ export function Header({
       window.removeEventListener("keydown", closeOnEscape);
     };
   }, [userMenuOpen]);
+
+  // 메뉴 항목 클릭 시 동작 분기
+  function handleMenuItemClick(item: string) {
+    setUserMenuOpen(false);
+    if (item === "포인트 충전") {
+      setIsChargeOpen(true);
+    }
+    if (item === "기프티콘 교환") {
+      setIsRedeemOpen(true);
+    }
+    if (item === "내 참여 내역") {
+      setIsHistoryOpen(true);
+    }
+    if (item === "로그아웃") {
+      onLogoutClick(); // 추가
+    }
+  }
+
+  // 충전 확정 처리 (실제 API 연결 전까지 임시)
+  function handleChargeConfirm(amount: number) {
+    console.log("충전 금액:", amount); // TODO: 실제 결제/충전 API 연결 지점
+    setIsChargeOpen(false);
+  }
+
+  // 기프티콘 교환 확정 처리 (실제 API 연결 전까지 임시)
+  function handleRedeemConfirm() {
+    console.log("피자 기프티콘 교환"); // TODO: 실제 교환 API 연결 지점
+    setIsRedeemOpen(false);
+  }
 
   return (
     <header className="fixed inset-x-0 top-0 z-50 flex h-16 items-center justify-between bg-[#12151b] px-6 shadow-[0_1px_0_#20242c]">
@@ -95,7 +139,7 @@ export function Header({
                       key={item}
                       type="button"
                       role="menuitem"
-                      onClick={() => setUserMenuOpen(false)}
+                      onClick={() => handleMenuItemClick(item)}
                       className="flex h-[52px] w-full items-center rounded-[9px] border-0 bg-transparent px-4 text-left text-[16px] font-medium text-[#c5cad3] transition hover:bg-[#2a2f3a] hover:text-white focus-visible:bg-[#2a2f3a] focus-visible:text-white"
                     >
                       {item}
@@ -114,6 +158,32 @@ export function Header({
         >
           {sessionLoading ? "연결 중" : "로그인"}
         </button>
+      )}
+
+      {/* 포인트 충전 모달 */}
+      {isChargeOpen && (
+        <PointChargeModal
+          pointBalance={balance}
+          onClose={() => setIsChargeOpen(false)}
+          onConfirm={handleChargeConfirm}
+        />
+      )}
+
+      {/* 기프티콘 교환 모달 */}
+      {isRedeemOpen && (
+        <GiftRedeemModal
+          pointBalance={balance}
+          onClose={() => setIsRedeemOpen(false)}
+          onConfirm={handleRedeemConfirm}
+        />
+      )}
+
+      {/* 내 참여 내역 모달 */}
+      {isHistoryOpen && (
+        <PointHistoryModal
+          entries={MOCK_HISTORY_ENTRIES}
+          onClose={() => setIsHistoryOpen(false)}
+        />
       )}
     </header>
   );
