@@ -303,7 +303,7 @@ export function CardDetailSheet({
 
         {!videoCard && (
           <p className="mb-0 mt-6 text-xs text-[#9aa3b2]">
-            모르는 단어를 드래그하면 뜻을 알려드려요.
+            모르는 용어를 드래그하면 쉽게 설명해드려요.
           </p>
         )}
 
