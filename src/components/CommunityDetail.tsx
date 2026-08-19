@@ -91,7 +91,7 @@ export default function CommunityDetail({
       </button>
 
       {/* 상단 헤더 */}
-      <div className="rounded-2xl bg-[#1c2029] border border-white/[0.06] p-6 mb-4">
+      <div className="rounded-2xl bg-[#1c2029] border border-white/6 p-6 mb-4">
         <div className="flex items-center justify-between mb-4">
           <span className="text-xs font-semibold px-3 py-1 rounded-md bg-[#1e3a2f] text-[#4ade80]">
             진행 중
@@ -113,7 +113,7 @@ export default function CommunityDetail({
 
       {/* 본문: 생성자 글 + 참여 패널 */}
       <div className="grid grid-cols-[1fr_320px] gap-4 mb-4 max-[900px]:grid-cols-1">
-        <div className="rounded-2xl bg-[#1c2029] border border-white/[0.06] p-6">
+        <div className="rounded-2xl bg-[#1c2029] border border-white/6 p-6">
           <span className="text-xs text-white/40 font-medium">생성자 글</span>
           <p className="text-sm text-white/80 leading-6 mt-3 mb-4">
             {prediction.post ||
@@ -121,7 +121,7 @@ export default function CommunityDetail({
           </p>
 
           <div className="grid grid-cols-[1fr_1.3fr] gap-3">
-            <div className="rounded-xl bg-[#171a21] border border-white/[0.06] h-32 flex items-center justify-center">
+            <div className="rounded-xl bg-[#171a21] border border-white/6 h-32 flex items-center justify-center">
               <span className="text-xs text-white/25">첨부 이미지 — 차트 캡처</span>
             </div>
             <div className="rounded-xl bg-[#12213a] border border-[#2c4f7c] p-4">
@@ -136,7 +136,7 @@ export default function CommunityDetail({
           </div>
         </div>
 
-        <div className="rounded-2xl bg-[#1c2029] border border-white/[0.06] p-5">
+        <div className="rounded-2xl bg-[#1c2029] border border-white/6 p-5">
           <span className="text-xs text-white/40 font-medium">참여하기</span>
           <p className="text-3xl font-bold text-white mt-1">
             {prediction.totalPoints.toLocaleString()}P
@@ -152,7 +152,7 @@ export default function CommunityDetail({
             inputMode="numeric"
             value={betAmount}
             onChange={(e) => setBetAmount(Number(e.target.value.replace(/[^0-9]/g, '')) || 0)}
-            className="w-full rounded-lg bg-[#171a21] border border-white/[0.06] px-3.5 py-2.5 text-sm text-white outline-none focus:border-sky-500/50"
+            className="w-full rounded-lg bg-[#171a21] border border-white/6 px-3.5 py-2.5 text-sm text-white outline-none focus:border-sky-500/50"
           />
           <p className="text-xs text-white/30 mt-1.5 mb-4">
             1회 최대 1,000P · 내 포인트 {pointBalance.toLocaleString()}P
@@ -184,7 +184,7 @@ export default function CommunityDetail({
       </div>
 
       {/* 댓글 */}
-      <div className="rounded-2xl bg-[#1c2029] border border-white/[0.06] p-6">
+      <div className="rounded-2xl bg-[#1c2029] border border-white/6 p-6">
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-white font-bold text-base">댓글 {comments.length}</h2>
           <span className="text-xs text-white/30">공개 자료에 대한 근거를 남겨보세요.</span>
@@ -254,7 +254,7 @@ export default function CommunityDetail({
                     value={replyDraft}
                     onChange={(e) => setReplyDraft(e.target.value)}
                     placeholder="대댓글을 남겨보세요."
-                    className="flex-1 rounded-lg bg-[#171a21] border border-white/[0.06] px-3 py-2 text-sm text-white placeholder:text-white/30 outline-none focus:border-sky-500/50"
+                    className="flex-1 rounded-lg bg-[#171a21] border border-white/6 px-3 py-2 text-sm text-white placeholder:text-white/30 outline-none focus:border-sky-500/50"
                   />
                   <button
                     type="button"
@@ -276,7 +276,7 @@ export default function CommunityDetail({
           rows={2}
           disabled={!authenticated}
           placeholder={authenticated ? '자료를 보고 든 생각을 남겨보세요.' : '로그인하면 댓글을 남길 수 있어요.'}
-          className="w-full resize-none rounded-lg bg-[#171a21] border border-white/[0.06] px-3.5 py-3 text-sm text-white placeholder:text-white/30 outline-none focus:border-sky-500/50 disabled:opacity-60"
+          className="w-full resize-none rounded-lg bg-[#171a21] border border-white/6 px-3.5 py-3 text-sm text-white placeholder:text-white/30 outline-none focus:border-sky-500/50 disabled:opacity-60"
         />
         <div className="flex items-center justify-between mt-2.5">
           <div className="flex items-center gap-2">
@@ -293,7 +293,7 @@ export default function CommunityDetail({
               className={`text-xs px-3 py-1.5 rounded-full font-semibold ${
                 commentSide === 'up'
                   ? 'bg-[#1e3a2f] text-[#4ade80] border border-[#2f6b45]'
-                  : 'bg-white/[0.04] text-white/40'
+                  : 'bg-white/4 text-white/40'
               }`}
             >
               간다
@@ -304,7 +304,7 @@ export default function CommunityDetail({
               className={`text-xs px-3 py-1.5 rounded-full font-semibold ${
                 commentSide === 'down'
                   ? 'bg-[#4a2e17] text-[#fb923c] border border-[#7a5330]'
-                  : 'bg-white/[0.04] text-white/40'
+                  : 'bg-white/4 text-white/40'
               }`}
             >
               안 간다
@@ -367,7 +367,7 @@ function SideBox({
       <p className="text-xs text-white/40 mb-2">
         {people}명 · {pool.toLocaleString()}P
       </p>
-      <div className="h-1.5 w-full rounded-full bg-white/[0.08] overflow-hidden">
+      <div className="h-1.5 w-full rounded-full bg-white/8 overflow-hidden">
         <div
           className={`h-full rounded-full ${isUp ? 'bg-[#4ade80]' : 'bg-[#fb923c]'}`}
           style={{ width: `${ratio}%` }}

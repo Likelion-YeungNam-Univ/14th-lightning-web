@@ -66,7 +66,7 @@ function TradingViewChartInner({ symbol, height = 420 }: TradingViewChartProps) 
 
   return (
     <div
-      className="rounded-2xl overflow-hidden border border-white/[0.06] bg-[#131722]"
+      className="rounded-2xl overflow-hidden border border-white/6 bg-[#131722]"
       style={{ height }}
     >
       <div id={containerId} ref={containerRef} className="h-full w-full" />

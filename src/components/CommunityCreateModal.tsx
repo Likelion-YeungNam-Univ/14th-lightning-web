@@ -68,7 +68,7 @@ export default function CommunityCreateModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 px-4 py-10 overflow-y-auto">
-      <div className="w-full max-w-md rounded-2xl bg-[#171a21] border border-white/[0.06] p-6">
+      <div className="w-full max-w-md rounded-2xl bg-[#171a21] border border-white/6 p-6">
         {/* 헤더 */}
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-white text-lg font-bold">
@@ -88,7 +88,7 @@ export default function CommunityCreateModal({
           {/* 종목 (읽기 전용) */}
           <div>
             <label className="block text-xs text-white/40 mb-1.5">종목</label>
-            <div className="flex items-center justify-between rounded-lg bg-[#131417] border border-white/[0.06] px-3.5 py-3">
+            <div className="flex items-center justify-between rounded-lg bg-[#131417] border border-white/6 px-3.5 py-3">
               <span className="text-white font-semibold text-sm">{stockName}</span>
               <span className="text-xs text-white/30">상단에서 선택한 종목이에요</span>
             </div>
@@ -102,7 +102,7 @@ export default function CommunityCreateModal({
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="예) 9월 말까지 8만원 간다"
-              className="w-full rounded-lg bg-[#131417] border border-white/[0.06] px-3.5 py-3 text-sm text-white placeholder:text-white/30 outline-none focus:border-sky-500/50"
+              className="w-full rounded-lg bg-[#131417] border border-white/6 px-3.5 py-3 text-sm text-white placeholder:text-white/30 outline-none focus:border-sky-500/50"
             />
           </div>
 
@@ -118,7 +118,7 @@ export default function CommunityCreateModal({
                 value={expectedPrice}
                 onChange={(e) => setExpectedPrice(e.target.value.replace(/[^0-9]/g, ''))}
                 placeholder="80,000원"
-                className="w-full rounded-lg bg-[#131417] border border-white/[0.06] px-3.5 py-3 text-sm text-white placeholder:text-white/30 outline-none focus:border-sky-500/50"
+                className="w-full rounded-lg bg-[#131417] border border-white/6 px-3.5 py-3 text-sm text-white placeholder:text-white/30 outline-none focus:border-sky-500/50"
               />
             </div>
             <div>
@@ -127,7 +127,7 @@ export default function CommunityCreateModal({
                 type="date"
                 value={deadlineDate}
                 onChange={(e) => setDeadlineDate(e.target.value)}
-                className="w-full rounded-lg bg-[#131417] border border-white/[0.06] px-3.5 py-3 text-sm text-white outline-none focus:border-sky-500/50 [color-scheme:dark]"
+                className="w-full rounded-lg bg-[#131417] border border-white/6 px-3.5 py-3 text-sm text-white outline-none focus:border-sky-500/50 scheme-dark"
               />
             </div>
           </div>
@@ -140,7 +140,7 @@ export default function CommunityCreateModal({
               onChange={(e) => setContent(e.target.value)}
               rows={3}
               placeholder="왜 그렇게 보는지 적어주세요. 사진과 링크를 함께 올릴 수 있어요."
-              className="w-full resize-none rounded-lg bg-[#131417] border border-white/[0.06] px-3.5 py-3 text-sm text-white placeholder:text-white/30 outline-none focus:border-sky-500/50"
+              className="w-full resize-none rounded-lg bg-[#131417] border border-white/6 px-3.5 py-3 text-sm text-white placeholder:text-white/30 outline-none focus:border-sky-500/50"
             />
             <div className="flex gap-2 mt-2">
               <button
@@ -170,7 +170,7 @@ export default function CommunityCreateModal({
                 className={`px-5 py-1 rounded-full text-sm font-semibold transition-colors ${
                   direction === 'up'
                     ? ' text-emerald-300 border'
-                    : 'bg-[#131417] text-white/50 border border-white/[0.06]'
+                    : 'bg-[#131417] text-white/50 border border-white/6'
                 }`}
               >
                 간다
@@ -181,7 +181,7 @@ export default function CommunityCreateModal({
                 className={`px-5 py-1 rounded-full text-sm font-semibold transition-colors ${
                   direction === 'down'
                     ? ' text-orange-300 border'
-                    : 'bg-[#131417] text-white/50 border border-white/[0.06]'
+                    : 'bg-[#131417] text-white/50 border border-white/6'
                 }`}
               >
                 안 간다
@@ -192,7 +192,7 @@ export default function CommunityCreateModal({
           {/* 참여 인원 (신규) */}
           <div>
             <label className="block text-xs text-white/40 mb-1.5">참여 인원</label>
-            <div className="flex items-center justify-between rounded-lg bg-[#131417] border border-white/[0.06] px-3.5 py-2.5">
+            <div className="flex items-center justify-between rounded-lg bg-[#131417] border border-white/6 px-3.5 py-2.5">
               <span className="text-sm text-white/50">
                 최소 {MIN_PARTICIPANTS}명 ~ 최대 {MAX_PARTICIPANTS}명
               </span>
@@ -201,7 +201,7 @@ export default function CommunityCreateModal({
                   type="button"
                   onClick={() => handleParticipantsChange(-1)}
                   disabled={maxParticipants <= MIN_PARTICIPANTS}
-                  className="size-7 rounded-full bg-white/[0.06] text-white disabled:opacity-30 disabled:cursor-default hover:bg-white/[0.1]"
+                  className="size-7 rounded-full bg-white/6 text-white disabled:opacity-30 disabled:cursor-default hover:bg-white/10"
                 >
                   −
                 </button>
@@ -212,7 +212,7 @@ export default function CommunityCreateModal({
                   type="button"
                   onClick={() => handleParticipantsChange(1)}
                   disabled={maxParticipants >= MAX_PARTICIPANTS}
-                  className="size-7 rounded-full bg-white/[0.06] text-white disabled:opacity-30 disabled:cursor-default hover:bg-white/[0.1]"
+                  className="size-7 rounded-full bg-white/6 text-white disabled:opacity-30 disabled:cursor-default hover:bg-white/10"
                 >
                   +
                 </button>
@@ -237,7 +237,7 @@ export default function CommunityCreateModal({
                 const value = Number(e.target.value.replace(/[^0-9]/g, '')) || 0;
                 setBetAmount(Math.min(value, MAX_BET_PER_ROUND));
               }}
-              className="w-full rounded-lg bg-[#131417] border border-white/[0.06] px-3.5 py-3 text-sm text-white outline-none focus:border-sky-500/50"
+              className="w-full rounded-lg bg-[#131417] border border-white/6 px-3.5 py-3 text-sm text-white outline-none focus:border-sky-500/50"
             />
           </div>
 

@@ -18,7 +18,7 @@ export default function CommunityCard({ prediction, onClick }: CommunityCardProp
     <button
       type="button"
       onClick={() => onClick(prediction.id)}
-      className="text-left bg-[#1c2029] rounded-2xl p-5 border border-white/[0.06] w-full hover:border-white/[0.15] transition-colors"
+      className="text-left bg-[#1c2029] rounded-2xl p-5 border border-white/6 w-full hover:border-white/15 transition-colors"
     >
       {/* 상단: 뱃지 + 판가름 날짜 */}
       <div className="flex items-center gap-2 mb-3.5">
@@ -53,7 +53,7 @@ export default function CommunityCard({ prediction, onClick }: CommunityCardProp
       </p>
 
       {/* 프로그레스바 */}
-      <div className="h-1.5 w-full rounded-full bg-white/[0.08] overflow-hidden">
+      <div className="h-1.5 w-full rounded-full bg-white/8 overflow-hidden">
         <div
           className={`h-full rounded-full ${
             isUp ? 'bg-[#81f6ac]' : 'bg-[rgb(231,162,106)]'

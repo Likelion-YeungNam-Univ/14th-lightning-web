@@ -156,7 +156,7 @@ export default function CommunityFeed({
         {chartSymbol ? (
           <TradingViewChart symbol={chartSymbol} height={420} />
         ) : (
-          <div className="h-[420px] rounded-2xl bg-[#171a21] border border-white/[0.06] flex items-center justify-center">
+          <div className="h-105 rounded-2xl bg-[#171a21] border border-white/6 flex items-center justify-center">
             <span className="text-sm text-white/30">차트를 불러오는 중이에요...</span>
           </div>
         )}

@@ -28,9 +28,9 @@ export function StockList({
   return (
     <section
       aria-label="관심 종목"
-      className="-mx-6 flex min-h-[82px] flex-col justify-center border-y border-[#20242c] bg-[#12151b] px-6 py-4 max-[760px]:min-h-[78px] max-[760px]:px-[18px]"
+      className="-mx-6 flex min-h-20.5 flex-col justify-center border-y border-[#20242c] bg-[#12151b] px-6 py-4 max-[760px]:min-h-19.5 max-[760px]:px-4.5"
     >
-      <div className="flex items-center gap-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div className="flex items-center gap-2 overflow-x-auto scrollbar-none [&::-webkit-scrollbar]:hidden">
         {stocksLoading ? (
           <>
             <span className="h-9 w-24 shrink-0 animate-pulse rounded-full bg-[#1c2029]" />
@@ -69,7 +69,7 @@ export function StockList({
                   if (!reorderMode) onSelectStock(stock.stock_code);
                 }}
                 onKeyDown={(event) => handleKeyDown(event, index)}
-                className={`shrink-0 rounded-full border px-3.5 py-2 text-[13px] font-bold transition-colors duration-[180ms] ease-[cubic-bezier(.23,1,.32,1)] ${
+                className={`shrink-0 rounded-full border px-3.5 py-2 text-[13px] font-bold transition-colors duration-180 ease-[cubic-bezier(.23,1,.32,1)] ${
                   reorderMode
                     ? "border-[#4d9fff]/60 bg-[#203651] text-[#79b8ff]"
                     : activeStockCode === stock.stock_code
@@ -115,7 +115,7 @@ export function StockList({
             type="button"
             onClick={onAddStock}
             disabled={!onAddStock || reorderMode}
-            className="shrink-0 rounded-full border border-dashed border-[#4d9fff]/50 bg-[#1c2029] px-3.5 py-2 text-[13px] font-bold text-[#4d9fff] transition-colors duration-[180ms] ease-[cubic-bezier(.23,1,.32,1)] hover:bg-[#252b36] disabled:cursor-default disabled:opacity-50"
+            className="shrink-0 rounded-full border border-dashed border-[#4d9fff]/50 bg-[#1c2029] px-3.5 py-2 text-[13px] font-bold text-[#4d9fff] transition-colors duration-180 ease-[cubic-bezier(.23,1,.32,1)] hover:bg-[#252b36] disabled:cursor-default disabled:opacity-50"
           >
             ＋ 종목 추가
           </button>
