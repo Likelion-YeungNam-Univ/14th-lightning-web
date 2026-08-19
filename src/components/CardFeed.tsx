@@ -3,6 +3,7 @@ import { canSaveCardFromTab } from "../utils/savedCards";
 
 type CardFeedProps = {
   cards: Card[];
+  market: string;
   tab: string;
   loading: boolean;
   error: string;
@@ -90,6 +91,7 @@ function LoadingCards() {
 /** GET /cards 응답을 출처별 카드 디자인과 오류·빈 상태로 표시한다. */
 export function CardFeed({
   cards,
+  market,
   tab,
   loading,
   error,
@@ -162,6 +164,10 @@ export function CardFeed({
           const views = formatViews(card.view_count);
           const publishedAt = formatDate(card.published_at);
           const displayLabel = labelDisplay(card.label);
+          const showDisclosureType =
+            market === "overseas" &&
+            tab === "disclosure" &&
+            (card.doc_type || card.doc_type_name);
           return (
             <article
               key={card.card_id}
@@ -247,6 +253,13 @@ export function CardFeed({
                 )}
                 <h2 className="m-0 line-clamp-2 text-[15px] font-bold leading-[1.45] text-[#f2f3f5]">
                   {card.title}
+                  {showDisclosureType && (
+                    <span className="ml-2 inline-block rounded-md bg-[#243a52] px-2 py-0.5 align-middle text-[11px] font-bold leading-4 text-[#79b8ff]">
+                      {[card.doc_type, card.doc_type_name]
+                        .filter(Boolean)
+                        .join(" ")}
+                    </span>
+                  )}
                 </h2>
                 {card.channel_name && (
                   <p className="mb-1 mt-2 text-[13px] text-[#c8ccd4]">
