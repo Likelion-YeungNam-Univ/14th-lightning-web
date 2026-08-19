@@ -195,73 +195,73 @@ function EconCardDialog({
         <div className="min-h-0 flex-1 overflow-y-auto px-10 pb-10 max-[640px]:px-5 max-[640px]:pb-7">
           {loading ? (
             <div className="mt-12 space-y-3" aria-label="경제 상식 불러오는 중">
-            <div className="h-4 animate-pulse rounded bg-[#2a2f39]" />
-            <div className="h-4 animate-pulse rounded bg-[#2a2f39]" />
-            <div className="h-4 w-3/4 animate-pulse rounded bg-[#2a2f39]" />
-          </div>
-        ) : error ? (
-          <p className="mb-0 mt-12 text-sm text-[#f0a868]">{error}</p>
-        ) : detail ? (
-          <>
-            <div
-              ref={bodyRef}
-              onPointerUp={scheduleSelectedTermCapture}
-              onKeyUp={scheduleSelectedTermCapture}
-              className="border-b border-[#3a3e48] py-7 text-[15px] leading-[1.85] text-[#d9dee7] max-[640px]:py-7"
-            >
-              {paragraphs.map((paragraph, index) => (
-                <p key={index} className="mb-6 mt-0 last:mb-0">
-                  {paragraph}
-                </p>
-              ))}
+              <div className="h-4 animate-pulse rounded bg-[#2a2f39]" />
+              <div className="h-4 animate-pulse rounded bg-[#2a2f39]" />
+              <div className="h-4 w-3/4 animate-pulse rounded bg-[#2a2f39]" />
             </div>
-            <p className="mb-0 mt-6 text-xs text-[#9aa3b2]">
-              모르는 단어를 드래그하면 뜻을 알려드려요
-            </p>
-            {detail.sources.length > 0 && (
-              <div className="mt-12">
-                <h3 className="m-0 text-xs font-bold text-[#aab3c1]">
-                  원문 출처
-                </h3>
-                <ol className="mb-0 mt-5 space-y-4 p-0">
-                  {detail.sources.map((source) => (
-                    <li
-                      key={`${source.number}-${source.url}`}
-                      className="flex items-center gap-6 rounded-[20px] bg-[#151820] px-7 py-5 max-[640px]:gap-4 max-[640px]:px-4"
-                    >
-                      <strong className="text-[17px] text-[#6798ff]">
-                        {source.number}
-                      </strong>
-                      <div className="min-w-0 flex-1">
-                        <strong className="block text-sm text-white">
-                          {source.org}
-                        </strong>
-                        <span className="mt-1 block text-xs text-[#9fb0cc]">
-                          {source.doc_title}
-                        </span>
-                      </div>
-                      <a
-                        href={source.url}
-                        target="_blank"
-                        rel="noreferrer"
-                        aria-label={`${source.org} 원문 열기`}
-                        className="inline-flex shrink-0 items-center gap-3 text-[13px] text-[#a8b8d2] no-underline transition hover:text-[#6fa8ff]"
-                      >
-                        <span className="max-[640px]:hidden">
-                          {sourceHostname(source.url)}
-                        </span>
-                        <span aria-hidden="true">↗</span>
-                      </a>
-                    </li>
-                  ))}
-                </ol>
+          ) : error ? (
+            <p className="mb-0 mt-12 text-sm text-[#f0a868]">{error}</p>
+          ) : detail ? (
+            <>
+              <div
+                ref={bodyRef}
+                onPointerUp={scheduleSelectedTermCapture}
+                onKeyUp={scheduleSelectedTermCapture}
+                className="border-b border-[#3a3e48] py-7 text-[15px] leading-[1.85] text-[#d9dee7] max-[640px]:py-7"
+              >
+                {paragraphs.map((paragraph, index) => (
+                  <p key={index} className="mb-6 mt-0 last:mb-0">
+                    {paragraph}
+                  </p>
+                ))}
               </div>
-            )}
-            <p className="mb-0 mt-12 rounded-[16px] bg-[#273044] px-7 py-6 text-sm leading-6 text-[#9db0cf] max-[640px]:px-5 max-[640px]:py-4">
-              위 자료를 바탕으로 assit이 정리한 설명이에요.<br />
-              구체적인 수치는 각 출처 탭에서 확인해 주세요.
-            </p>
-          </>
+              <p className="mb-0 mt-6 text-base text-[#9aa3b2]">
+                모르는 단어를 드래그하면 뜻을 알려드려요
+              </p>
+              {detail.sources.length > 0 && (
+                <div className="mt-12">
+                  <h3 className="m-0 text-xs font-bold text-[#aab3c1]">
+                    원문 출처
+                  </h3>
+                  <ol className="mb-0 mt-5 space-y-4 p-0">
+                    {detail.sources.map((source) => (
+                      <li
+                        key={`${source.number}-${source.url}`}
+                        className="flex items-center gap-6 rounded-[20px] bg-[#151820] px-7 py-5 max-[640px]:gap-4 max-[640px]:px-4"
+                      >
+                        <strong className="text-[17px] text-[#6798ff]">
+                          {source.number}
+                        </strong>
+                        <div className="min-w-0 flex-1">
+                          <strong className="block text-sm text-white">
+                            {source.org}
+                          </strong>
+                          <span className="mt-1 block text-xs text-[#9fb0cc]">
+                            {source.doc_title}
+                          </span>
+                        </div>
+                        <a
+                          href={source.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          aria-label={`${source.org} 원문 열기`}
+                          className="inline-flex shrink-0 items-center gap-3 text-[13px] text-[#a8b8d2] no-underline transition hover:text-[#6fa8ff]"
+                        >
+                          <span className="max-[640px]:hidden">
+                            {sourceHostname(source.url)}
+                          </span>
+                          <span aria-hidden="true">↗</span>
+                        </a>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              )}
+              <p className="mb-0 mt-12 rounded-[16px] bg-[#273044] px-7 py-6 text-sm leading-6 text-[#9db0cf] max-[640px]:px-5 max-[640px]:py-4">
+                위 자료를 바탕으로 assit이 정리한 설명이에요.<br />
+                구체적인 수치는 각 출처 탭에서 확인해 주세요.
+              </p>
+            </>
           ) : null}
         </div>
       </section>
