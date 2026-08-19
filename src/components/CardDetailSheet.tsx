@@ -21,6 +21,33 @@ function formatDate(value: string | null) {
   }).format(date);
 }
 
+function youtubeEmbedUrl(value: string | null) {
+  if (!value) return null;
+
+  try {
+    const url = new URL(value);
+    const hostname = url.hostname.replace(/^www\./, "");
+    let videoId: string | null = null;
+
+    if (hostname === "youtu.be") {
+      videoId = url.pathname.split("/").filter(Boolean)[0] ?? null;
+    } else if (hostname === "youtube.com" || hostname === "m.youtube.com") {
+      if (url.pathname === "/watch") {
+        videoId = url.searchParams.get("v");
+      } else {
+        const [kind, id] = url.pathname.split("/").filter(Boolean);
+        if (["embed", "shorts", "live"].includes(kind)) videoId = id ?? null;
+      }
+    }
+
+    return videoId
+      ? `https://www.youtube.com/embed/${encodeURIComponent(videoId)}?autoplay=1`
+      : null;
+  } catch {
+    return null;
+  }
+}
+
 // 영향 라벨에 맞는 판단 근거 제목을 반환한다.
 function reasonTitle(label: string | null) {
   if (label === "긍정" || label === "positive") return "왜 긍정일까요?";
@@ -76,6 +103,7 @@ export function CardDetailSheet({
   const [termResponse, setTermResponse] = useState<TermExplainResponse | null>(
     null,
   );
+  const [isVideoPlaying, setIsVideoPlaying] = useState(false);
 
   useEffect(() => {
     const closeOnEscape = (event: KeyboardEvent) => {
@@ -94,7 +122,8 @@ export function CardDetailSheet({
     .split(/\n\s*\n/)
     .filter(Boolean);
   const publishedAt = formatDate(card.published_at);
-  const videoCard = Boolean(card.channel_name || card.thumbnail_url);
+  const videoCard = tab === "youtube";
+  const embedUrl = videoCard ? youtubeEmbedUrl(card.origin_url) : null;
   const displayLabel = labelText(card.label);
 
   const explainTerm = async (term: string) => {
@@ -197,16 +226,33 @@ export function CardDetailSheet({
 
         {videoCard && (
           <div className="relative mt-6 flex min-h-52 items-center justify-center overflow-hidden rounded-xl bg-[#252b34]">
-            {card.thumbnail_url && (
+            {isVideoPlaying && embedUrl ? (
+              <iframe
+                src={embedUrl}
+                title={`${card.title} 영상`}
+                className="absolute inset-0 h-full w-full"
+                allow="autoplay; encrypted-media; picture-in-picture"
+                allowFullScreen
+              />
+            ) : card.thumbnail_url ? (
               <img
                 src={card.thumbnail_url}
                 alt=""
                 className="absolute inset-0 h-full w-full object-cover opacity-45"
               />
+            ) : null}
+            {!isVideoPlaying && (
+              <button
+                type="button"
+                onClick={() => {
+                  if (embedUrl) setIsVideoPlaying(true);
+                }}
+                disabled={!embedUrl}
+                className="relative flex items-center gap-2 rounded-full border border-white/15 bg-[#0f1115]/80 px-4 py-2.5 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <span aria-hidden="true">▶</span> 영상 확인하기
+              </button>
             )}
-            <span className="relative flex items-center gap-2 rounded-full border border-white/15 bg-[#0f1115]/80 px-4 py-2.5 text-sm font-bold">
-              <span aria-hidden="true">▶</span> 영상 확인하기
-            </span>
           </div>
         )}
 
@@ -251,9 +297,9 @@ export function CardDetailSheet({
                 {paragraph}
               </p>
             ))
-          ) : (
+          ) : !videoCard ? (
             <p className="text-[#9aa3b2]">제공된 요약 내용이 없습니다.</p>
-          )}
+          ) : null}
         </div>
 
         {card.label_reason && (
@@ -267,9 +313,11 @@ export function CardDetailSheet({
           </aside>
         )}
 
-        <p className="mb-0 mt-6 text-xs text-[#9aa3b2]">
-          모르는 용어를 드래그하면 쉽게 설명해드려요.
-        </p>
+        {!videoCard && (
+          <p className="mb-0 mt-6 text-xs text-[#9aa3b2]">
+            모르는 용어를 드래그하면 쉽게 설명해드려요.
+          </p>
+        )}
 
         {selectedTerm && (
           <aside
@@ -329,7 +377,7 @@ export function CardDetailSheet({
             >
               {card.is_saved ? "★" : "☆"}
             </button>
-            {card.origin_url && (
+            {card.origin_url && !videoCard && (
               <a
                 href={card.origin_url}
                 target="_blank"
