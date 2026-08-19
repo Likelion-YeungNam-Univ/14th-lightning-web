@@ -78,6 +78,7 @@ export function StockFeedSection({
       ) : (
         <CardFeed
           cards={cards}
+          market={market}
           tab={activeTab}
           loading={cardsLoading}
           error={cardsError}

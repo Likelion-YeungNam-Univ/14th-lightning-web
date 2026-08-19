@@ -13,6 +13,8 @@ export type Card = {
   label: string | null;
   label_reason: string | null;
   title: string;
+  doc_type: string | null;
+  doc_type_name: string | null;
   summary_short: string | null;
   summary_full: string | null;
   source_name: string;
