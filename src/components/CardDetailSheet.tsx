@@ -350,7 +350,7 @@ export function CardDetailSheet({
             {canSaveCard && <button
               type="button"
               onClick={() => onToggleSave(card)}
-              className={`grid size-11 place-items-center rounded-lg border-0 bg-[#282d38] text-xl ${card.is_saved ? "text-[#4d9fff]" : "text-[#c8ccd4]"}`}
+              className={`grid size-11 place-items-center rounded-lg border-0 bg-[#282d38] text-xl transition ${card.is_saved ? "text-[#ffbf00] hover:text-[#ffd24d]" : "text-[#c8ccd4] hover:text-[#f2f3f5]"}`}
               aria-label={card.is_saved ? "즐겨찾기 해제" : "즐겨찾기 추가"}
             >
               {card.is_saved ? "★" : "☆"}

@@ -209,7 +209,7 @@ export function CardFeed({
                       event.stopPropagation();
                       onToggleSave?.(card);
                     }}
-                    className={`absolute right-2 top-2 grid size-9 place-items-center rounded-full border-0 bg-[#0f1115]/60 text-lg transition ${card.is_saved ? "text-[#ffbf00]" : "text-[#c8ccd4] hover:text-[#f2f3f5]"} disabled:cursor-default`}
+                    className={`absolute right-2 top-2 grid size-9 place-items-center rounded-full border-0 bg-[#0f1115]/60 text-lg transition ${card.is_saved ? "text-[#ffbf00] hover:text-[#ffd24d]" : "text-[#c8ccd4] hover:text-[#f2f3f5]"} disabled:cursor-default`}
                   >
                     {card.is_saved ? "★" : "☆"}
                   </button>}
@@ -240,7 +240,7 @@ export function CardFeed({
                         event.stopPropagation();
                         onToggleSave?.(card);
                       }}
-                      className={`-mr-1 -mt-1 shrink-0 border-0 bg-transparent px-1 text-lg transition ${card.is_saved ? "text-[#ffbf00]" : "text-[#c8ccd4] hover:text-[#f2f3f5]"} disabled:cursor-default`}
+                      className={`-mr-1 -mt-1 shrink-0 border-0 bg-transparent px-1 text-lg transition ${card.is_saved ? "text-[#ffbf00] hover:text-[#ffd24d]" : "text-[#c8ccd4] hover:text-[#f2f3f5]"} disabled:cursor-default`}
                     >
                       {card.is_saved ? "★" : "☆"}
                     </button>}
