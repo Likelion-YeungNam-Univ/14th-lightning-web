@@ -121,6 +121,28 @@ button:disabled {
   }
 }
 
+@keyframes status-banner-info {
+  0% {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+
+  10%,
+  80% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+.status-banner--info {
+  animation: status-banner-info 3s ease both;
+}
+
 @keyframes econ-knowledge-marquee {
   to {
     transform: translateX(calc(-50% - 14px));
