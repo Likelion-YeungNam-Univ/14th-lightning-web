@@ -48,7 +48,7 @@ export default function App() {
     useCards(activeStockCode, activeTab, activeMarketInfo, setActiveTab);
   const { savedResponse, setSavedResponse, savedLoading, savedError } =
     useSavedCards(activeStockCode, activeTab);
-  const { detailCard, detailTab, setDetailCard, openDetail, closeDetail } =
+  const { detailCard, detailTab, detailLinkSentence, setDetailCard, openDetail, closeDetail } =
     useCardDetail();
   const {
     saveError,
@@ -164,6 +164,7 @@ export default function App() {
         onStockAuthRequired={requireLoginForStocks}
         detailCard={detailCard}
         detailTab={detailTab}
+        detailLinkSentence={detailLinkSentence}
         onDetailClose={closeDetail}
         onToggleSave={(card, tab) => void toggleCardSave(card, tab)}
       />

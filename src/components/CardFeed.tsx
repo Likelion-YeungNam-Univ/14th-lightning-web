@@ -9,7 +9,6 @@ type CardFeedProps = {
   error: string;
   reason: string | null;
   disclaimer: boolean;
-  linkSentence: string | null;
   onToggleSave?: (card: Card) => void;
   onOpenCard?: (card: Card) => void;
 };
@@ -68,19 +67,21 @@ function labelDisplay(label: string | null) {
 }
 
 // 카드 목록을 불러오는 동안 고정 개수의 스켈레톤을 표시한다.
-function LoadingCards() {
+function LoadingCards({ video }: { video: boolean }) {
   return (
-    <div className="grid grid-cols-5 gap-5 max-[1120px]:grid-cols-3 max-[760px]:grid-cols-1">
+    <div className="grid auto-rows-fr grid-cols-5 gap-5 opacity-80 max-[1120px]:grid-cols-3 max-[760px]:grid-cols-1">
       {Array.from({ length: 5 }, (_, index) => (
         <article
           key={index}
           className="overflow-hidden rounded-xl bg-[#1c2029]"
         >
-          <div className="h-45 animate-pulse bg-[#2a2e36]" />
-          <div className="space-y-3 p-4">
+          {video && <div className="h-45 animate-pulse bg-[#2a2e36]" />}
+          <div className={`space-y-3 p-4 ${video ? "" : "min-h-48.5"}`}>
+            {!video && <div className="h-6 w-2/5 animate-pulse rounded bg-[#2a2e36]" />}
             <div className="h-4 w-full animate-pulse rounded bg-[#2a2e36]" />
             <div className="h-4 w-3/4 animate-pulse rounded bg-[#2a2e36]" />
             <div className="h-3 w-1/2 animate-pulse rounded bg-[#2a2e36]" />
+            {!video && <div className="h-3 w-full animate-pulse rounded bg-[#252a33]" />}
           </div>
         </article>
       ))}
@@ -97,15 +98,14 @@ export function CardFeed({
   error,
   reason,
   disclaimer,
-  linkSentence,
   onToggleSave,
   onOpenCard,
 }: CardFeedProps) {
   const canSaveCards = canSaveCardFromTab(tab);
   if (loading)
     return (
-      <section aria-label="자료 로딩 중" className="py-5">
-        <LoadingCards />
+      <section aria-label="자료 로딩 중" aria-live="polite" className="py-5">
+        <LoadingCards video={tab === "youtube"} />
       </section>
     );
 
@@ -147,14 +147,6 @@ export function CardFeed({
               참고용 · 개인 의견입니다.
             </strong>{" "}
             영상은 개인의 해석을 담고 있어요. 기관 자료와 함께 비교해보세요.
-          </p>
-        </aside>
-      )}
-      {linkSentence && (
-        <aside className="mb-4 rounded-lg border border-[#2c3644] bg-[#171d26] px-4 py-3">
-          <span className="text-xs font-bold text-[#2a78d1]">내 종목엔</span>
-          <p className="mb-0 mt-1 text-sm leading-6 text-[#c8ccd4]">
-            {linkSentence}
           </p>
         </aside>
       )}

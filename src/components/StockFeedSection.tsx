@@ -22,7 +22,6 @@ type StockFeedSectionProps = {
   cardsError: string;
   cardsReason: string | null;
   cardsDisclaimer: boolean;
-  linkSentence: string | null;
   onToggleSave: (card: Card) => void;
   onOpenCard: (card: Card) => void;
 };
@@ -45,7 +44,6 @@ export function StockFeedSection({
   cardsError,
   cardsReason,
   cardsDisclaimer,
-  linkSentence,
   onToggleSave,
   onOpenCard,
 }: StockFeedSectionProps) {
@@ -84,7 +82,6 @@ export function StockFeedSection({
           error={cardsError}
           reason={cardsReason}
           disclaimer={cardsDisclaimer}
-          linkSentence={linkSentence}
           onToggleSave={onToggleSave}
           onOpenCard={onOpenCard}
         />

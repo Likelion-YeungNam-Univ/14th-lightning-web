@@ -45,7 +45,7 @@ type Props = {
   cardsError: string;
   canLoadCards: boolean;
   onToggleSave: (card: Card, tab: string) => void;
-  onOpenDetail: (card: Card, tab: string) => void;
+  onOpenDetail: (card: Card, tab: string, linkSentence?: string | null) => void;
 
   sessionError: string;
 };
@@ -141,11 +141,10 @@ export function MainPage({
           cardsError={canLoadCards ? cardsError : ""}
           cardsReason={canLoadCards ? (cardResponse?.reason ?? null) : null}
           cardsDisclaimer={canLoadCards && (cardResponse?.disclaimer ?? false)}
-          linkSentence={
-            canLoadCards ? (cardResponse?.link_sentence ?? null) : null
-          }
           onToggleSave={(card) => onToggleSave(card, activeTab)}
-          onOpenCard={(card) => onOpenDetail(card, activeTab)}
+          onOpenCard={(card) =>
+            onOpenDetail(card, activeTab, cardResponse?.link_sentence ?? null)
+          }
         />
       )}
       {marketsError && (

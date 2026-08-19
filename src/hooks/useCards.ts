@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useLayoutEffect, useState } from "react";
 import { ApiError, getApi } from "../api/client";
 import type { SourceTab } from "../components/SourceNav";
 import type { CardListResponse } from "../types/card";
@@ -21,7 +21,7 @@ export function useCards(
   );
 
   // 종목 또는 출처 탭이 바뀌면 해당 조합으로 GET /cards를 호출한다.
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (
       !activeStockCode ||
       activeTab === "saved" ||
@@ -31,6 +31,7 @@ export function useCards(
     }
     let cancelled = false;
     const loadCards = async () => {
+      setCardResponse(null);
       setCardsLoading(true);
       setCardsError("");
       try {
