@@ -1,11 +1,15 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { CommunityPrediction } from '../types/community';
+import type { SavedCardItem } from '../types/card';
+import { SavedCardAttachModal } from './SavedCardAttachModal';
 
 interface CommunityDetailProps {
   prediction: CommunityPrediction;
+  stockCode: string;
   pointBalance: number;
   authenticated?: boolean; // 로그인 여부 — 실제 인증 연결 전까지 기본 false
   onBack: () => void;
+  onDelete: () => void;
 }
 
 function formatPrice(price: number, currency: 'KRW' | 'USD') {
@@ -16,9 +20,11 @@ function formatPrice(price: number, currency: 'KRW' | 'USD') {
 
 export default function CommunityDetail({
   prediction,
+  stockCode,
   pointBalance,
   authenticated = false,
   onBack,
+  onDelete,
 }: CommunityDetailProps) {
   const [betAmount, setBetAmount] = useState(500);
   const [myBet, setMyBet] = useState<'up' | 'down' | null>(null);
@@ -27,19 +33,47 @@ export default function CommunityDetail({
   const [commentSide, setCommentSide] = useState<'up' | 'down'>('up');
   const [replyTargetId, setReplyTargetId] = useState<string | null>(null);
   const [replyDraft, setReplyDraft] = useState('');
+  const [savedCardModalOpen, setSavedCardModalOpen] = useState(false);
+  const [attachedCard, setAttachedCard] = useState<SavedCardItem | null>(null);
+  const [participationNotice, setParticipationNotice] = useState('');
+  const toastTimerRef = useRef<number | null>(null);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [participantCount, setParticipantCount] = useState(prediction.participantCount);
+  const [upParticipantCount, setUpParticipantCount] = useState(
+    Math.round(prediction.upRatio * prediction.participantCount),
+  );
+  const [totalPoints, setTotalPoints] = useState(prediction.totalPoints);
 
-  const totalPeople = prediction.participantCount;
-  const upRatio = Math.round(prediction.upRatio * 100);
+  useEffect(() => () => {
+    if (toastTimerRef.current !== null) window.clearTimeout(toastTimerRef.current);
+  }, []);
+
+  function showParticipationNotice(message: string) {
+    setParticipationNotice(message);
+    if (toastTimerRef.current !== null) window.clearTimeout(toastTimerRef.current);
+    toastTimerRef.current = window.setTimeout(() => setParticipationNotice(''), 2600);
+  }
+
+  const totalPeople = participantCount;
+  const upRatio = totalPeople ? Math.round((upParticipantCount / totalPeople) * 100) : 0;
   const downRatio = 100 - upRatio;
   const priceLabel = formatPrice(prediction.targetPrice, prediction.currency);
   const upPeople = Math.round((upRatio / 100) * totalPeople);
   const downPeople = totalPeople - upPeople;
-  const upPool = Math.round((upRatio / 100) * prediction.totalPoints);
-  const downPool = prediction.totalPoints - upPool;
+  const upPool = Math.round((upRatio / 100) * totalPoints);
+  const downPool = totalPoints - upPool;
 
-  function handleBet(side: 'up' | 'down') {
+  function handleBet(side: 'up' | 'down', points = 0) {
     if (myBet || totalPeople >= prediction.maxParticipants) return;
+    if (!points || points > 1000 || points > pointBalance) {
+      showParticipationNotice('참여 포인트는 보유 포인트 안에서 1,000P 이하로 입력해주세요.');
+      return;
+    }
     setMyBet(side);
+    setParticipantCount((current) => current + 1);
+    if (side === 'up') setUpParticipantCount((current) => current + 1);
+    setTotalPoints((current) => current + points);
+    showParticipationNotice(`${side === 'up' ? '간다' : '안 간다'}에 ${points.toLocaleString()}P를 참여 포인트로 냈어요.`);
   }
 
   function toggleLike(commentId: string) {
@@ -59,9 +93,23 @@ export default function CommunityDetail({
     if (!body) return;
     setComments((prev) => [
       ...prev,
-      { id: `local-${Date.now()}`, author: '나', side: commentSide, body, likes: 0, replies: [] },
+      {
+        id: `local-${Date.now()}`,
+        author: '나',
+        side: commentSide,
+        body,
+        likes: 0,
+        replies: [],
+        attachedCard: attachedCard
+          ? {
+              title: typeof attachedCard.snapshot.title === 'string' ? attachedCard.snapshot.title : '저장한 자료',
+              sourceName: typeof attachedCard.snapshot.source_name === 'string' ? attachedCard.snapshot.source_name : attachedCard.tab,
+            }
+          : undefined,
+      },
     ]);
     setCommentDraft('');
+    setAttachedCard(null);
   }
 
   function submitReply(commentId: string) {
@@ -96,9 +144,7 @@ export default function CommunityDetail({
           <span className="text-xs font-semibold px-3 py-1 rounded-md bg-[#1e3a2f] text-[#4ade80]">
             진행 중
           </span>
-          <span className="text-xs text-white/30">
-            만든 사람 {prediction.creatorName || '반도체러버'} · 2일 전
-          </span>
+          <div className="flex items-center gap-3"><span className="text-xs text-white/30">만든 사람 {prediction.creatorName || '반도체러버'} · 2일 전</span><button type="button" onClick={() => setDeleteConfirmOpen(true)} className="text-xs text-white/35 hover:text-[#ff8d72]">삭제</button></div>
         </div>
 
         <h1 className="text-white text-xl font-bold mb-6">{prediction.title}</h1>
@@ -139,7 +185,7 @@ export default function CommunityDetail({
         <div className="rounded-2xl bg-[#1c2029] border border-white/[0.06] p-5">
           <span className="text-xs text-white/40 font-medium">참여하기</span>
           <p className="text-3xl font-bold text-white mt-1">
-            {prediction.totalPoints.toLocaleString()}P
+            {totalPoints.toLocaleString()}P
           </p>
           <p className="text-xs text-white/30 mb-4">현재 판돈 · 승자가 전부 가져가요</p>
 
@@ -162,7 +208,7 @@ export default function CommunityDetail({
             <button
               type="button"
               disabled={Boolean(myBet) || totalPeople >= prediction.maxParticipants}
-              onClick={() => handleBet('up')}
+              onClick={() => handleBet('up', betAmount)}
               className="py-3 rounded-lg bg-[#4ade80] text-[#0b1c12] font-bold text-sm disabled:opacity-40"
             >
               간다
@@ -170,45 +216,46 @@ export default function CommunityDetail({
             <button
               type="button"
               disabled={Boolean(myBet) || totalPeople >= prediction.maxParticipants}
-              onClick={() => handleBet('down')}
+              onClick={() => handleBet('down', betAmount)}
               className="py-3 rounded-lg bg-[#fb923c] text-[#2b1608] font-bold text-sm disabled:opacity-40"
             >
               안 간다
             </button>
           </div>
 
-          <p className="text-xs text-white/30 mt-3 text-center">
+          <p className="mt-3 text-center text-xs text-white/30">
             판가름 날짜의 종가로 자동 판정돼요.
           </p>
         </div>
       </div>
 
       {/* 댓글 */}
-      <div className="rounded-2xl bg-[#1c2029] border border-white/[0.06] p-6">
+      <div className="rounded-2xl border border-white/[0.06] bg-[#1c2029] p-6">
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-white font-bold text-base">댓글 {comments.length}</h2>
           <span className="text-xs text-white/30">공개 자료에 대한 근거를 남겨보세요.</span>
         </div>
 
-        <div className="space-y-4 mb-5">
+        <div className="mb-3 space-y-2.5">
           {comments.map((comment) => (
             <div key={comment.id}>
-              <div className="flex items-start gap-2.5">
-                <span
-                  className={`text-xs font-bold px-2 py-1 rounded-md shrink-0 mt-0.5 ${
+              <div className="rounded-xl bg-[#171b23] px-4 py-3.5">
+                <div className="flex items-start gap-2.5">
+                  <span
+                    className={`mt-0.5 shrink-0 rounded-md px-2 py-1 text-xs font-bold ${
                     comment.side === 'up'
                       ? 'bg-[#1e3a2f] text-[#4ade80]'
                       : 'bg-[#4a2e17] text-[#fb923c]'
-                  }`}
-                >
-                  {comment.side === 'up' ? '간다' : '안 간다'}
-                </span>
-                <div className="flex-1">
-                  <p className="text-sm text-white">
-                    <span className="font-bold">{comment.author}</span>{' '}
-                    <span className="text-white/80">{comment.body}</span>
-                  </p>
-                  <div className="flex items-center gap-4 mt-1.5">
+                    }`}
+                  >
+                    {comment.side === 'up' ? '간다' : '안 간다'}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm text-white"><span className="font-bold">{comment.author}</span>{' '}<span className="text-white/85">{comment.body}</span></p>
+                    {comment.attachedCard && <div className="mt-2 rounded-lg border border-[#2c4f7c] bg-[#12213a] px-3 py-2"><span className="text-[10px] font-bold text-[#79b8ff]">첨부 자료 · {comment.attachedCard.sourceName}</span><p className="mt-1 text-xs font-semibold text-[#e3eefc]">{comment.attachedCard.title}</p></div>}
+                  </div>
+                </div>
+                <div className="mt-2 flex justify-end gap-4">
                     <button
                       type="button"
                       onClick={() => toggleLike(comment.id)}
@@ -229,7 +276,6 @@ export default function CommunityDetail({
                     >
                       ↩ 대댓글
                     </button>
-                  </div>
                 </div>
               </div>
 
@@ -270,21 +316,24 @@ export default function CommunityDetail({
         </div>
 
         {/* 댓글 입력창 */}
+        <div className="rounded-xl border border-[#3a4250] bg-[#171a21] p-3">
         <textarea
           value={commentDraft}
           onChange={(e) => setCommentDraft(e.target.value.slice(0, 200))}
           rows={2}
           disabled={!authenticated}
           placeholder={authenticated ? '자료를 보고 든 생각을 남겨보세요.' : '로그인하면 댓글을 남길 수 있어요.'}
-          className="w-full resize-none rounded-lg bg-[#171a21] border border-white/[0.06] px-3.5 py-3 text-sm text-white placeholder:text-white/30 outline-none focus:border-sky-500/50 disabled:opacity-60"
+          className="h-16 w-full resize-none border-0 bg-transparent p-0 text-sm text-white outline-none placeholder:text-white/30 disabled:opacity-60"
         />
-        <div className="flex items-center justify-between mt-2.5">
+        {attachedCard && <div className="mt-2 flex items-center justify-between rounded-md border border-[#2c4f7c] bg-[#12213a] px-2.5 py-2"><span className="truncate text-xs text-[#b9d9ff]">⌁ {typeof attachedCard.snapshot.title === 'string' ? attachedCard.snapshot.title : '저장한 자료'}</span><button type="button" onClick={() => setAttachedCard(null)} className="ml-3 text-sm text-[#9aa3b2] hover:text-white" aria-label="첨부 자료 제거">×</button></div>}
+        <div className="mt-2.5 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <button
               type="button"
-              className="text-xs text-white/50 border border-white/10 rounded-md px-2.5 py-1.5 hover:text-white/80"
+              onClick={() => setSavedCardModalOpen(true)}
+              className="rounded-full border border-[#3a4250] px-2.5 py-1.5 text-xs text-white/60 hover:text-white"
             >
-              🔗 자료 카드
+              ↪ 자료 카드
             </button>
             <span className="text-xs text-white/30">내 의견</span>
             <button
@@ -312,7 +361,7 @@ export default function CommunityDetail({
           </div>
 
           <div className="flex items-center gap-3">
-            <span className="text-xs text-white/30">{commentDraft.length}/200 · ⌘/Ctrl+Enter</span>
+            <span className="hidden text-xs text-white/30 sm:inline">{commentDraft.length}/200 · ⌘/Ctrl+Enter</span>
             <button
               type="button"
               onClick={submitComment}
@@ -322,8 +371,11 @@ export default function CommunityDetail({
               {authenticated ? '댓글 남기기' : '로그인하고 댓글 쓰기'}
             </button>
           </div>
-        </div>
+        </div></div>
       </div>
+      {savedCardModalOpen && <SavedCardAttachModal stockCode={stockCode} onClose={() => setSavedCardModalOpen(false)} onSelect={(item) => { setAttachedCard(item); setSavedCardModalOpen(false); }} />}
+      {deleteConfirmOpen && <div className="fixed inset-0 z-70 grid place-items-center bg-black/70 p-4" onMouseDown={() => setDeleteConfirmOpen(false)}><section role="dialog" aria-modal="true" aria-labelledby="delete-community-title" onMouseDown={(event) => event.stopPropagation()} className="w-full max-w-90 rounded-xl border border-[#303744] bg-[#1c2029] p-5 shadow-2xl"><h2 id="delete-community-title" className="text-base font-bold">커뮤니티를 삭제할까요?</h2><p className="mt-3 text-sm leading-5 text-[#9aa3b2]">삭제한 커뮤니티와 참여 기록은 이 화면에서 되돌릴 수 없어요.</p><div className="mt-6 grid grid-cols-2 gap-2"><button type="button" onClick={() => setDeleteConfirmOpen(false)} className="h-10 rounded-md border border-[#3a4250] text-sm text-[#c8ccd4]">취소</button><button type="button" onClick={onDelete} className="h-10 rounded-md bg-[#e15b4d] text-sm font-bold text-white">삭제하기</button></div></section></div>}
+      {participationNotice && <div role="status" className="fixed bottom-6 left-1/2 z-80 -translate-x-1/2 rounded-md border border-[#2f6b45] bg-[#152a1e] px-4 py-2 text-xs font-medium text-[#c6f7dc] shadow-2xl"><span aria-hidden="true" className="mr-1.5 text-[#4ade80]">●</span>{participationNotice}</div>}
     </div>
   );
 }

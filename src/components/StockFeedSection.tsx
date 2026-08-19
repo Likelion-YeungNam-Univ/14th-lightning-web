@@ -71,6 +71,7 @@ export function StockFeedSection({
       )}
       {activeTab === "community" ? (
         <CommunityFeed
+          key={stockCode}
           stockName={stockName}
           stockCode={stockCode}
           market={market}
