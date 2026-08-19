@@ -37,6 +37,7 @@ jobs:
           target: "/var/www/14th-lightning-web"
           strip_components: 1
           overwrite: true
+          timeout: 60
 
       - name: Validate and reload Nginx
         uses: appleboy/ssh-action@v1
