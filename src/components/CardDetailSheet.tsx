@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ApiError, postApi } from "../api/client";
 import type { Card, TermExplainResponse } from "../types/card";
+import { youtubeEmbedUrl } from "../utils/youtube";
 
 type CardDetailSheetProps = {
   card: Card;
@@ -19,33 +20,6 @@ function formatDate(value: string | null) {
     month: "long",
     day: "numeric",
   }).format(date);
-}
-
-function youtubeEmbedUrl(value: string | null) {
-  if (!value) return null;
-
-  try {
-    const url = new URL(value);
-    const hostname = url.hostname.replace(/^www\./, "");
-    let videoId: string | null = null;
-
-    if (hostname === "youtu.be") {
-      videoId = url.pathname.split("/").filter(Boolean)[0] ?? null;
-    } else if (hostname === "youtube.com" || hostname === "m.youtube.com") {
-      if (url.pathname === "/watch") {
-        videoId = url.searchParams.get("v");
-      } else {
-        const [kind, id] = url.pathname.split("/").filter(Boolean);
-        if (["embed", "shorts", "live"].includes(kind)) videoId = id ?? null;
-      }
-    }
-
-    return videoId
-      ? `https://www.youtube.com/embed/${encodeURIComponent(videoId)}?autoplay=1`
-      : null;
-  } catch {
-    return null;
-  }
 }
 
 // 영향 라벨에 맞는 판단 근거 제목을 반환한다.
