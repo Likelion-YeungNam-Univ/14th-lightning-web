@@ -158,7 +158,7 @@ export function CardFeed({
           </p>
         </aside>
       )}
-      <div className="grid grid-cols-5 items-start gap-5 max-[1120px]:grid-cols-3 max-[760px]:grid-cols-1">
+      <div className="grid auto-rows-fr grid-cols-5 gap-5 max-[1120px]:grid-cols-3 max-[760px]:grid-cols-1">
         {cards.map((card) => {
           const videoCard = tab === "youtube";
           const views = formatViews(card.view_count);
@@ -183,7 +183,7 @@ export function CardFeed({
                   onOpenCard(card);
                 }
               }}
-              className={`group overflow-hidden rounded-xl bg-[#1c2029] transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_12px_26px_rgba(0,0,0,.35)] focus-visible:outline-2 focus-visible:outline-[#4d9fff] ${onOpenCard ? "cursor-pointer" : ""}`}
+              className={`group h-full overflow-hidden rounded-xl bg-[#1c2029] transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_12px_26px_rgba(0,0,0,.35)] focus-visible:outline-2 focus-visible:outline-[#4d9fff] ${onOpenCard ? "cursor-pointer" : ""}`}
             >
               {videoCard && (
                 <div className="relative h-45 overflow-hidden bg-[#2a2e36]">
