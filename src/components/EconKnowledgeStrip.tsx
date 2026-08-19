@@ -7,21 +7,6 @@ import type {
   EconCardListResponse,
 } from "../types/econCard";
 
-const mockDefaultSources = [
-  {
-    number: 1,
-    org: "한국은행",
-    doc_title: "경제금융용어 및 경제교육 자료",
-    url: "https://www.bok.or.kr",
-  },
-  {
-    number: 2,
-    org: "금융위원회",
-    doc_title: "금융정책 자료",
-    url: "https://www.fsc.go.kr",
-  },
-];
-
 function sourceHostname(url: string) {
   try {
     return new URL(url).hostname.replace(/^www\./, "");
@@ -29,75 +14,6 @@ function sourceHostname(url: string) {
     return "원문 보기";
   }
 }
-
-const mockEconCards: EconCardDetailResponse[] = [
-  {
-    id: -1,
-    title: "산업을 지원하는 법은 언제 효과가 나타날까요?",
-    body: "산업 지원 정책은 발표 즉시 모든 효과가 나타나기보다 예산 편성, 사업자 선정, 실제 투자 집행을 거치며 단계적으로 영향을 줘요. 정책의 효과를 볼 때는 발표 시점뿐 아니라 집행 일정과 대상 기업의 투자 계획도 함께 살펴보는 것이 좋아요.",
-    sources: [
-      { number: 1, org: "산업연구원", doc_title: "산업 정책 연구자료", url: "https://www.kiet.re.kr" },
-      { number: 2, org: "기획재정부", doc_title: "경제정책 자료", url: "https://www.moef.go.kr" },
-    ],
-  },
-  {
-    id: -2,
-    title: "주가가 비싸면 큰 회사일까요?",
-    body: "주가 한 주의 가격만으로 회사의 크기를 비교하기는 어려워요. 회사의 시장 가치는 보통 주가에 전체 발행 주식 수를 곱한 시가총액으로 비교해요.",
-    sources: [
-      { number: 1, org: "자본시장연구원", doc_title: "자본시장 연구자료", url: "https://www.kcmi.re.kr" },
-      { number: 2, org: "금융위원회", doc_title: "자본시장 제도자료", url: "https://www.fsc.go.kr" },
-    ],
-  },
-  {
-    id: -3,
-    title: "주식을 공짜로 주는데 왜 재산은 그대로일까요?",
-    body: "무상증자는 보유 주식 수를 늘리지만 그만큼 주당 가격이 조정될 수 있어요. 주식 수가 늘었다는 사실만으로 전체 투자 가치가 같은 비율로 증가하는 것은 아니에요.",
-    sources: mockDefaultSources,
-  },
-  {
-    id: -4,
-    title: "금리는 누가 어떻게 결정할까요?",
-    body: "중앙은행은 물가와 경기, 금융 안정 등을 고려해 기준금리를 결정해요. 기준금리 변화는 예금과 대출 금리, 소비와 투자에 걸쳐 점차 영향을 줘요.",
-    sources: mockDefaultSources,
-  },
-  {
-    id: -5,
-    title: "환율이 오르면 수출 기업은 항상 유리할까요?",
-    body: "환율 상승은 수출 대금의 원화 환산액을 늘릴 수 있지만 원재료 수입 비용과 외화 부채 부담도 키울 수 있어요. 기업마다 매출과 비용 구조가 달라 영향을 따로 확인해야 해요.",
-    sources: mockDefaultSources,
-  },
-  {
-    id: -6,
-    title: "물가가 오르면 현금의 가치는 어떻게 될까요?",
-    body: "같은 금액으로 살 수 있는 상품과 서비스가 줄어들면 현금의 실질 구매력은 낮아져요. 자산의 수익률을 볼 때 물가 상승률을 함께 보는 이유예요.",
-    sources: mockDefaultSources,
-  },
-  {
-    id: -7,
-    title: "배당을 받으면 주가는 왜 조정될까요?",
-    body: "회사가 주주에게 현금을 배당하면 기업 안에 남아 있는 자산이 그만큼 줄어요. 배당락일에는 이 변화를 반영해 주가가 이론적으로 조정될 수 있어요.",
-    sources: mockDefaultSources,
-  },
-  {
-    id: -8,
-    title: "국채 금리가 오르면 주식에는 어떤 영향이 있을까요?",
-    body: "국채 금리가 오르면 상대적으로 안전한 자산의 기대수익이 높아지고 기업의 자금 조달 비용도 커질 수 있어요. 다만 경기 상황과 업종에 따라 주식시장 반응은 달라져요.",
-    sources: mockDefaultSources,
-  },
-  {
-    id: -9,
-    title: "기업이 자사주를 사면 무엇이 달라질까요?",
-    body: "자사주 매입은 시장에 유통되는 주식 수를 줄이고 주당 지표에 영향을 줄 수 있어요. 실제 효과는 매입 목적과 소각 여부, 기업의 재무 상태에 따라 달라져요.",
-    sources: mockDefaultSources,
-  },
-  {
-    id: -10,
-    title: "경기가 좋아져도 모든 업종이 함께 오를까요?",
-    body: "업종마다 경기 변화에 반응하는 시점과 정도가 달라요. 소비, 금리, 원자재 가격처럼 각 업종에 중요한 조건을 함께 살펴봐야 해요.",
-    sources: mockDefaultSources,
-  },
-];
 
 function EconCardButton({
   card,
@@ -402,15 +318,9 @@ export function EconKnowledgeStrip() {
     const loadCards = async () => {
       try {
         const response = await getApi<EconCardListResponse>("/econ-cards");
-        if (!cancelled) {
-          setCards(
-            response.items.length > 0 || !import.meta.env.DEV
-              ? response.items
-              : mockEconCards,
-          );
-        }
+        if (!cancelled) setCards(response.items);
       } catch {
-        if (!cancelled) setCards(import.meta.env.DEV ? mockEconCards : []);
+        if (!cancelled) setCards([]);
       }
     };
     void loadCards();
@@ -424,12 +334,6 @@ export function EconKnowledgeStrip() {
     setDetail(null);
     setDetailError("");
     setDetailLoading(true);
-    const mockDetail = mockEconCards.find((item) => item.id === card.id);
-    if (mockDetail) {
-      setDetail(mockDetail);
-      setDetailLoading(false);
-      return;
-    }
     try {
       const response = await getApi<EconCardDetailResponse>(
         `/econ-card/${card.id}`,
