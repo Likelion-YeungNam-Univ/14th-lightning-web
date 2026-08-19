@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 
 interface TradingViewChartProps {
-  symbol: string; // 예: "KRX:005930", "NASDAQ:NVDA"
+  symbol: string;
   height?: number;
 }
 
@@ -13,7 +13,6 @@ declare global {
 
 let scriptLoadingPromise: Promise<void> | null = null;
 
-// TradingView 위젯 스크립트를 한 번만 로드한다 (여러 차트가 있어도 재사용).
 function loadTradingViewScript(): Promise<void> {
   if (window.TradingView) return Promise.resolve();
   if (scriptLoadingPromise) return scriptLoadingPromise;
@@ -30,9 +29,9 @@ function loadTradingViewScript(): Promise<void> {
   return scriptLoadingPromise;
 }
 
-export default function TradingViewChart({ symbol, height = 420 }: TradingViewChartProps) {
+// 추가: 실제 렌더링을 담당하는 내부 컴포넌트 (key로 완전히 새로 마운트시킬 대상)
+function TradingViewChartInner({ symbol, height = 420 }: TradingViewChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  // 심볼마다 고유한 DOM id가 있어야 위젯이 꼬이지 않는다.
   const containerId = `tv-chart-${symbol.replace(/[^a-zA-Z0-9]/g, '-')}`;
 
   useEffect(() => {
@@ -41,7 +40,7 @@ export default function TradingViewChart({ symbol, height = 420 }: TradingViewCh
     loadTradingViewScript().then(() => {
       if (cancelled || !containerRef.current || !window.TradingView) return;
 
-      containerRef.current.innerHTML = ''; // 이전 위젯 흔적 제거
+      containerRef.current.innerHTML = '';
 
       new window.TradingView.widget({
         symbol,
@@ -73,4 +72,9 @@ export default function TradingViewChart({ symbol, height = 420 }: TradingViewCh
       <div id={containerId} ref={containerRef} className="h-full w-full" />
     </div>
   );
+}
+
+// 수정: 바깥에서 key={symbol}로 감싸서, 심볼이 바뀌면 완전히 새로운 DOM 트리로 강제 재마운트
+export default function TradingViewChart({ symbol, height = 420 }: TradingViewChartProps) {
+  return <TradingViewChartInner key={symbol} symbol={symbol} height={height} />;
 }

@@ -123,6 +123,8 @@ export function MainPage({
       ) : (
         <StockFeedSection
           market={activeMarket}
+          marketStocks={marketStocks}
+          activeStockCode={activeStockCode}
           tabs={activeMarketInfo?.tabs}
           disabled={stocksLoading || !activeStockCode}
           activeTab={activeTab}

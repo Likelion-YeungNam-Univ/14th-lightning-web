@@ -4,9 +4,12 @@ import { CardFeed } from "./CardFeed";
 import { StatusBanner } from "./StatusBanner";
 import CommunityFeed from './CommunityFeed';
 import type { Card, SavedCardItem } from "../types/card";
+import type { MyStockItem } from "../types/stock"; // 추가
 
 type StockFeedSectionProps = {
   market: string;
+  marketStocks: MyStockItem[];       // 추가
+  activeStockCode: string;           // 추가
   tabs?: string[];
   disabled: boolean;
   activeTab: SourceTab;
@@ -30,6 +33,8 @@ type StockFeedSectionProps = {
 /** 출처 탭 선택과, 탭에 따라 일반 카드 또는 저장 카드 목록을 전환해 보여준다. */
 export function StockFeedSection({
   market,
+  marketStocks,      // 추가
+  activeStockCode,   // 추가
   tabs,
   disabled,
   activeTab,
@@ -49,6 +54,9 @@ export function StockFeedSection({
   onToggleSave,
   onOpenCard,
 }: StockFeedSectionProps) {
+  // 추가: 현재 선택된 종목 정보 찾기
+  const activeStock = marketStocks.find((s) => s.stock_code === activeStockCode);
+
   return (
     <>
       <SourceNav
@@ -66,7 +74,13 @@ export function StockFeedSection({
         />
       )}
       {activeTab === "community" ? (
-        <CommunityFeed stockName={market} />
+        activeStock && (
+          <CommunityFeed
+            stockName={activeStock.name}
+            stockCode={activeStock.stock_code}
+            market={activeStock.market}
+          />
+        )
       ) : activeTab === "saved" ? (
         <SavedCardFeed
           items={savedItems}

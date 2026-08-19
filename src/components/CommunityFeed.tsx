@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { CommunityPrediction, CommunityCurrency } from '../types/community';
 import CommunityCard from './CommunityCard';
 import CommunityDetail from './CommunityDetail';
 import CommunityCreateModal, { type CommunityCreateFormData } from './CommunityCreateModal';
 import TradingViewChart from './TradingViewChart';
-import { toTradingViewSymbol } from '../lib/tradingview-symbol';
+import { fetchChartSymbol } from '../api/chart';
 
 // 종목별 기준 정보 (실제 API 연결 전까지 쓰는 임시 매핑)
 const STOCK_MOCK_CONFIG: Record<string, { currency: CommunityCurrency; basePrice: number }> = {
@@ -95,23 +95,41 @@ function generatePredictions(stockName: string): CommunityPrediction[] {
 interface CommunityFeedProps {
   stockName: string;
   stockCode: string;
-  market: string;
   pointBalance?: number; // 실제 포인트 API 연결 전까지는 기본값 사용
-  authenticated: boolean; 
+  authenticated: boolean;
 }
 
 export default function CommunityFeed({
   stockName,
   stockCode,
-  market,
   pointBalance = 7200,
   authenticated,
 }: CommunityFeedProps) {
   const predictions = generatePredictions(stockName);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [chartSymbol, setChartSymbol] = useState<string | null>(null);
 
   const selectedPrediction = predictions.find((p) => p.id === selectedId) ?? null;
+
+  // 종목이 바뀔 때마다 실제 차트 심볼을 백엔드에서 조회
+  useEffect(() => {
+    let cancelled = false;
+    setChartSymbol(null);
+    console.log('요청하는 stockCode:', stockCode);
+    fetchChartSymbol(stockCode)
+      .then((symbol) => {
+        console.log('받은 심볼:', symbol); 
+        if (!cancelled) setChartSymbol(symbol);
+      })
+      .catch(() => {
+        console.error('심볼 조회 실패:', error);
+        if (!cancelled) setChartSymbol(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [stockCode]);
 
   // 카드 클릭 시 같은 자리에서 상세 화면으로 전환
   if (selectedPrediction) {
@@ -125,8 +143,6 @@ export default function CommunityFeed({
     );
   }
 
-  const symbol = toTradingViewSymbol(stockCode, market);
-
   function handleCreateSubmit(data: CommunityCreateFormData) {
     console.log('제출된 폼 데이터:', data); // TODO: 실제 저장 API 연결 지점 (postApi 등)
     setIsCreateOpen(false);
@@ -136,7 +152,13 @@ export default function CommunityFeed({
     <div>
       {/* 차트 */}
       <div className="mb-5">
-        <TradingViewChart symbol={symbol} height={420} />
+        {chartSymbol ? (
+          <TradingViewChart symbol={chartSymbol} height={420} />
+        ) : (
+          <div className="h-[420px] rounded-2xl bg-[#171a21] border border-white/[0.06] flex items-center justify-center">
+            <span className="text-sm text-white/30">차트를 불러오는 중이에요...</span>
+          </div>
+        )}
       </div>
 
       {/* 헤더 */}
