@@ -1,4 +1,5 @@
 import type { Card } from "../types/card";
+import { canSaveCardFromTab } from "../utils/savedCards";
 
 type CardFeedProps = {
   cards: Card[];
@@ -98,6 +99,7 @@ export function CardFeed({
   onToggleSave,
   onOpenCard,
 }: CardFeedProps) {
+  const canSaveCards = canSaveCardFromTab(tab);
   if (loading)
     return (
       <section aria-label="자료 로딩 중" className="py-5">
@@ -191,7 +193,7 @@ export function CardFeed({
                   <span className="absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center gap-1.5 rounded-full border border-white/15 bg-[#0f1115]/80 px-3 py-2 text-xs font-bold opacity-0 transition group-hover:opacity-100">
                     <span aria-hidden="true">▶</span> 재생
                   </span>
-                  <button
+                  {canSaveCards && <button
                     type="button"
                     aria-label={
                       card.is_saved ? "즐겨찾기 해제" : "즐겨찾기 추가"
@@ -204,7 +206,7 @@ export function CardFeed({
                     className={`absolute right-2 top-2 grid size-9 place-items-center rounded-full border-0 bg-[#0f1115]/60 text-lg transition ${card.is_saved ? "text-[#ffbf00]" : "text-[#c8ccd4] hover:text-[#f2f3f5]"} disabled:cursor-default`}
                   >
                     {card.is_saved ? "★" : "☆"}
-                  </button>
+                  </button>}
                 </div>
               )}
               <div className={videoCard ? "p-4" : "min-h-48.5 p-4"}>
@@ -222,7 +224,7 @@ export function CardFeed({
                         {card.source_name}
                       </span>
                     </div>
-                    <button
+                    {canSaveCards && <button
                       type="button"
                       aria-label={
                         card.is_saved ? "즐겨찾기 해제" : "즐겨찾기 추가"
@@ -235,7 +237,7 @@ export function CardFeed({
                       className={`-mr-1 -mt-1 shrink-0 border-0 bg-transparent px-1 text-lg transition ${card.is_saved ? "text-[#ffbf00]" : "text-[#c8ccd4] hover:text-[#f2f3f5]"} disabled:cursor-default`}
                     >
                       {card.is_saved ? "★" : "☆"}
-                    </button>
+                    </button>}
                   </div>
                 )}
                 {card.indicator_value && (

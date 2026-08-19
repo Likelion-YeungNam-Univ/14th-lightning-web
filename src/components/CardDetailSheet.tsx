@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { ApiError, postApi } from "../api/client";
 import type { Card, TermExplainResponse } from "../types/card";
 import { youtubeEmbedUrl } from "../utils/youtube";
+import { canSaveCardFromTab } from "../utils/savedCards";
 
 type CardDetailSheetProps = {
   card: Card;
@@ -99,6 +100,7 @@ export function CardDetailSheet({
   const videoCard = tab === "youtube";
   const embedUrl = videoCard ? youtubeEmbedUrl(card.origin_url) : null;
   const displayLabel = labelText(card.label);
+  const canSaveCard = canSaveCardFromTab(tab);
 
   const explainTerm = async (term: string) => {
     if (!tab) {
@@ -345,14 +347,14 @@ export function CardDetailSheet({
             {[card.source_name, publishedAt].filter(Boolean).join(" · ")}
           </span>
           <div className="flex items-center gap-3">
-            <button
+            {canSaveCard && <button
               type="button"
               onClick={() => onToggleSave(card)}
               className={`grid size-11 place-items-center rounded-lg border-0 bg-[#282d38] text-xl ${card.is_saved ? "text-[#4d9fff]" : "text-[#c8ccd4]"}`}
               aria-label={card.is_saved ? "즐겨찾기 해제" : "즐겨찾기 추가"}
             >
               {card.is_saved ? "★" : "☆"}
-            </button>
+            </button>}
             {card.origin_url && !videoCard && (
               <a
                 href={card.origin_url}
