@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { deleteApi, postApi } from "../api/client";
 import type { StockAddResponse, StockChanges } from "../types/stock";
 
@@ -21,6 +21,16 @@ export function useStockActions({
     useState<StockChanges | null>(null);
   const [stockActionError, setStockActionError] = useState("");
   const [stockActionNotice, setStockActionNotice] = useState("");
+
+  useEffect(() => {
+    if (!stockActionNotice) return;
+
+    const timer = window.setTimeout(() => {
+      setStockActionNotice("");
+    }, 3000);
+
+    return () => window.clearTimeout(timer);
+  }, [stockActionNotice]);
 
   // 저장 결과를 안내하고 시장·종목 정보를 다시 조회한다.
   const completeStockAdd = (response: StockAddResponse | null = null) => {

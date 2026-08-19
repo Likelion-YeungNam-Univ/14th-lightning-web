@@ -114,7 +114,13 @@ export function AddStockModal({
         </div>
 
         <div className="mt-12">
-          <strong className="text-sm text-[#aab3c1]">
+          <strong
+            className={`text-sm ${
+              selected.length >= maxStocks
+                ? "text-[#ff5c5c]"
+                : "text-[#aab3c1]"
+            }`}
+          >
             내 종목 {selected.length} / {maxStocks}
           </strong>
           <div className="mt-4 flex min-h-10 flex-wrap gap-2">

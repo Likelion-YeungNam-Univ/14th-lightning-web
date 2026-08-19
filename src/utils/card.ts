@@ -1,4 +1,5 @@
 import type { Card, CardDetail, SavedCardItem } from "../types/card";
+import { youtubeThumbnailUrl } from "./youtube";
 
 // 스냅샷의 알 수 없는 값에서 문자열만 안전하게 반환한다.
 function snapshotString(snapshot: Record<string, unknown>, key: string) {
@@ -30,6 +31,7 @@ function snapshotDetails(snapshot: Record<string, unknown>) {
 export function savedItemToCard(item: SavedCardItem): Card | null {
   if (item.card_id === null) return null;
   const { snapshot } = item;
+  const originUrl = snapshotString(snapshot, "origin_url");
   return {
     card_id: item.card_id,
     label: snapshotString(snapshot, "label"),
@@ -47,9 +49,11 @@ export function savedItemToCard(item: SavedCardItem): Card | null {
         fed: "미국 Fed",
       }[item.tab] ?? item.tab),
     published_at: snapshotString(snapshot, "published_at"),
-    origin_url: snapshotString(snapshot, "origin_url"),
+    origin_url: originUrl,
     is_saved: true,
-    thumbnail_url: snapshotString(snapshot, "thumbnail_url"),
+    thumbnail_url:
+      snapshotString(snapshot, "thumbnail_url") ??
+      (item.tab === "youtube" ? youtubeThumbnailUrl(originUrl) : null),
     channel_name: snapshotString(snapshot, "channel_name"),
     view_count: snapshotNumber(snapshot, "view_count"),
     indicator_value: snapshotString(snapshot, "indicator_value"),

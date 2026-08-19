@@ -5,7 +5,7 @@ type StatusBannerProps = {
 
 const toneClass: Record<StatusBannerProps["tone"], string> = {
   error: "border-[#634b2f] bg-[#2a2119] text-[#f0a868]",
-  info: "border-[#315b84] bg-[#17283a] text-[#9ec9fb]",
+  info: "status-banner--info border-[#315b84] bg-[#17283a] text-[#9ec9fb]",
 };
 
 export function StatusBanner({ tone, message }: StatusBannerProps) {

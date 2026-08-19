@@ -1,4 +1,5 @@
 import type { SavedCardItem } from "../types/card";
+import { youtubeThumbnailUrl } from "../utils/youtube";
 
 type SavedCardFeedProps = {
   items: SavedCardItem[];
@@ -69,7 +70,10 @@ export function SavedCardFeed({
     const summary = snapshotText(item.snapshot, "summary_short");
     const sourceName = snapshotText(item.snapshot, "source_name") ?? tabLabels[item.tab] ?? item.tab;
     const channelName = snapshotText(item.snapshot, "channel_name");
-    const thumbnailUrl = snapshotText(item.snapshot, "thumbnail_url");
+    const originUrl = snapshotText(item.snapshot, "origin_url");
+    const thumbnailUrl =
+      snapshotText(item.snapshot, "thumbnail_url") ??
+      youtubeThumbnailUrl(originUrl);
     const views = formatViews(snapshotNumber(item.snapshot, "view_count"));
     const videoCard = item.tab === "youtube";
     const key = `${item.card_id ?? "snapshot"}-${item.saved_at}-${index}`;
