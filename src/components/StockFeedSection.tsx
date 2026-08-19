@@ -10,6 +10,9 @@ type StockFeedSectionProps = {
   market: string;
   marketStocks: MyStockItem[];       // 추가
   activeStockCode: string;           // 추가
+  stockName: string;
+  stockCode: string;
+  authenticated: boolean;
   tabs?: string[];
   disabled: boolean;
   activeTab: SourceTab;
@@ -25,7 +28,6 @@ type StockFeedSectionProps = {
   cardsError: string;
   cardsReason: string | null;
   cardsDisclaimer: boolean;
-  linkSentence: string | null;
   onToggleSave: (card: Card) => void;
   onOpenCard: (card: Card) => void;
 };
@@ -35,6 +37,9 @@ export function StockFeedSection({
   market,
   marketStocks,      // 추가
   activeStockCode,   // 추가
+  stockName,
+  stockCode,
+  authenticated,
   tabs,
   disabled,
   activeTab,
@@ -50,7 +55,6 @@ export function StockFeedSection({
   cardsError,
   cardsReason,
   cardsDisclaimer,
-  linkSentence,
   onToggleSave,
   onOpenCard,
 }: StockFeedSectionProps) {
@@ -81,6 +85,12 @@ export function StockFeedSection({
             market={activeStock.market}
           />
         )
+        <CommunityFeed
+          stockName={stockName}
+          stockCode={stockCode}
+          market={market}
+          authenticated={authenticated}
+        />
       ) : activeTab === "saved" ? (
         <SavedCardFeed
           items={savedItems}
@@ -92,12 +102,12 @@ export function StockFeedSection({
       ) : (
         <CardFeed
           cards={cards}
+          market={market}
           tab={activeTab}
           loading={cardsLoading}
           error={cardsError}
           reason={cardsReason}
           disclaimer={cardsDisclaimer}
-          linkSentence={linkSentence}
           onToggleSave={onToggleSave}
           onOpenCard={onOpenCard}
         />

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useLayoutEffect, useState } from "react";
 import { getApi } from "../api/client";
 import type { SourceTab } from "../components/SourceNav";
 import type { SavedCardListResponse } from "../types/card";
@@ -11,10 +11,11 @@ export function useSavedCards(activeStockCode: string, activeTab: SourceTab) {
   const [savedError, setSavedError] = useState("");
 
   // 일반 출처 탭에서는 요청하지 않고 저장 탭 진입 시에만 API를 호출한다.
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!activeStockCode || activeTab !== "saved") return;
     let cancelled = false;
     const loadSavedCards = async () => {
+      setSavedResponse(null);
       setSavedLoading(true);
       setSavedError("");
       try {

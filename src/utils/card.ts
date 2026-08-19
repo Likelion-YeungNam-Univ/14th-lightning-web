@@ -37,6 +37,8 @@ export function savedItemToCard(item: SavedCardItem): Card | null {
     label: snapshotString(snapshot, "label"),
     label_reason: snapshotString(snapshot, "label_reason"),
     title: snapshotString(snapshot, "title") ?? "저장한 자료",
+    doc_type: snapshotString(snapshot, "doc_type"),
+    doc_type_name: snapshotString(snapshot, "doc_type_name"),
     summary_short: snapshotString(snapshot, "summary_short"),
     summary_full: snapshotString(snapshot, "summary_full"),
     source_name:

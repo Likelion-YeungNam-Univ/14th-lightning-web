@@ -11,6 +11,7 @@ import type { MarketInfo } from "../types/market";
 import type { MyStockItem } from "../types/stock";
 
 type Props = {
+  authenticated: boolean;
   markets: MarketInfo[];
   activeMarket: string;
   marketsLoading: boolean;
@@ -45,13 +46,14 @@ type Props = {
   cardsError: string;
   canLoadCards: boolean;
   onToggleSave: (card: Card, tab: string) => void;
-  onOpenDetail: (card: Card, tab: string) => void;
+  onOpenDetail: (card: Card, tab: string, linkSentence?: string | null) => void;
 
   sessionError: string;
 };
 
 /** 시장·종목 선택부터 카드 피드까지 메인 화면의 콘텐츠를 렌더링한다. */
 export function MainPage({
+  authenticated,
   markets,
   activeMarket,
   marketsLoading,
@@ -84,6 +86,10 @@ export function MainPage({
   onOpenDetail,
   sessionError,
 }: Props) {
+  const activeStockName =
+    marketStocks.find((stock) => stock.stock_code === activeStockCode)?.name ??
+    activeStockCode;
+
   return (
     <main id="main" className="px-6 pt-16">
       <EconKnowledgeStrip />
@@ -125,6 +131,9 @@ export function MainPage({
           market={activeMarket}
           marketStocks={marketStocks}
           activeStockCode={activeStockCode}
+          stockName={activeStockName}
+          stockCode={activeStockCode}
+          authenticated={authenticated}
           tabs={activeMarketInfo?.tabs}
           disabled={stocksLoading || !activeStockCode}
           activeTab={activeTab}
@@ -143,11 +152,10 @@ export function MainPage({
           cardsError={canLoadCards ? cardsError : ""}
           cardsReason={canLoadCards ? (cardResponse?.reason ?? null) : null}
           cardsDisclaimer={canLoadCards && (cardResponse?.disclaimer ?? false)}
-          linkSentence={
-            canLoadCards ? (cardResponse?.link_sentence ?? null) : null
-          }
           onToggleSave={(card) => onToggleSave(card, activeTab)}
-          onOpenCard={(card) => onOpenDetail(card, activeTab)}
+          onOpenCard={(card) =>
+            onOpenDetail(card, activeTab, cardResponse?.link_sentence ?? null)
+          }
         />
       )}
       {marketsError && (

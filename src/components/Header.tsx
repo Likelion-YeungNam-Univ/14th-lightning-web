@@ -131,7 +131,7 @@ export function Header({
               <div
                 role="menu"
                 aria-label="사용자 메뉴"
-                className="absolute right-0 top-[56px] w-[244px] overflow-hidden rounded-[14px] border border-[#343b49] bg-[#20232c] p-2 shadow-[0_18px_45px_rgba(0,0,0,.45)]"
+                className="absolute right-0 top-[54px] w-[176px] overflow-hidden rounded-[12px] border border-[#343b49] bg-[#20232c] p-1.5 shadow-[0_18px_45px_rgba(0,0,0,.45)]"
               >
                 {["포인트 충전", "기프티콘 교환", "내 참여 내역", "로그아웃"].map(
                   (item) => (
@@ -140,7 +140,7 @@ export function Header({
                       type="button"
                       role="menuitem"
                       onClick={() => handleMenuItemClick(item)}
-                      className="flex h-[52px] w-full items-center rounded-[9px] border-0 bg-transparent px-4 text-left text-[16px] font-medium text-[#c5cad3] transition hover:bg-[#2a2f3a] hover:text-white focus-visible:bg-[#2a2f3a] focus-visible:text-white"
+                      className="flex h-[44px] w-full items-center rounded-[8px] border-0 bg-transparent px-3 text-left text-sm font-medium text-[#c5cad3] transition hover:bg-[#2a2f3a] hover:text-white focus-visible:bg-[#2a2f3a] focus-visible:text-white"
                     >
                       {item}
                     </button>
