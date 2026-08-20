@@ -27,10 +27,13 @@ export interface CommentApiItem {
   deleted: boolean;
   saved_card_snapshot: Record<string, unknown> | null;
   created_at: string;
+  like_count: number;
+  liked_by_me: boolean;
 }
 
 export interface CommentListResponse { items: CommentApiItem[]; }
 export interface CommentCreateResponse { item: CommentApiItem; }
+export interface CommentLikeResponse { liked: boolean; like_count: number; }
 
 export interface CommunityPrediction {
   id: string;

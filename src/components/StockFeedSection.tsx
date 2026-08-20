@@ -10,6 +10,7 @@ type StockFeedSectionProps = {
   stockName: string;
   stockCode: string;
   authenticated: boolean;
+  onRequireLogin: () => void;
   pointBalance: number;
   onSpendPoints: (amount: number) => void;
   tabs?: string[];
@@ -37,6 +38,7 @@ export function StockFeedSection({
   stockName,
   stockCode,
   authenticated,
+  onRequireLogin,
   pointBalance,
   onSpendPoints,
   tabs,
@@ -79,6 +81,7 @@ export function StockFeedSection({
           stockCode={stockCode}
           market={market}
           authenticated={authenticated}
+          onRequireLogin={onRequireLogin}
           pointBalance={pointBalance}
           onSpendPoints={onSpendPoints}
         />

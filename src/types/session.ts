@@ -9,3 +9,4 @@ export type SessionResponse = {
 // POST /auth/mock-login
 // 설정한거 확인
 export type LoginResponse = { authenticated: boolean };
+export type LogoutResponse = { authenticated: boolean };

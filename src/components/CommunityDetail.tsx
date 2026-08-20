@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { getApi, postApi } from '../api/client';
+import { deleteApi, getApi, postApi } from '../api/client';
 import type { SavedCardItem } from '../types/card';
-import type { CommentApiItem, CommentCreateResponse, CommentListResponse, CommunityComment, CommunityPrediction } from '../types/community';
+import type { CommentApiItem, CommentCreateResponse, CommentLikeResponse, CommentListResponse, CommunityComment, CommunityPrediction } from '../types/community';
 import CommunityCardAttachModal from './CommunityCardAttachModal';
 
 interface CommunityDetailProps {
@@ -19,6 +19,26 @@ function formatPrice(price: number, currency: 'KRW' | 'USD') {
     : `${price.toLocaleString()}원`;
 }
 
+const demoCommentsKey = (roomId: string) => `assit:demo-comments:${roomId}`;
+
+function initialComments(prediction: CommunityPrediction) {
+  if (!prediction.id.startsWith('demo-')) return prediction.comments;
+  try {
+    const saved = JSON.parse(localStorage.getItem(demoCommentsKey(prediction.id)) ?? 'null') as unknown;
+    return Array.isArray(saved) ? saved as CommunityComment[] : prediction.comments;
+  } catch {
+    return prediction.comments;
+  }
+}
+
+function saveDemoComments(roomId: string, comments: CommunityComment[]) {
+  try {
+    localStorage.setItem(demoCommentsKey(roomId), JSON.stringify(comments));
+  } catch {
+    // 저장 공간을 사용할 수 없어도 현재 화면의 댓글 기능은 유지한다.
+  }
+}
+
 export default function CommunityDetail({
   prediction,
   pointBalance,
@@ -29,7 +49,7 @@ export default function CommunityDetail({
 }: CommunityDetailProps) {
   const [betAmount, setBetAmount] = useState(500);
   const [myBet, setMyBet] = useState<'up' | 'down' | null>(null);
-  const [comments, setComments] = useState(prediction.comments);
+  const [comments, setComments] = useState(() => initialComments(prediction));
   const [commentDraft, setCommentDraft] = useState('');
   const [commentSide, setCommentSide] = useState<'up' | 'down'>('up');
   const [replyTargetId, setReplyTargetId] = useState<string | null>(null);
@@ -38,11 +58,12 @@ export default function CommunityDetail({
   const [attachedCard, setAttachedCard] = useState<SavedCardItem | null>(null);
   const [commentSubmitting, setCommentSubmitting] = useState(false);
   const [commentError, setCommentError] = useState('');
+  const [pendingLikeIds, setPendingLikeIds] = useState<Set<string>>(() => new Set());
   const [participationMessage, setParticipationMessage] = useState('');
   const isDemoRoom = prediction.id.startsWith('demo-');
 
   function mapComment(item: CommentApiItem): CommunityComment {
-    return { id: String(item.id), author: item.author_tag, side: item.side === 'down' ? 'down' : 'up', body: item.body ?? '', likes: 0, replies: [], attachedCard: item.saved_card_snapshot };
+    return { id: String(item.id), author: item.author_tag, side: item.side === 'down' ? 'down' : 'up', body: item.body ?? '', likes: item.like_count, likedByMe: item.liked_by_me, replies: [], attachedCard: item.saved_card_snapshot };
   }
 
   useEffect(() => {
@@ -52,7 +73,7 @@ export default function CommunityDetail({
       .then((response) => { if (!cancelled) setComments(response.items.filter((item) => !item.deleted).map(mapComment)); })
       .catch(() => undefined);
     return () => { cancelled = true; };
-  }, [prediction.id]);
+  }, [authenticated, prediction.id]);
 
   const totalPeople = prediction.participantCount;
   const upRatio = Math.round(prediction.upRatio * 100);
@@ -82,15 +103,41 @@ export default function CommunityDetail({
     return () => window.clearTimeout(timer);
   }, [participationMessage]);
 
-  function toggleLike(commentId: string) {
+  async function toggleLike(commentId: string) {
     if (!authenticated) return;
-    setComments((prev) =>
-      prev.map((c) =>
-        c.id === commentId
-          ? { ...c, likedByMe: !c.likedByMe, likes: c.likes + (c.likedByMe ? -1 : 1) }
-          : c,
-      ),
-    );
+    const comment = comments.find((item) => item.id === commentId);
+    if (!comment || pendingLikeIds.has(commentId)) return;
+
+    if (isDemoRoom) {
+      setComments((prev) => {
+        const next = prev.map((item) => item.id === commentId
+          ? { ...item, likedByMe: !item.likedByMe, likes: item.likes + (item.likedByMe ? -1 : 1) }
+          : item);
+        saveDemoComments(prediction.id, next);
+        return next;
+      });
+      return;
+    }
+
+    setPendingLikeIds((current) => new Set(current).add(commentId));
+    setCommentError('');
+    try {
+      const path = `/comments/${encodeURIComponent(commentId)}/like`;
+      const response = comment.likedByMe
+        ? await deleteApi<CommentLikeResponse>(path)
+        : await postApi<CommentLikeResponse>(path);
+      setComments((prev) => prev.map((item) => item.id === commentId
+        ? { ...item, likedByMe: response.liked, likes: response.like_count }
+        : item));
+    } catch (error) {
+      setCommentError(error instanceof Error ? error.message : '댓글 좋아요를 변경하지 못했습니다.');
+    } finally {
+      setPendingLikeIds((current) => {
+        const next = new Set(current);
+        next.delete(commentId);
+        return next;
+      });
+    }
   }
 
   async function submitComment() {
@@ -101,15 +148,19 @@ export default function CommunityDetail({
     setCommentError('');
     try {
       if (isDemoRoom) {
-        setComments((prev) => [...prev, {
-          id: `local-${Date.now()}`,
-          author: '나',
-          side: commentSide,
-          body,
-          likes: 0,
-          replies: [],
-          attachedCard: attachedCard?.snapshot ?? null,
-        }]);
+        setComments((prev) => {
+          const next = [...prev, {
+            id: `local-${Date.now()}`,
+            author: '나',
+            side: commentSide,
+            body,
+            likes: 0,
+            replies: [],
+            attachedCard: attachedCard?.snapshot ?? null,
+          }];
+          saveDemoComments(prediction.id, next);
+          return next;
+        });
         setCommentDraft('');
         setAttachedCard(null);
         return;
@@ -281,7 +332,8 @@ export default function CommunityDetail({
                   <div className="flex items-center gap-4 mt-1.5">
                     <button
                       type="button"
-                      onClick={() => toggleLike(comment.id)}
+                      onClick={() => void toggleLike(comment.id)}
+                      disabled={pendingLikeIds.has(comment.id)}
                       className={`text-xs flex items-center gap-1 ${
                         comment.likedByMe ? 'text-[#f87171]' : 'text-white/30 hover:text-white/60'
                       }`}

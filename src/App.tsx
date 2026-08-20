@@ -12,6 +12,8 @@ import { useCardActions } from "./hooks/useCardActions";
 import { useStockActions } from "./hooks/useStockActions";
 import { useCardDetail } from "./hooks/useCardDetail";
 import { usePoints } from "./hooks/usePoints";
+import { postApi } from "./api/client";
+import type { LogoutResponse, SessionResponse } from "./types/session";
 
 const ACTIVE_TAB_KEY = "assit:active-source-tab";
 
@@ -28,7 +30,11 @@ export default function App() {
   const { authenticated, setAuthenticated, sessionLoading, sessionError } =
     useSession();
   const [loginOpen, setLoginOpen] = useState(false);
-  const { points, spendPoints } = usePoints(authenticated);
+  // 포인트 API는 로그인 여부와 관계없이 세션만 준비되면 조회할 수 있다.
+  const { points, sessionPoints, spendPoints } = usePoints(
+    authenticated,
+    !sessionLoading,
+  );
   const {
     markets,
     activeMarket,
@@ -56,6 +62,11 @@ export default function App() {
     sessionStorage.setItem(ACTIVE_TAB_KEY, tab);
     setActiveTab(tab);
   }, []);
+  const logout = async () => {
+    await postApi<LogoutResponse>("/auth/logout");
+    await postApi<SessionResponse>("/session");
+    setAuthenticated(false);
+  };
   const { cardResponse, setCardResponse, cardsLoading, cardsError, canLoadCards } =
     useCards(activeStockCode, activeTab, activeMarketInfo, selectTab);
   const { savedResponse, setSavedResponse, savedLoading, savedError } =
@@ -114,12 +125,13 @@ export default function App() {
         authenticated={authenticated}
         sessionLoading={sessionLoading}
         points={points}
-        onLoginClick={() => setLoginOpen(true)} onLogoutClick={function (): void {
-          throw new Error("Function not implemented.");
-        } }      />
+        onLoginClick={() => setLoginOpen(true)}
+        onLogoutClick={() => void logout()}
+      />
       <MainPage
         authenticated={authenticated}
-        pointBalance={points?.balance ?? 0}
+        onRequireLogin={() => setLoginOpen(true)}
+        pointBalance={sessionPoints?.balance ?? 0}
         onSpendPoints={spendPoints}
         markets={markets}
         activeMarket={activeMarket}
