@@ -1,5 +1,6 @@
 import type { StockListProps } from "../types/stock";
 import { useStockReorder } from "../hooks/useStockReorder";
+import { displayStockName } from "../utils/stock-name";
 
 /** 등록 종목을 표시하고 선택 및 순서 변경 입력을 처리한다. */
 export function StockList({
@@ -28,18 +29,20 @@ export function StockList({
   return (
     <section
       aria-label="관심 종목"
-      className="-mx-6 flex min-h-[82px] flex-col justify-center border-y border-[#20242c] bg-[#12151b] px-6 py-4 max-[760px]:min-h-[78px] max-[760px]:px-[18px]"
+      className="-mx-6 flex min-h-[58px] flex-col justify-center border-y border-[#20242c] bg-[#0f1115] px-6 py-3 max-[760px]:min-h-[54px] max-[760px]:px-[18px]"
     >
-      <div className="flex items-center gap-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div className="flex items-center gap-1.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {stocksLoading ? (
           <>
-            <span className="h-9 w-24 shrink-0 animate-pulse rounded-full bg-[#1c2029]" />
-            <span className="h-9 w-28 shrink-0 animate-pulse rounded-full bg-[#1c2029]" />
-            <span className="h-9 w-20 shrink-0 animate-pulse rounded-full bg-[#1c2029]" />
+            <span className="h-7 w-14 shrink-0 animate-pulse rounded-full bg-[#1c2029]" />
+            <span className="h-7 w-14 shrink-0 animate-pulse rounded-full bg-[#1c2029]" />
+            <span className="h-7 w-14 shrink-0 animate-pulse rounded-full bg-[#1c2029]" />
           </>
         ) : (
           // useStocks가 display_order 기준으로 정렬한 종목을 표시한다.
-          stocks.map((stock, index) => (
+          stocks.map((stock, index) => {
+            const displayName = displayStockName(stock);
+            return (
             <div
               key={stock.stock_code}
               draggable={reorderMode && !reordering}
@@ -61,20 +64,20 @@ export function StockList({
                 aria-pressed={activeStockCode === stock.stock_code}
                 aria-label={
                   reorderMode
-                    ? `${stock.name} 종목. 드래그하여 순서 변경`
-                    : stock.name
+                    ? `${displayName} 종목. 드래그하여 순서 변경`
+                    : displayName
                 }
                 onClick={() => {
                   // 순서 변경 중에는 클릭으로 활성 종목이 바뀌지 않게 한다.
                   if (!reorderMode) onSelectStock(stock.stock_code);
                 }}
                 onKeyDown={(event) => handleKeyDown(event, index)}
-                className={`shrink-0 rounded-full border px-3.5 py-2 text-[13px] font-bold transition-colors duration-[180ms] ease-[cubic-bezier(.23,1,.32,1)] ${
+                className={`h-7 shrink-0 rounded-full border px-3 text-[10px] font-bold leading-none transition-colors duration-[180ms] ease-[cubic-bezier(.23,1,.32,1)] ${
                   reorderMode
                     ? "border-[#4d9fff]/60 bg-[#203651] text-[#79b8ff]"
                     : activeStockCode === stock.stock_code
-                      ? "border-transparent bg-[#4d9fff] text-[#0f1115]"
-                      : "border-transparent bg-[#1c2029] text-[#9aa3b2] hover:border-[#303846] hover:bg-[#202530] hover:text-[#f2f3f5]"
+                      ? "border-[#4d9fff] bg-[#4d9fff] text-[#07111f]"
+                      : "border-[#222832] bg-[#171b22] text-[#8fa1b8] hover:border-[#344152] hover:bg-[#1c222c] hover:text-[#d9e4f2]"
                 }`}
               >
                 {reorderMode && (
@@ -82,10 +85,11 @@ export function StockList({
                     ⋮⋮
                   </span>
                 )}
-                {stock.name}
+                {displayName}
               </button>
             </div>
-          ))
+            );
+          })
         )}
 
         {/* 종목이 두 개 이상이고 저장 콜백이 연결된 경우에만 순서 변경을 제공한다. */}
@@ -95,7 +99,7 @@ export function StockList({
             aria-pressed={reorderMode}
             onClick={toggleReorderMode}
             disabled={reordering}
-            className={`shrink-0 rounded-full border px-3.5 py-2 text-[13px] font-bold transition-colors ${
+            className={`h-7 shrink-0 rounded-full border px-3 text-[10px] font-bold leading-none transition-colors ${
               reorderMode
                 ? "border-[#4d9fff]/70 bg-[#203651] text-[#79b8ff]"
                 : "border-[#303846] bg-[#171b22] text-[#9aa3b2] hover:text-[#f2f3f5]"
@@ -115,7 +119,7 @@ export function StockList({
             type="button"
             onClick={onAddStock}
             disabled={!onAddStock || reorderMode}
-            className="shrink-0 rounded-full border border-dashed border-[#4d9fff]/50 bg-[#1c2029] px-3.5 py-2 text-[13px] font-bold text-[#4d9fff] transition-colors duration-[180ms] ease-[cubic-bezier(.23,1,.32,1)] hover:bg-[#252b36] disabled:cursor-default disabled:opacity-50"
+            className="h-7 shrink-0 rounded-full border border-dashed border-[#4d9fff]/80 bg-transparent px-3 text-[10px] font-bold leading-none text-[#4d9fff] transition-colors duration-[180ms] ease-[cubic-bezier(.23,1,.32,1)] hover:bg-[#172334] disabled:cursor-default disabled:opacity-50"
           >
             ＋ 종목 추가
           </button>

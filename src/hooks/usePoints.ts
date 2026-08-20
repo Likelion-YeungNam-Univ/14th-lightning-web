@@ -23,5 +23,18 @@ export function usePoints(authenticated: boolean) {
     };
   }, [authenticated]);
 
-  return authenticated ? points : null;
+  const visiblePoints = authenticated ? points : null;
+  const spendPoints = (amount: number) => {
+    setPoints((current) => current ? {
+      ...current,
+      balance: Math.max(0, current.balance - amount),
+      pizza_progress: {
+        ...current.pizza_progress,
+        held: Math.max(0, current.pizza_progress.held - amount),
+        percent: Math.max(0, Math.round((Math.max(0, current.pizza_progress.held - amount) / current.pizza_progress.target) * 100)),
+      },
+    } : current);
+  };
+
+  return { points: visiblePoints, spendPoints };
 }

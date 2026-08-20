@@ -9,6 +9,7 @@ interface CommunityDetailProps {
   pointBalance: number;
   authenticated?: boolean; // 로그인 여부 — 실제 인증 연결 전까지 기본 false
   stockCode: string;
+  onPointsSpent?: (amount: number) => void;
   onBack: () => void;
 }
 
@@ -23,6 +24,7 @@ export default function CommunityDetail({
   pointBalance,
   authenticated = false,
   stockCode,
+  onPointsSpent,
   onBack,
 }: CommunityDetailProps) {
   const [betAmount, setBetAmount] = useState(500);
@@ -36,12 +38,15 @@ export default function CommunityDetail({
   const [attachedCard, setAttachedCard] = useState<SavedCardItem | null>(null);
   const [commentSubmitting, setCommentSubmitting] = useState(false);
   const [commentError, setCommentError] = useState('');
+  const [participationMessage, setParticipationMessage] = useState('');
+  const isDemoRoom = prediction.id.startsWith('demo-');
 
   function mapComment(item: CommentApiItem): CommunityComment {
     return { id: String(item.id), author: item.author_tag, side: item.side === 'down' ? 'down' : 'up', body: item.body ?? '', likes: 0, replies: [], attachedCard: item.saved_card_snapshot };
   }
 
   useEffect(() => {
+    if (prediction.id.startsWith('demo-')) return;
     let cancelled = false;
     void getApi<CommentListResponse>(`/rooms/${encodeURIComponent(prediction.id)}/comments`)
       .then((response) => { if (!cancelled) setComments(response.items.filter((item) => !item.deleted).map(mapComment)); })
@@ -60,8 +65,22 @@ export default function CommunityDetail({
 
   function handleBet(side: 'up' | 'down') {
     if (myBet || totalPeople >= prediction.maxParticipants) return;
+    const amount = Math.min(1000, Math.max(100, betAmount));
+    if (amount > pointBalance) {
+      setParticipationMessage('참여 포인트가 부족해요.');
+      return;
+    }
+    setBetAmount(amount);
     setMyBet(side);
+    onPointsSpent?.(amount);
+    setParticipationMessage(`${side === 'up' ? '간다' : '안 간다'}에 ${amount.toLocaleString()}P를 냈어요.`);
   }
+
+  useEffect(() => {
+    if (!participationMessage) return;
+    const timer = window.setTimeout(() => setParticipationMessage(''), 3000);
+    return () => window.clearTimeout(timer);
+  }, [participationMessage]);
 
   function toggleLike(commentId: string) {
     if (!authenticated) return;
@@ -81,6 +100,20 @@ export default function CommunityDetail({
     setCommentSubmitting(true);
     setCommentError('');
     try {
+      if (isDemoRoom) {
+        setComments((prev) => [...prev, {
+          id: `local-${Date.now()}`,
+          author: '나',
+          side: commentSide,
+          body,
+          likes: 0,
+          replies: [],
+          attachedCard: attachedCard?.snapshot ?? null,
+        }]);
+        setCommentDraft('');
+        setAttachedCard(null);
+        return;
+      }
       const response = await postApi<CommentCreateResponse>(`/rooms/${encodeURIComponent(prediction.id)}/comments`, { body, saved_card_id: attachedCard?.card_id ?? null });
       setComments((prev) => [...prev, mapComment(response.item)]);
       setCommentDraft('');
@@ -204,6 +237,12 @@ export default function CommunityDetail({
               안 간다
             </button>
           </div>
+
+          {myBet && (
+            <div className="mt-3 rounded-lg bg-[#15181f] px-3 py-2.5 text-xs text-emerald-300">
+              ✓ {myBet === 'up' ? '간다' : '안 간다'}에 {betAmount.toLocaleString()}P 참여 중
+            </div>
+          )}
 
           <p className="text-xs text-white/30 mt-3 text-center">
             판가름 날짜의 종가로 자동 판정돼요.
@@ -358,6 +397,7 @@ export default function CommunityDetail({
         </div>
       </div>
       {attachOpen && <CommunityCardAttachModal stockCode={stockCode} selected={attachedCard} onClose={() => setAttachOpen(false)} onSelect={(item) => { setAttachedCard(item); setAttachOpen(false); }} />}
+      {participationMessage && <div role="status" className="status-banner--info fixed bottom-5 left-1/2 z-[80] -translate-x-1/2 rounded-lg border border-white/10 bg-[#20252f] px-4 py-3 text-xs font-bold text-white shadow-2xl"><span className="mr-2">✓</span>{participationMessage}</div>}
     </div>
   );
 }

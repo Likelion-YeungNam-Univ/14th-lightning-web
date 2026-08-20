@@ -20,7 +20,7 @@ export default function App() {
   const { authenticated, setAuthenticated, sessionLoading, sessionError } =
     useSession();
   const [loginOpen, setLoginOpen] = useState(false);
-  const points = usePoints(authenticated);
+  const { points, spendPoints } = usePoints(authenticated);
   const {
     markets,
     activeMarket,
@@ -107,6 +107,8 @@ export default function App() {
         } }      />
       <MainPage
         authenticated={authenticated}
+        pointBalance={points?.balance ?? 0}
+        onSpendPoints={spendPoints}
         markets={markets}
         activeMarket={activeMarket}
         marketsLoading={marketsLoading}
