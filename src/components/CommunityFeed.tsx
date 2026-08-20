@@ -4,6 +4,7 @@ import CommunityCard from './CommunityCard';
 import CommunityDetail from './CommunityDetail';
 import CommunityCreateModal, { type CommunityCreateFormData } from './CommunityCreateModal';
 import TradingViewChart from './TradingViewChart';
+import { toTradingViewSymbol } from '../lib/tradingview-symbol';
 
 // 종목별 기준 정보 (실제 API 연결 전까지 쓰는 임시 매핑)
 const STOCK_MOCK_CONFIG: Record<string, { currency: CommunityCurrency; basePrice: number }> = {
@@ -106,8 +107,7 @@ export default function CommunityFeed({
   pointBalance = 7200,
   authenticated,
 }: CommunityFeedProps) {
-  const config = STOCK_MOCK_CONFIG[stockName] ?? { currency: 'KRW' as const, basePrice: 100000 };
-  const [predictions, setPredictions] = useState(() => generatePredictions(stockName));
+  const predictions = generatePredictions(stockName);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
@@ -118,40 +118,17 @@ export default function CommunityFeed({
     return (
       <CommunityDetail
         prediction={selectedPrediction}
-        stockCode={stockCode}
         pointBalance={pointBalance}
         authenticated={authenticated}
         onBack={() => setSelectedId(null)}
-        onDelete={() => {
-          setPredictions((current) => current.filter((item) => item.id !== selectedPrediction.id));
-          setSelectedId(null);
-        }}
       />
     );
   }
 
+  const symbol = toTradingViewSymbol(stockCode, market);
+
   function handleCreateSubmit(data: CommunityCreateFormData) {
-    // 현재 API에는 커뮤니티 생성 엔드포인트가 없으므로, 만든 방은 이 화면에서 즉시 표시한다.
-    // API가 추가되면 이 지점에서 생성 요청 후 서버 응답으로 교체하면 된다.
-    setPredictions((current) => [
-      {
-        id: `local-${Date.now()}`,
-        stockName: data.stockName,
-        title: data.title,
-        direction: data.direction,
-        targetPrice: data.expectedPrice,
-        currency: config.currency,
-        deadlineLabel: data.deadlineDate.slice(5).replace('-', '.'),
-        participantCount: 1,
-        maxParticipants: data.maxParticipants,
-        totalPoints: data.betAmount,
-        upRatio: data.direction === 'up' ? 1 : 0,
-        creatorName: '나',
-        post: data.content,
-        comments: [],
-      },
-      ...current,
-    ]);
+    console.log('제출된 폼 데이터:', data); // TODO: 실제 저장 API 연결 지점 (postApi 등)
     setIsCreateOpen(false);
   }
 
@@ -159,7 +136,7 @@ export default function CommunityFeed({
     <div>
       {/* 차트 */}
       <div className="mb-5">
-        <TradingViewChart key={stockCode} stockCode={stockCode} stockName={stockName} market={market} height={420} />
+        <TradingViewChart symbol={symbol} height={420} />
       </div>
 
       {/* 헤더 */}
@@ -202,8 +179,6 @@ export default function CommunityFeed({
       {isCreateOpen && (
         <CommunityCreateModal
           stockName={stockName}
-          currency={config.currency}
-          defaultPrice={config.basePrice}
           pointBalance={pointBalance}
           onClose={() => setIsCreateOpen(false)}
           onSubmit={handleCreateSubmit}

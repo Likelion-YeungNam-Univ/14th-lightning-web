@@ -15,10 +15,6 @@ export interface CommunityComment {
   likes: number;
   likedByMe?: boolean;
   replies: CommunityReply[];
-  attachedCard?: {
-    title: string;
-    sourceName: string;
-  };
 }
 
 export interface CommunityPrediction {
