@@ -1,6 +1,10 @@
 import { useEffect, useState } from "react";
-import { getApi } from "../api/client";
-import type { PointBalanceResponse } from "../types/points";
+import { getApi, postApi } from "../api/client";
+import type {
+  GifticonExchangeResponse,
+  PointBalanceResponse,
+  PointChargeResponse,
+} from "../types/points";
 
 export function usePoints(authenticated: boolean, sessionReady = authenticated) {
   const [points, setPoints] = useState<PointBalanceResponse | null>(null);
@@ -24,6 +28,37 @@ export function usePoints(authenticated: boolean, sessionReady = authenticated) 
   }, [authenticated, sessionReady]);
 
   const visiblePoints = authenticated ? points : null;
+
+  const applyBalance = (balance: number) => {
+    setPoints((current) => {
+      if (!current) return current;
+      const target = current.pizza_progress.target;
+      return {
+        ...current,
+        balance,
+        pizza_progress: {
+          ...current.pizza_progress,
+          held: balance,
+          percent: Math.min(100, Math.max(0, Math.round((balance / target) * 100))),
+        },
+      };
+    });
+  };
+
+  const chargePoints = async (amount: number) => {
+    const response = await postApi<PointChargeResponse>("/me/points/charge", {
+      amount,
+    });
+    applyBalance(response.balance);
+    return response;
+  };
+
+  const redeemGifticon = async () => {
+    const response = await postApi<GifticonExchangeResponse>("/me/gifticons");
+    applyBalance(response.balance);
+    return response;
+  };
+
   const spendPoints = (amount: number) => {
     setPoints((current) => current ? {
       ...current,
@@ -37,4 +72,5 @@ export function usePoints(authenticated: boolean, sessionReady = authenticated) 
   };
 
   return { points: visiblePoints, sessionPoints: points, spendPoints };
+  return { points: visiblePoints, spendPoints, chargePoints, redeemGifticon };
 }

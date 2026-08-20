@@ -4,6 +4,11 @@
  */
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "/api";
 
+/** EventSource처럼 공통 fetch 함수 밖에서 API를 호출할 때 사용할 URL을 만든다. */
+export function apiUrl(path: string) {
+  return `${API_BASE_URL}${path}`;
+}
+
 /** 백엔드 응답 */
 type ErrorPayload = {
   code?: string;
