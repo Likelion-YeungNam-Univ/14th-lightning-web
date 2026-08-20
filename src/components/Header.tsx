@@ -15,6 +15,19 @@ const MOCK_HISTORY_ENTRIES: PointHistoryEntry[] = [
   { id: "3", label: "피자 기프티콘 교환", amount: -18000, date_label: "지난달" },
 ];
 
+const GIFT_RESULT_STORAGE_PREFIX = "assit:gift-result:";
+
+function isGifticonExchangeResponse(value: unknown): value is GifticonExchangeResponse {
+  if (!value || typeof value !== "object") return false;
+  const result = value as Record<string, unknown>;
+  return (
+    typeof result.order_id === "number" &&
+    typeof result.points_used === "number" &&
+    typeof result.issued_code === "string" &&
+    typeof result.balance === "number"
+  );
+}
+
 type HeaderProps = {
   authenticated: boolean;
   sessionLoading: boolean;
@@ -52,6 +65,37 @@ export function Header({
   const target = 23_000;
   const percent = Math.min(100, Math.max(0, Math.round((held / target) * 100)));
   const numberFormatter = new Intl.NumberFormat("ko-KR");
+  const giftResultStorageKey = account?.login_id
+    ? `${GIFT_RESULT_STORAGE_PREFIX}${account.login_id}`
+    : null;
+
+  useEffect(() => {
+    const restoreTimer = window.setTimeout(() => {
+      if (!authenticated || !giftResultStorageKey) {
+        setGiftResult(null);
+        return;
+      }
+      try {
+        const storedResult = window.localStorage.getItem(giftResultStorageKey);
+        if (!storedResult) {
+          setGiftResult(null);
+          return;
+        }
+        const parsedResult: unknown = JSON.parse(storedResult);
+        if (isGifticonExchangeResponse(parsedResult)) {
+          setGiftResult(parsedResult);
+        } else {
+          window.localStorage.removeItem(giftResultStorageKey);
+          setGiftResult(null);
+        }
+      } catch {
+        window.localStorage.removeItem(giftResultStorageKey);
+        setGiftResult(null);
+      }
+    }, 0);
+
+    return () => window.clearTimeout(restoreTimer);
+  }, [authenticated, giftResultStorageKey]);
 
   useEffect(() => {
     if (!userMenuOpen) return;
@@ -90,6 +134,9 @@ export function Header({
     }
     if (item === "로그아웃") {
       setGiftResult(null);
+      if (giftResultStorageKey) {
+        window.localStorage.removeItem(giftResultStorageKey);
+      }
       onLogoutClick(); // 추가
     }
   }
@@ -111,9 +158,18 @@ export function Header({
     setPointActionLoading(true);
     setPointActionError("");
     setGiftResult(null);
+    if (giftResultStorageKey) {
+      window.localStorage.removeItem(giftResultStorageKey);
+    }
     try {
       const response = await onRedeemGifticon();
       setGiftResult(response);
+      if (giftResultStorageKey) {
+        window.localStorage.setItem(
+          giftResultStorageKey,
+          JSON.stringify(response),
+        );
+      }
     } catch (error) {
       setPointActionError(error instanceof Error ? error.message : "기프티콘 교환에 실패했습니다.");
     } finally {
