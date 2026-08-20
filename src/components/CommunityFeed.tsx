@@ -90,7 +90,7 @@ function roomToPrediction(room: RoomListItem, stockName: string, market: string)
     currency: currencyForMarket(market),
     deadlineLabel: room.judge_date.slice(5).replace('-', '.'),
     participantCount: room.participant_count,
-    maxParticipants: 4,
+    maxParticipants: room.max_participants,
     totalPoints: room.total_points,
     upRatio,
     creatorName: '',
@@ -195,26 +195,14 @@ export default function CommunityFeed({
       judge_date: data.deadlineDate,
       body: data.content || null,
       amount: data.betAmount,
+      max_participants: data.maxParticipants,
     };
     try {
-      const created = USE_SERVER_COMMUNITY_ROOMS
-        ? roomToPrediction((await postApi<RoomCreateResponse>('/rooms', request)).room, stockName, market)
-        : {
-            id: `local-created-${stockCode}-${Date.now()}`,
-            stockName,
-            title: data.title,
-            direction: data.direction,
-            targetPrice: data.expectedPrice,
-            currency: currencyForMarket(market),
-            deadlineLabel: data.deadlineDate.slice(5).replace('-', '.'),
-            participantCount: 1,
-            maxParticipants: data.maxParticipants,
-            totalPoints: data.betAmount,
-            upRatio: data.direction === 'up' ? 1 : 0,
-            creatorName: '나',
-            post: data.content,
-            comments: [],
-          } satisfies CommunityPrediction;
+      const created = roomToPrediction(
+        (await postApi<RoomCreateResponse>('/rooms', request)).room,
+        stockName,
+        market,
+      );
       // 이번 시연에서 만든 방만 기본 카드 2개보다 앞에 임시로 표시한다.
       setPredictions((current) => [created, ...current.filter((room) => room.id !== created.id)]);
       onSpendPoints?.(data.betAmount);

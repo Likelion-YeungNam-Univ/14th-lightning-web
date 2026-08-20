@@ -64,6 +64,7 @@ export interface RoomListItem {
   target_price: number;
   judge_date: string;
   participant_count: number;
+  max_participants: number;
   total_points: number;
   up: RoomSideCount;
   down: RoomSideCount;
@@ -84,6 +85,7 @@ export interface RoomCreateRequest {
   judge_date: string;
   body: string | null;
   amount: number;
+  max_participants: number;
 }
 
 export interface RoomCreateResponse {
