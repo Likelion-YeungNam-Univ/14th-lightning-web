@@ -12,10 +12,9 @@ import { useCardActions } from "./hooks/useCardActions";
 import { useStockActions } from "./hooks/useStockActions";
 import { useCardDetail } from "./hooks/useCardDetail";
 import { usePoints } from "./hooks/usePoints";
-import { postApi } from "./api/client";
-import type { LogoutResponse, SessionResponse } from "./types/session";
 import { logout } from "./api/auth";
-import type { AccountResponse } from "./types/session";
+import { postApi } from "./api/client";
+import type { AccountResponse, SessionResponse } from "./types/session";
 import { LOGIN_ID_STORAGE_KEY } from "./types/session";
 
 const ACTIVE_TAB_KEY = "assit:active-source-tab";
@@ -34,11 +33,10 @@ export default function App() {
     useSession();
   const [loginOpen, setLoginOpen] = useState(false);
   // 포인트 API는 로그인 여부와 관계없이 세션만 준비되면 조회할 수 있다.
-  const { points, sessionPoints, spendPoints } = usePoints(
+  const { points, sessionPoints, spendPoints, chargePoints, redeemGifticon } = usePoints(
     authenticated,
     !sessionLoading,
   );
-  const { points, spendPoints, chargePoints, redeemGifticon } = usePoints(authenticated);
   const {
     markets,
     activeMarket,
@@ -66,10 +64,9 @@ export default function App() {
     sessionStorage.setItem(ACTIVE_TAB_KEY, tab);
     setActiveTab(tab);
   }, []);
-  const logout = async () => {
-    await postApi<LogoutResponse>("/auth/logout");
+  const handleLogout = async () => {
+    await logout();
     await postApi<SessionResponse>("/session");
-    setAuthenticated(false);
   };
   const { cardResponse, setCardResponse, cardsLoading, cardsError, canLoadCards } =
     useCards(activeStockCode, activeTab, activeMarketInfo, selectTab);
@@ -129,12 +126,10 @@ export default function App() {
         authenticated={authenticated}
         sessionLoading={sessionLoading}
         points={points}
-        onLoginClick={() => setLoginOpen(true)}
-        onLogoutClick={() => void logout()}
         account={account}
         onLoginClick={() => setLoginOpen(true)}
         onLogoutClick={() => {
-          void logout().finally(() => {
+          void handleLogout().finally(() => {
             window.localStorage.removeItem(LOGIN_ID_STORAGE_KEY);
             setAuthenticated(false);
             setAccount(null);
