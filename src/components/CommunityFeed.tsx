@@ -227,6 +227,13 @@ export default function CommunityFeed({
     }
   }
 
+  function deleteLocalRoom(roomId: string) {
+    if (!roomId.startsWith('local-created-')) return;
+    setPredictions((current) => current.filter((room) => room.id !== roomId));
+    if (selectedId === roomId) setSelectedId(null);
+    sessionStorage.removeItem(selectedRoomKey(stockCode));
+  }
+
 
   return (
     <div className="pb-12">
@@ -244,7 +251,7 @@ export default function CommunityFeed({
       ) : predictions.length === 0 ? (
         <div className="mt-5 rounded-2xl border border-white/10 bg-[#15181f] px-5 py-14 text-center"><p className="font-bold text-white">아직 만들어진 커뮤니티가 없어요.</p><p className="mt-2 text-sm text-white/40">첫 번째 커뮤니티를 만들어 의견을 나눠보세요.</p></div>
       ) : (
-        <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">{predictions.map((prediction) => <CommunityCard key={prediction.id} prediction={prediction} onClick={(roomId) => { sessionStorage.setItem(selectedRoomKey(stockCode), roomId); setSelectedId(roomId); }} />)}</div>
+        <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">{predictions.map((prediction) => <CommunityCard key={prediction.id} prediction={prediction} onClick={(roomId) => { sessionStorage.setItem(selectedRoomKey(stockCode), roomId); setSelectedId(roomId); }} onDelete={prediction.id.startsWith('local-created-') ? deleteLocalRoom : undefined} />)}</div>
       )}
 
       {isCreateOpen && <CommunityCreateModal stockName={stockName} stockCode={stockCode} currency={currencyForMarket(market)} pointBalance={pointBalance} submitting={submitting} submitError={submitError} onClose={() => { if (!submitting) setIsCreateOpen(false); }} onSubmit={(data) => void handleCreateSubmit(data)} />}

@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { deleteApi, getApi, postApi } from '../api/client';
 import type { SavedCardItem } from '../types/card';
-import type { CommentApiItem, CommentCreateResponse, CommentLikeResponse, CommentListResponse, CommunityComment, CommunityPrediction } from '../types/community';
+import type { BettingEntryResponse, CommentApiItem, CommentCreateResponse, CommentLikeResponse, CommentListResponse, CommunityComment, CommunityPrediction } from '../types/community';
+import { LOGIN_ID_STORAGE_KEY } from '../types/session';
 import CommunityCardAttachModal from './CommunityCardAttachModal';
 
 interface CommunityDetailProps {
@@ -39,6 +40,22 @@ function saveDemoComments(roomId: string, comments: CommunityComment[]) {
   }
 }
 
+type SavedParticipation = { side: 'up' | 'down'; amount: number };
+
+function participationKey(roomId: string) {
+  const loginId = localStorage.getItem(LOGIN_ID_STORAGE_KEY) ?? 'anonymous';
+  return `assit:community-entry:${loginId}:${roomId}`;
+}
+
+function readParticipation(roomId: string): SavedParticipation | null {
+  try {
+    const value = JSON.parse(localStorage.getItem(participationKey(roomId)) ?? 'null') as SavedParticipation | null;
+    return value && (value.side === 'up' || value.side === 'down') && Number.isFinite(value.amount) ? value : null;
+  } catch {
+    return null;
+  }
+}
+
 export default function CommunityDetail({
   prediction,
   pointBalance,
@@ -47,8 +64,10 @@ export default function CommunityDetail({
   onPointsSpent,
   onBack,
 }: CommunityDetailProps) {
-  const [betAmount, setBetAmount] = useState(500);
-  const [myBet, setMyBet] = useState<'up' | 'down' | null>(null);
+  const savedParticipation = readParticipation(prediction.id);
+  const [betAmount, setBetAmount] = useState(savedParticipation?.amount ?? 500);
+  const [myBet, setMyBet] = useState<'up' | 'down' | null>(savedParticipation?.side ?? null);
+  const [betSubmitting, setBetSubmitting] = useState(false);
   const [comments, setComments] = useState(() => initialComments(prediction));
   const [commentDraft, setCommentDraft] = useState('');
   const [commentSide, setCommentSide] = useState<'up' | 'down'>('up');
@@ -84,17 +103,32 @@ export default function CommunityDetail({
   const upPool = Math.round((upRatio / 100) * prediction.totalPoints);
   const downPool = prediction.totalPoints - upPool;
 
-  function handleBet(side: 'up' | 'down') {
-    if (myBet || totalPeople >= prediction.maxParticipants) return;
+  async function handleBet(side: 'up' | 'down') {
+    if (!authenticated) {
+      setParticipationMessage('로그인 후 참여할 수 있어요.');
+      return;
+    }
+    if (myBet || betSubmitting || totalPeople >= prediction.maxParticipants) return;
     const amount = Math.min(1000, Math.max(100, betAmount));
     if (amount > pointBalance) {
       setParticipationMessage('참여 포인트가 부족해요.');
       return;
     }
-    setBetAmount(amount);
-    setMyBet(side);
-    onPointsSpent?.(amount);
-    setParticipationMessage(`${side === 'up' ? '간다' : '안 간다'}에 ${amount.toLocaleString()}P를 냈어요.`);
+    setBetSubmitting(true);
+    try {
+      if (!isDemoRoom) {
+        await postApi<BettingEntryResponse>(`/rooms/${encodeURIComponent(prediction.id)}/entries`, { side, amount });
+      }
+      localStorage.setItem(participationKey(prediction.id), JSON.stringify({ side, amount } satisfies SavedParticipation));
+      setBetAmount(amount);
+      setMyBet(side);
+      onPointsSpent?.(amount);
+      setParticipationMessage(`${side === 'up' ? '간다' : '안 간다'}에 ${amount.toLocaleString()}P를 냈어요.`);
+    } catch (error) {
+      setParticipationMessage(error instanceof Error ? error.message : '커뮤니티에 참여하지 못했습니다.');
+    } finally {
+      setBetSubmitting(false);
+    }
   }
 
   useEffect(() => {
@@ -275,16 +309,16 @@ export default function CommunityDetail({
           <div className="grid grid-cols-2 gap-2.5">
             <button
               type="button"
-              disabled={Boolean(myBet) || totalPeople >= prediction.maxParticipants}
-              onClick={() => handleBet('up')}
+              disabled={Boolean(myBet) || betSubmitting || totalPeople >= prediction.maxParticipants}
+              onClick={() => void handleBet('up')}
               className="rounded-lg bg-[#5bd49e] py-3.5 text-sm font-bold text-[#0b1c12] disabled:opacity-40"
             >
               간다
             </button>
             <button
               type="button"
-              disabled={Boolean(myBet) || totalPeople >= prediction.maxParticipants}
-              onClick={() => handleBet('down')}
+              disabled={Boolean(myBet) || betSubmitting || totalPeople >= prediction.maxParticipants}
+              onClick={() => void handleBet('down')}
               className="rounded-lg bg-[#f2a45f] py-3.5 text-sm font-bold text-[#2b1608] disabled:opacity-40"
             >
               안 간다

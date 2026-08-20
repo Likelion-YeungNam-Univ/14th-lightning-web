@@ -3,6 +3,7 @@ import type { CommunityPrediction } from '../types/community';
 interface CommunityCardProps {
   prediction: CommunityPrediction;
   onClick: (id: string) => void;
+  onDelete?: (id: string) => void;
 }
 
 function formatPrice(price: number, currency: 'KRW' | 'USD') {
@@ -11,12 +12,12 @@ function formatPrice(price: number, currency: 'KRW' | 'USD') {
     : `${price.toLocaleString()}원`;
 }
 
-export default function CommunityCard({ prediction, onClick }: CommunityCardProps) {
+export default function CommunityCard({ prediction, onClick, onDelete }: CommunityCardProps) {
   const isUp = prediction.direction === 'up';
   const leadingRatio = isUp ? prediction.upRatio : 1 - prediction.upRatio;
   const progressPercent = Math.min(100, Math.max(0, Math.round(leadingRatio * 100)));
 
-  return (
+  return <div className="relative">
     <button
       type="button"
       onClick={() => onClick(prediction.id)}
@@ -64,5 +65,6 @@ export default function CommunityCard({ prediction, onClick }: CommunityCardProp
         />
       </div>
     </button>
-  );
+    {onDelete && <button type="button" onClick={() => onDelete(prediction.id)} className="absolute right-4 top-4 rounded-md border border-red-400/20 bg-[#1c2029] px-2.5 py-1.5 text-xs font-semibold text-red-300 hover:bg-red-500/10" aria-label={`${prediction.title} 커뮤니티 삭제`}>삭제</button>}
+  </div>;
 }
