@@ -29,7 +29,7 @@ export function StockList({
   return (
     <section
       aria-label="관심 종목"
-      className="-mx-8 flex min-h-[92px] flex-col items-center justify-center gap-0 border-y border-[#20242c] bg-[#12151b] px-6 py-[18px] max-[760px]:px-[18px]"
+      className="-mx-8 flex min-h-[62px] flex-col items-center justify-center gap-0 border-y border-[#20242c] bg-[#12151b] px-6 py-[18px] max-[760px]:px-[18px]"
     >
       <div className="flex w-full items-center gap-2.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {stocksLoading ? (
