@@ -347,7 +347,7 @@ export function EconKnowledgeStrip() {
         </div>
 
         <div className="relative mt-4">
-          <div className="econ-knowledge__viewport overflow-hidden max-[760px]:overflow-x-auto max-[760px]:px-[18px] max-[760px]:[scrollbar-width:none] max-[760px]:[&::-webkit-scrollbar]:hidden">
+          <div className="econ-knowledge__viewport overflow-hidden py-1 max-[760px]:overflow-x-auto max-[760px]:px-[18px] max-[760px]:[scrollbar-width:none] max-[760px]:[&::-webkit-scrollbar]:hidden">
             <div className="econ-knowledge__track flex w-max gap-7">
               {[0, 1].map((copy) => (
                 <div
