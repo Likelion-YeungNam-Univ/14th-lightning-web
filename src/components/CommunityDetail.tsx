@@ -152,70 +152,72 @@ export default function CommunityDetail({
       </button>
 
       {/* 상단 헤더 */}
-      <div className="rounded-2xl bg-[#1c2029] border border-white/[0.06] p-6 mb-4">
-        <div className="flex items-center justify-between mb-4">
-          <span className="text-xs font-semibold px-3 py-1 rounded-md bg-[#1e3a2f] text-[#4ade80]">
+      <header className="mb-5 rounded-2xl border border-white/[0.08] bg-[#1c2029] px-6 py-5 sm:px-7">
+        <div className="mb-4 flex items-center justify-between gap-4">
+          <span className="rounded-md bg-[#17432f] px-3 py-1 text-xs font-bold text-[#4ade80]">
             진행 중
           </span>
-          <span className="text-xs text-white/30">
+          <span className="text-xs text-white/35">
             만든 사람 {prediction.creatorName || '반도체러버'} · 2일 전
           </span>
         </div>
 
-        <h1 className="text-white text-xl font-bold mb-6">{prediction.title}</h1>
+        <h1 className="mb-6 text-xl font-bold tracking-[-0.02em] text-white">{prediction.title}</h1>
 
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-4 gap-x-8 gap-y-4 max-[720px]:grid-cols-2 max-[420px]:grid-cols-1">
           <Metric label="종목" value={prediction.stockName} />
-          <Metric label="판가름 날짜" value={`2026.${prediction.deadlineLabel}`} />
-          <Metric label="생성자 예상가" value={priceLabel} accent />
+          <Metric label="결과일" value={`2026.${prediction.deadlineLabel}`} />
+          <Metric label="기준 가격" value={priceLabel} accent />
           <Metric label="참여 인원" value={`${totalPeople} / ${prediction.maxParticipants}명`} />
         </div>
-      </div>
+      </header>
 
       {/* 본문: 생성자 글 + 참여 패널 */}
-      <div className="grid grid-cols-[1fr_320px] gap-4 mb-4 max-[900px]:grid-cols-1">
-        <div className="rounded-2xl bg-[#1c2029] border border-white/[0.06] p-6">
-          <span className="text-xs text-white/40 font-medium">생성자 글</span>
-          <p className="text-sm text-white/80 leading-6 mt-3 mb-4">
+      <div className="mb-5 grid grid-cols-[minmax(0,1fr)_380px] gap-5 max-[960px]:grid-cols-1">
+        <section className="min-h-[500px] rounded-2xl border border-white/[0.06] bg-[#1c2029] p-6 sm:p-7">
+          <span className="text-xs font-bold text-[#4d9fff]">작성글</span>
+          <p className="mb-6 mt-3 text-[15px] leading-7 text-white/85">
             {prediction.post ||
-              `${prediction.stockName}의 공개 자료와 업황 흐름을 함께 보면, 판가름 날짜까지 이 가격대는 충분히 확인할 수 있다고 봐요. 반대로 보시는 분들은 근거를 남겨주세요.`}
+              `${prediction.stockName}의 공개 자료와 업황 흐름을 함께 보면, 결과일까지 이 가격대는 충분히 확인할 수 있다고 봐요. 반대로 보시는 분들은 근거를 남겨주세요.`}
           </p>
 
-          <div className="grid grid-cols-[1fr_1.3fr] gap-3">
-            <div className="rounded-xl bg-[#171a21] border border-white/[0.06] h-32 flex items-center justify-center">
-              <span className="text-xs text-white/25">첨부 이미지 — 차트 캡처</span>
+          <div className="grid grid-cols-2 gap-5 max-[640px]:grid-cols-1">
+            <div className="flex h-46 items-center justify-center rounded-xl border border-white/[0.04] bg-[#2a2f38]">
+              <span className="text-xs text-white/35">첨부 이미지 · 차트 캡처</span>
             </div>
-            <div className="rounded-xl bg-[#12213a] border border-[#2c4f7c] p-4">
-              <span className="text-xs text-[#4d9fff] font-medium">첨부 링크</span>
-              <p className="text-sm text-white font-semibold mt-1.5 leading-5">
+            <div className="flex h-46 flex-col rounded-xl border border-[#315682] bg-[#171b23] p-5">
+              <span className="text-xs font-bold text-[#4d9fff]">첨부 링크</span>
+              <p className="mt-3 text-sm font-bold leading-6 text-white">
                 주요사항보고서
                 <br />
                 (자기주식취득결과보고서)
               </p>
-              <p className="text-xs text-white/30 mt-3">DART · 2026.04.24</p>
+              <p className="mt-auto text-xs text-blue-200/65">DART · 2026.04.24</p>
             </div>
           </div>
-        </div>
+        </section>
 
-        <div className="rounded-2xl bg-[#1c2029] border border-white/[0.06] p-5">
-          <span className="text-xs text-white/40 font-medium">참여하기</span>
-          <p className="text-3xl font-bold text-white mt-1">
+        <aside className="rounded-2xl border border-white/[0.06] bg-[#1c2029] p-6">
+          <span className="text-xs font-bold text-[#4d9fff]">참여하기</span>
+          <p className="mt-2 text-4xl font-bold tracking-tight text-white">
             {prediction.totalPoints.toLocaleString()}P
           </p>
-          <p className="text-xs text-white/30 mb-4">현재 판돈 · 승자가 전부 가져가요</p>
+          <p className="mb-5 mt-1 text-xs text-white/35">방장이 정한 참여 포인트가 쌓여요</p>
 
           <SideBox label="간다" ratio={upRatio} people={upPeople} pool={upPool} isUp />
           <SideBox label="안 간다" ratio={downRatio} people={downPeople} pool={downPool} isUp={false} />
 
-          <label className="block text-xs text-white/40 mt-4 mb-1.5">참여 금액</label>
-          <input
-            type="text"
-            inputMode="numeric"
-            value={betAmount}
-            onChange={(e) => setBetAmount(Number(e.target.value.replace(/[^0-9]/g, '')) || 0)}
-            className="w-full rounded-lg bg-[#171a21] border border-white/[0.06] px-3.5 py-2.5 text-sm text-white outline-none focus:border-sky-500/50"
-          />
-          <p className="text-xs text-white/30 mt-1.5 mb-4">
+          <label className="mt-4 block rounded-xl bg-[#171a21] px-4 py-3.5 text-xs text-white/45">
+            참여 포인트
+            <input
+              type="text"
+              inputMode="numeric"
+              value={betAmount}
+              onChange={(e) => setBetAmount(Number(e.target.value.replace(/[^0-9]/g, '')) || 0)}
+              className="mt-1 block w-full border-0 bg-transparent p-0 text-lg font-bold text-white outline-none"
+            />
+          </label>
+          <p className="mb-4 mt-2 text-[11px] text-white/30">
             1회 최대 1,000P · 내 포인트 {pointBalance.toLocaleString()}P
           </p>
 
@@ -224,7 +226,7 @@ export default function CommunityDetail({
               type="button"
               disabled={Boolean(myBet) || totalPeople >= prediction.maxParticipants}
               onClick={() => handleBet('up')}
-              className="py-3 rounded-lg bg-[#4ade80] text-[#0b1c12] font-bold text-sm disabled:opacity-40"
+              className="rounded-lg bg-[#5bd49e] py-3.5 text-sm font-bold text-[#0b1c12] disabled:opacity-40"
             >
               간다
             </button>
@@ -232,7 +234,7 @@ export default function CommunityDetail({
               type="button"
               disabled={Boolean(myBet) || totalPeople >= prediction.maxParticipants}
               onClick={() => handleBet('down')}
-              className="py-3 rounded-lg bg-[#fb923c] text-[#2b1608] font-bold text-sm disabled:opacity-40"
+              className="rounded-lg bg-[#f2a45f] py-3.5 text-sm font-bold text-[#2b1608] disabled:opacity-40"
             >
               안 간다
             </button>
@@ -245,9 +247,9 @@ export default function CommunityDetail({
           )}
 
           <p className="text-xs text-white/30 mt-3 text-center">
-            판가름 날짜의 종가로 자동 판정돼요.
+             결과일의 종가로 자동 판정돼요.
           </p>
-        </div>
+        </aside>
       </div>
 
       {/* 댓글 */}
@@ -405,7 +407,7 @@ export default function CommunityDetail({
 function Metric({ label, value, accent = false }: { label: string; value: string; accent?: boolean }) {
   return (
     <div>
-      <p className="text-xs text-white/30 mb-1">{label}</p>
+      <p className="mb-1.5 text-xs text-white/35">{label}</p>
       <p className={`text-sm font-bold ${accent ? 'text-[#4d9fff]' : 'text-white'}`}>{value}</p>
     </div>
   );
@@ -426,22 +428,20 @@ function SideBox({
 }) {
   return (
     <div
-      className={`rounded-lg border p-3 mb-2.5 ${
-        isUp ? 'border-[#2f6b45] bg-[#152a1e]' : 'border-[#7a5330] bg-[#2a1f14]'
-      }`}
+      className="mb-3 rounded-xl border border-transparent bg-[#171b21] p-4"
     >
-      <div className="flex items-center justify-between mb-1.5">
-        <span className={`text-sm font-bold ${isUp ? 'text-[#4ade80]' : 'text-[#fb923c]'}`}>
+      <div className="mb-2 flex items-center justify-between">
+        <span className={`text-base font-bold ${isUp ? 'text-[#4ade80]' : 'text-[#fb923c]'}`}>
           {label}
         </span>
-        <span className={`text-sm font-bold ${isUp ? 'text-[#4ade80]' : 'text-[#fb923c]'}`}>
+        <span className={`text-base font-bold ${isUp ? 'text-[#4ade80]' : 'text-[#fb923c]'}`}>
           {ratio}%
         </span>
       </div>
-      <p className="text-xs text-white/40 mb-2">
+      <p className="mb-2.5 text-xs text-white/45">
         {people}명 · {pool.toLocaleString()}P
       </p>
-      <div className="h-1.5 w-full rounded-full bg-white/[0.08] overflow-hidden">
+      <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/[0.1]">
         <div
           className={`h-full rounded-full ${isUp ? 'bg-[#4ade80]' : 'bg-[#fb923c]'}`}
           style={{ width: `${ratio}%` }}
