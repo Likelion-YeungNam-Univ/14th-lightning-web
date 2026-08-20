@@ -3,6 +3,7 @@ import { deleteApi, postApi } from "../api/client";
 import type { StockAddResponse, StockChanges } from "../types/stock";
 
 type UseStockActionsParams = {
+  authenticated: boolean;
   activeMarket: string;
   refreshMarkets: () => Promise<void>;
   refreshStocks: () => void;
@@ -11,6 +12,7 @@ type UseStockActionsParams = {
 
 /** 종목 추가 모달과 로그인 후 재시도할 종목 변경 요청을 관리한다. */
 export function useStockActions({
+  authenticated,
   activeMarket,
   refreshMarkets,
   refreshStocks,
@@ -21,6 +23,13 @@ export function useStockActions({
     useState<StockChanges | null>(null);
   const [stockActionError, setStockActionError] = useState("");
   const [stockActionNotice, setStockActionNotice] = useState("");
+
+  useEffect(() => {
+    if (authenticated) return;
+
+    setStockModalOpen(false);
+    setPendingStockChanges(null);
+  }, [authenticated]);
 
   useEffect(() => {
     if (!stockActionNotice) return;
@@ -98,6 +107,10 @@ export function useStockActions({
   const openStockModal = () => {
     setStockActionError("");
     setStockActionNotice("");
+    if (!authenticated) {
+      onRequireLogin();
+      return;
+    }
     setStockModalOpen(true);
   };
 

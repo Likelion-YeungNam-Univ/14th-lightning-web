@@ -4,11 +4,13 @@ import { displayStockName } from "../utils/stock-name";
 
 /** 등록 종목을 표시하고 선택 및 순서 변경 입력을 처리한다. */
 export function StockList({
+  editable,
   stocks,
   activeStockCode,
   stocksLoading,
   stocksError,
   onSelectStock,
+  onRequireLogin,
   onAddStock,
   onReorderStocks,
   reordering = false,
@@ -93,11 +95,11 @@ export function StockList({
         )}
 
         {/* 종목이 두 개 이상이고 저장 콜백이 연결된 경우에만 순서 변경을 제공한다. */}
-        {!stocksLoading && stocks.length > 1 && onReorderStocks && (
+        {!stocksLoading && stocks.length > 1 && (onReorderStocks || !editable) && (
           <button
             type="button"
             aria-pressed={reorderMode}
-            onClick={toggleReorderMode}
+            onClick={editable ? toggleReorderMode : onRequireLogin}
             disabled={reordering}
             className={`h-11 shrink-0 whitespace-nowrap rounded-full border px-[18px] text-sm font-bold transition-colors ${
               reorderMode

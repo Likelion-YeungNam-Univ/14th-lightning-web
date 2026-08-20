@@ -98,6 +98,7 @@ export default function App() {
     requireLoginForStocks,
     openStockModal,
   } = useStockActions({
+    authenticated,
     activeMarket,
     refreshMarkets,
     refreshStocks,
@@ -162,7 +163,7 @@ export default function App() {
         stocksError={stocksError}
         onSelectStock={setActiveStockCode}
         onAddStock={openStockModal}
-        onReorderStocks={(stockCodes) => void reorderStocks(stockCodes)}
+        onReorderStocks={authenticated ? (stockCodes) => void reorderStocks(stockCodes) : undefined}
         reordering={reordering}
         reorderError={reorderError}
         stockActionError={stockActionError}
