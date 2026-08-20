@@ -63,7 +63,7 @@ export default function CommunityCreateModal({ stockName, currency = 'KRW', poin
             <label className="text-xs font-medium text-white/45">결과일<input type="date" min={today} value={deadline} onChange={(e) => setDeadline(e.target.value)} className="mt-2 w-full rounded-lg border border-[#3a414d] bg-[#12151b] px-4 py-3 text-sm font-semibold text-white outline-none [color-scheme:dark] focus:border-blue-400" /></label>
           </div>
           <label className="block text-xs font-medium text-white/45">
-            <span className="flex items-center justify-between"><span>방을 만든 이유</span><span aria-live="polite" className="font-normal tabular-nums text-white/35">{content.length}/{MAX_CONTENT_LENGTH}자</span></span>
+            <span className="flex items-center justify-between"><span>작성글</span><span aria-live="polite" className="font-normal tabular-nums text-white/35">{content.length}/{MAX_CONTENT_LENGTH}자</span></span>
             <textarea value={content} maxLength={MAX_CONTENT_LENGTH} onChange={(e) => setContent(e.target.value)} rows={4} placeholder="왜 그렇게 보는지 적어주세요. 사진과 링크를 함께 올릴 수 있어요." className="mt-2 w-full resize-y rounded-lg border border-[#3a414d] bg-[#12151b] px-4 py-3 text-sm text-white placeholder:text-white/35 outline-none focus:border-blue-400" />
           </label>
           <div className="flex flex-wrap items-center gap-2">

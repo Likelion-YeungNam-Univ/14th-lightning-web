@@ -22,7 +22,7 @@ export default function CommunityCard({ prediction, onClick }: CommunityCardProp
       onClick={() => onClick(prediction.id)}
       className="text-left bg-[#1c2029] rounded-2xl p-5 border border-white/[0.06] w-full hover:border-white/[0.15] transition-colors"
     >
-      {/* 상단: 뱃지 + 판가름 날짜 */}
+      {/* 상단: 뱃지 +  결과일 */}
       <div className="flex items-center gap-2 mb-3.5">
         <span
           className={`text-xs font-semibold px-2.5 py-1 rounded-md ${
@@ -34,7 +34,7 @@ export default function CommunityCard({ prediction, onClick }: CommunityCardProp
           {isUp ? '간다 우세' : '안간다 우세'}
         </span>
         <span className="text-xs text-[#8b93a3]">
-          판가름 {prediction.deadlineLabel}
+          결과일 {prediction.deadlineLabel}
         </span>
       </div>
 

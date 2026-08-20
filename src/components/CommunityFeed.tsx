@@ -168,7 +168,11 @@ export default function CommunityFeed({
     return () => window.clearTimeout(timer);
   }, [createdMessage]);
 
+  
   const symbol = useTradingViewSymbol(stockCode, market);
+
+  console.log("TradingView symbol:", symbol);
+  
   const selectedPrediction = predictions.find((prediction) => prediction.id === selectedId) ?? null;
   if (selectedPrediction) {
     return <CommunityDetail prediction={selectedPrediction} stockCode={stockCode} pointBalance={availablePoints} authenticated={authenticated} onPointsSpent={(amount) => { setAvailablePoints((current) => Math.max(0, current - amount)); onSpendPoints?.(amount); }} onBack={() => { sessionStorage.removeItem(selectedRoomKey(stockCode)); setSelectedId(null); }} />;
