@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { ApiError, getApi, postApi } from "../api/client";
-import type { TermExplainResponse } from "../types/card";
+import { getApi } from "../api/client";
+import { useTermExplanationStream } from "../hooks/useTermExplanationStream";
 import type {
   EconCardDetailResponse,
   EconCardItem,
@@ -58,13 +58,14 @@ function EconCardDialog({
   onClose: () => void;
 }) {
   const bodyRef = useRef<HTMLDivElement>(null);
-  const requestRef = useRef(0);
   const [selectedTerm, setSelectedTerm] = useState("");
-  const [termLoading, setTermLoading] = useState(false);
-  const [termError, setTermError] = useState("");
-  const [termResponse, setTermResponse] = useState<TermExplainResponse | null>(
-    null,
-  );
+  const {
+    termLoading,
+    termError,
+    termResponse,
+    explainTerm,
+    resetTermExplanation,
+  } = useTermExplanationStream();
   const [popoverPosition, setPopoverPosition] = useState({ left: 16, top: 16 });
 
   useEffect(() => {
@@ -80,48 +81,12 @@ function EconCardDialog({
     };
   }, [onClose]);
 
-  const explainTerm = async (term: string) => {
-    if (!detail) return;
-    const requestId = ++requestRef.current;
-    setTermLoading(true);
-    setTermError("");
-    setTermResponse(null);
-    try {
-      let response: TermExplainResponse;
-      try {
-        response = await postApi<TermExplainResponse>("/terms/explain", {
-          term,
-          tab: "econ",
-          context: detail.body,
-        });
-      } catch (error) {
-        if (!(error instanceof ApiError) || error.code !== "invalid_tab") {
-          throw error;
-        }
-        response = await postApi<TermExplainResponse>("/terms/explain", {
-          term,
-          tab: "bok",
-          context: detail.body,
-        });
-      }
-      if (requestId === requestRef.current) setTermResponse(response);
-    } catch (termRequestError) {
-      if (requestId !== requestRef.current) return;
-      if (termRequestError instanceof ApiError) {
-        setTermError(termRequestError.message);
-      } else {
-        setTermError("용어 설명을 불러오지 못했어요.");
-      }
-    } finally {
-      if (requestId === requestRef.current) setTermLoading(false);
-    }
-  };
-
   const scheduleSelectedTermCapture = () => {
     window.setTimeout(captureSelectedTerm, 0);
   };
 
   const captureSelectedTerm = () => {
+    if (!detail) return;
     const selection = window.getSelection();
     const container = bodyRef.current;
     if (!selection || selection.isCollapsed || !container) return;
@@ -136,9 +101,8 @@ function EconCardDialog({
     const term = selection.toString().trim().replace(/\s+/g, " ");
     if (!term) return;
     if (term.length > 50) {
+      resetTermExplanation("용어는 50자 이내로 선택해주세요.");
       setSelectedTerm(term.slice(0, 50));
-      setTermResponse(null);
-      setTermError("용어는 50자 이내로 선택해주세요.");
       return;
     }
     const selectionRect = range.getBoundingClientRect();
@@ -157,7 +121,7 @@ function EconCardDialog({
         : Math.max(16, selectionRect.top - estimatedHeight - 12);
     setPopoverPosition({ left, top });
     setSelectedTerm(term);
-    void explainTerm(term);
+    explainTerm({ term, tab: "bok", context: detail.body });
   };
 
   const paragraphs = detail?.body.split(/\n\s*\n/).filter(Boolean) ?? [];
@@ -270,13 +234,20 @@ function EconCardDialog({
         <aside
           role="status"
           onMouseDown={(event) => event.stopPropagation()}
-          style={{ left: popoverPosition.left, top: popoverPosition.top }}
-          className="fixed z-[80] w-[min(420px,calc(100vw-32px))] rounded-[16px] border border-[#3c424e] bg-[#282c36] px-6 py-5 shadow-[0_24px_80px_rgba(0,0,0,.55)] max-[640px]:px-5 max-[640px]:py-5"
+          style={{
+            left: popoverPosition.left,
+            top: popoverPosition.top,
+            maxHeight: `calc(100vh - ${popoverPosition.top + 16}px)`,
+          }}
+          className="fixed z-[80] w-[min(420px,calc(100vw-32px))] overflow-y-auto rounded-[16px] border border-[#3c424e] bg-[#282c36] px-6 py-5 shadow-[0_24px_80px_rgba(0,0,0,.55)] [scrollbar-color:#566071_transparent] [scrollbar-width:thin] max-[640px]:px-5 max-[640px]:py-5"
         >
           <button
             type="button"
             aria-label="용어 설명 닫기"
-            onClick={() => setSelectedTerm("")}
+            onClick={() => {
+              resetTermExplanation();
+              setSelectedTerm("");
+            }}
             className="absolute right-4 top-4 grid size-9 place-items-center rounded-full border-0 bg-[#343945] text-2xl text-[#c3cad5]"
           >
             ×
