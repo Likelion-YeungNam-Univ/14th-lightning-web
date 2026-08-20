@@ -1,154 +1,117 @@
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 
 interface TradingViewChartProps {
   symbol: string;
   height?: number;
 }
 
-declare global {
-  interface Window {
-    TradingView?: {
-      widget: new (options: Record<string, unknown>) => unknown;
-    };
-  }
-}
-
-const TRADING_VIEW_SCRIPT_URL = "https://s3.tradingview.com/tv.js";
-let scriptLoadingPromise: Promise<void> | null = null;
-
-function loadTradingViewScript(): Promise<void> {
-  if (window.TradingView) return Promise.resolve();
-  if (scriptLoadingPromise) return scriptLoadingPromise;
-
-  scriptLoadingPromise = new Promise((resolve, reject) => {
-    const existingScript = document.querySelector<HTMLScriptElement>(
-      `script[src="${TRADING_VIEW_SCRIPT_URL}"]`,
-    );
-    const script = existingScript ?? document.createElement("script");
-
-    script.addEventListener("load", () => resolve(), { once: true });
-    script.addEventListener(
-      "error",
-      () => {
-        scriptLoadingPromise = null;
-        reject(new Error("TradingView 스크립트를 불러오지 못했어요."));
-      },
-      { once: true },
-    );
-
-    if (!existingScript) {
-      script.src = TRADING_VIEW_SCRIPT_URL;
-      script.async = true;
-      document.body.appendChild(script);
-    }
-  });
-
-  return scriptLoadingPromise;
-}
+const TRADINGVIEW_SCRIPT_URL =
+  "https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js";
 
 export default function TradingViewChart({
   symbol,
   height = 420,
 }: TradingViewChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const reactId = useId();
-  const [failedSymbol, setFailedSymbol] = useState("");
-  const isRestrictedKrxSymbol = symbol.startsWith("KRX:");
-  const containerId = `tv-chart-${reactId.replace(/:/g, "")}-${symbol.replace(/[^a-zA-Z0-9]/g, "-")}`;
 
   useEffect(() => {
-    if (!symbol || isRestrictedKrxSymbol) return;
+    if (!symbol) return;
 
-    let cancelled = false;
     const container = containerRef.current;
     if (!container) return;
 
+    console.log("TradingView에 실제 전달되는 symbol:", symbol);
+
+    // 이전 종목의 TradingView 위젯 완전히 제거
     container.innerHTML = "";
 
-    void loadTradingViewScript()
-      .then(() => {
-        if (cancelled || !window.TradingView) return;
+    // TradingView 위젯이 삽입될 영역 생성
+    const widgetContainer = document.createElement("div");
 
-        container.innerHTML = "";
-        new window.TradingView.widget({
-          symbol,
-          container_id: containerId,
-          autosize: true,
-          interval: "D",
-          timezone: "Asia/Seoul",
-          theme: "dark",
-          style: "1",
-          locale: "kr",
-          toolbar_bg: "#131722",
-          enable_publishing: false,
-          hide_top_toolbar: false,
-          hide_legend: false,
-          allow_symbol_change: false,
-        });
-      })
-      .catch(() => {
-        if (!cancelled) setFailedSymbol(symbol);
-      });
+    widgetContainer.className =
+      "tradingview-widget-container__widget";
+
+    widgetContainer.style.height = "100%";
+    widgetContainer.style.width = "100%";
+
+    container.appendChild(widgetContainer);
+
+    // TradingView 공식 Advanced Chart 스크립트 생성
+    const script = document.createElement("script");
+
+    script.src = TRADINGVIEW_SCRIPT_URL;
+    script.type = "text/javascript";
+    script.async = true;
+
+    // 여기 symbol 값이 종목마다 새로 들어감
+    script.innerHTML = JSON.stringify({
+      autosize: true,
+
+      symbol: symbol,
+
+      interval: "D",
+
+      timezone: "Asia/Seoul",
+
+      theme: "dark",
+
+      style: "1",
+
+      locale: "kr",
+
+      backgroundColor: "#131722",
+
+      hide_top_toolbar: false,
+
+      hide_side_toolbar: false,
+
+      hide_legend: false,
+
+      allow_symbol_change: false,
+
+      save_image: false,
+
+      calendar: false,
+
+      support_host: "https://www.tradingview.com",
+    });
+
+    container.appendChild(script);
 
     return () => {
-      cancelled = true;
+      // 다른 종목으로 이동하면 이전 위젯 제거
       container.innerHTML = "";
     };
-  }, [symbol, containerId, isRestrictedKrxSymbol]);
+  }, [symbol]);
 
-  if (isRestrictedKrxSymbol) {
-    const tradingViewUrl = `https://kr.tradingview.com/chart/?symbol=${encodeURIComponent(symbol)}`;
-
+  if (!symbol) {
     return (
       <div
-        className="relative grid overflow-hidden rounded-2xl border border-white/[0.06] bg-[#131722]"
-        style={{ height, minHeight: height }}
+        className="grid place-items-center overflow-hidden rounded-2xl border border-white/[0.06] bg-[#131722]"
+        style={{
+          height,
+          minHeight: height,
+        }}
       >
-        <span className="absolute right-4 top-4 rounded-full border border-amber-400/25 bg-amber-400/10 px-3 py-1.5 text-[11px] font-semibold text-amber-300">
-          KRX 외부 차트 제한
-        </span>
-        <div className="m-auto max-w-md px-6 text-center">
-          <div className="mx-auto grid size-11 place-items-center rounded-full bg-blue-400/10 text-xl text-blue-300">
-            ↗
-          </div>
-          <h3 className="mt-4 font-bold text-white">
-            국내 종목 차트는 TradingView에서 확인할 수 있어요.
-          </h3>
-          <p className="mt-2 text-sm leading-6 text-white/45">
-            {symbol}은 외부 위젯 대신 TradingView 차트 페이지로 연결합니다.
-          </p>
-          <a
-            href={tradingViewUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="mt-5 inline-flex rounded-lg bg-[#4d9fff] px-4 py-2.5 text-sm font-bold text-[#07111f] hover:bg-[#6aafff]"
-          >
-            TradingView에서 차트 보기
-          </a>
-        </div>
+        <p className="text-sm text-white/40">
+          차트를 불러오는 중이에요.
+        </p>
       </div>
     );
   }
 
-  const hasError = failedSymbol === symbol;
-
   return (
     <div
       className="overflow-hidden rounded-2xl border border-white/[0.06] bg-[#131722]"
-      style={{ height, minHeight: height }}
+      style={{
+        height,
+        minHeight: height,
+      }}
     >
-      {hasError ? (
-        <div className="grid h-full place-items-center px-6 text-center">
-          <div>
-            <p className="font-bold text-white">차트를 불러오지 못했어요.</p>
-            <p className="mt-2 text-sm text-white/40">
-              네트워크 연결을 확인한 뒤 다시 시도해주세요.
-            </p>
-          </div>
-        </div>
-      ) : (
-        <div id={containerId} ref={containerRef} className="h-full w-full" />
-      )}
+      <div
+        ref={containerRef}
+        className="tradingview-widget-container h-full w-full"
+      />
     </div>
   );
 }
