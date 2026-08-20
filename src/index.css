@@ -107,6 +107,16 @@ button:disabled {
   background: #343b48;
 }
 
+html {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  display: none;
+}
+
 [role="dialog"] {
   animation: dialog-enter 180ms ease-out;
 }
