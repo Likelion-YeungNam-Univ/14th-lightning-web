@@ -43,8 +43,6 @@ function loadTradingViewScript(): Promise<void> {
   return scriptLoadingPromise;
 }
 
-// KRX(국내) 심볼도 TradingView 무료 위젯에서 정상 렌더된다(지연 시세) —
-// 이전의 "KRX 외부 차트 제한" 분기는 잘못된 전제여서 제거했다.
 export default function TradingViewChart({
   symbol,
   height = 420,
@@ -52,9 +50,12 @@ export default function TradingViewChart({
   const containerRef = useRef<HTMLDivElement>(null);
   const reactId = useId();
   const [error, setError] = useState("");
+  const isRestrictedKrxSymbol = symbol.startsWith("KRX:");
   const containerId = `tv-chart-${reactId.replace(/:/g, "")}-${symbol.replace(/[^a-zA-Z0-9]/g, "-")}`;
 
   useEffect(() => {
+    if (isRestrictedKrxSymbol) return;
+
     let cancelled = false;
     const container = containerRef.current;
     if (!container) return;
@@ -97,7 +98,41 @@ export default function TradingViewChart({
       cancelled = true;
       container.innerHTML = "";
     };
-  }, [symbol, containerId]);
+  }, [symbol, containerId, isRestrictedKrxSymbol]);
+
+  if (isRestrictedKrxSymbol) {
+    const tradingViewUrl = `https://kr.tradingview.com/chart/?symbol=${encodeURIComponent(symbol)}`;
+    return (
+      <div
+        className="relative grid overflow-hidden rounded-2xl border border-white/[0.06] bg-[#131722]"
+        style={{ height }}
+      >
+        <span className="absolute right-4 top-4 rounded-full border border-amber-400/25 bg-amber-400/10 px-3 py-1.5 text-[11px] font-semibold text-amber-300">
+          KRX 외부 차트 제한
+        </span>
+        <div className="m-auto max-w-md px-6 text-center">
+          <div className="mx-auto grid size-11 place-items-center rounded-full bg-blue-400/10 text-xl text-blue-300">
+            ↗
+          </div>
+          <h3 className="mt-4 font-bold text-white">
+            국내 종목 차트는 TradingView에서 확인할 수 있어요.
+          </h3>
+          <p className="mt-2 text-sm leading-6 text-white/45">
+            {symbol}은 TradingView 정책상 외부 위젯에서 제공되지 않아 반복 알림
+            대신 안내로 표시했어요.
+          </p>
+          <a
+            href={tradingViewUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="mt-5 inline-flex rounded-lg bg-[#4d9fff] px-4 py-2.5 text-sm font-bold text-[#07111f] hover:bg-[#6aafff]"
+          >
+            TradingView에서 차트 보기
+          </a>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
