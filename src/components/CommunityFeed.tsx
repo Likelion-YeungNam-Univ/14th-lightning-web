@@ -12,7 +12,7 @@ import CommunityCard from './CommunityCard';
 import CommunityDetail from './CommunityDetail';
 import CommunityCreateModal, { type CommunityCreateFormData } from './CommunityCreateModal';
 import TradingViewChart from './TradingViewChart';
-import { toTradingViewSymbol } from '../lib/tradingview-symbol';
+import { useTradingViewSymbol } from '../lib/tradingview-symbol';
 
 interface CommunityFeedProps {
   stockName: string;
@@ -139,6 +139,7 @@ export default function CommunityFeed({
     return () => window.clearTimeout(timer);
   }, [createdMessage]);
 
+  const symbol = useTradingViewSymbol(stockCode, market);
   const selectedPrediction = predictions.find((prediction) => prediction.id === selectedId) ?? null;
   if (selectedPrediction) {
     return <CommunityDetail prediction={selectedPrediction} stockCode={stockCode} pointBalance={availablePoints} authenticated={authenticated} onPointsSpent={(amount) => { setAvailablePoints((current) => Math.max(0, current - amount)); onSpendPoints?.(amount); }} onBack={() => setSelectedId(null)} />;
@@ -170,7 +171,6 @@ export default function CommunityFeed({
     }
   }
 
-  const symbol = toTradingViewSymbol(stockCode, market);
   return (
     <div>
       {createdMessage && <div role="status" className="status-banner--info fixed left-1/2 top-4 z-[60] -translate-x-1/2 rounded-lg border border-white/10 bg-[#20252f] px-4 py-3 text-xs font-bold text-white shadow-2xl"><span className="mr-2 inline-grid size-4 place-items-center rounded-full bg-white text-[10px] text-[#20252f]">✓</span>{createdMessage}</div>}

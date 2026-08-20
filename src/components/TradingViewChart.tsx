@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 interface TradingViewChartProps {
   symbol: string; // 예: "KRX:005930", "NASDAQ:NVDA"
@@ -7,7 +7,7 @@ interface TradingViewChartProps {
 
 declare global {
   interface Window {
-    TradingView?: any;
+    TradingView?: { widget: new (options: Record<string, unknown>) => unknown };
   }
 }
 
@@ -32,11 +32,13 @@ function loadTradingViewScript(): Promise<void> {
 
 export default function TradingViewChart({ symbol, height = 420 }: TradingViewChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const [error, setError] = useState('');
   // 심볼마다 고유한 DOM id가 있어야 위젯이 꼬이지 않는다.
   const containerId = `tv-chart-${symbol.replace(/[^a-zA-Z0-9]/g, '-')}`;
 
   useEffect(() => {
     let cancelled = false;
+    setError('');
 
     loadTradingViewScript().then(() => {
       if (cancelled || !containerRef.current || !window.TradingView) return;
@@ -58,6 +60,8 @@ export default function TradingViewChart({ symbol, height = 420 }: TradingViewCh
         hide_legend: false,
         allow_symbol_change: false,
       });
+    }).catch((reason: unknown) => {
+      if (!cancelled) setError(reason instanceof Error ? reason.message : '차트를 불러오지 못했어요.');
     });
 
     return () => {
@@ -70,7 +74,7 @@ export default function TradingViewChart({ symbol, height = 420 }: TradingViewCh
       className="rounded-2xl overflow-hidden border border-white/[0.06] bg-[#131722]"
       style={{ height }}
     >
-      <div id={containerId} ref={containerRef} className="h-full w-full" />
+      {error ? <div className="grid h-full place-items-center px-6 text-center"><div><p className="font-bold text-white">차트를 불러오지 못했어요.</p><p className="mt-2 text-sm text-white/40">네트워크 연결을 확인한 뒤 다시 시도해주세요.</p></div></div> : <div id={containerId} ref={containerRef} className="h-full w-full" />}
     </div>
   );
 }

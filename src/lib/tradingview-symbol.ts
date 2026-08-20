@@ -1,16 +1,34 @@
-// 내부 stock_code + market을 TradingView가 요구하는 심볼("거래소:코드") 형태로 변환한다.
-// market 값이 실제로 어떤 문자열("KOSPI"/"국내"/"KRX" 등)로 오는지에 맞춰
-// 아래 매핑 표만 수정하면 된다.
+import { useEffect, useState } from 'react';
+import { getApi } from '../api/client';
 
-const EXCHANGE_PREFIX_BY_MARKET: Record<string, string> = {
-  KOSPI: 'KRX',
-  KOSDAQ: 'KRX',
-  NASDAQ: 'NASDAQ',
-  NYSE: 'NYSE',
-  AMEX: 'AMEX',
+const OVERSEAS_EXCHANGES: Record<string, string> = {
+  NVDA: 'NASDAQ', TSLA: 'NASDAQ', AAPL: 'NASDAQ', MSFT: 'NASDAQ',
+  GOOGL: 'NASDAQ', AMZN: 'NASDAQ', META: 'NASDAQ', NFLX: 'NASDAQ',
+  AMD: 'NASDAQ', INTC: 'NASDAQ', JPM: 'NYSE', KO: 'NYSE', DIS: 'NYSE', NKE: 'NYSE',
 };
 
+/** API 사용 전 또는 실패 시 사용할 안전한 TradingView 심볼을 생성합니다. */
 export function toTradingViewSymbol(stockCode: string, market: string): string {
-  const prefix = EXCHANGE_PREFIX_BY_MARKET[market] ?? 'KRX';
-  return `${prefix}:${stockCode}`;
+  const code = stockCode.toUpperCase().replace(/^.*:/, '');
+  const normalizedMarket = market.toLowerCase();
+  if (normalizedMarket === 'overseas' || normalizedMarket.includes('us')) {
+    return `${OVERSEAS_EXCHANGES[code] ?? 'NASDAQ'}:${code}`;
+  }
+  return `KRX:${code.padStart(6, '0')}`;
+}
+
+/** 백엔드가 확정한 거래소 심볼을 우선 사용하고 실패 시 로컬 매핑으로 대체합니다. */
+export function useTradingViewSymbol(stockCode: string, market: string) {
+  const [symbol, setSymbol] = useState(() => toTradingViewSymbol(stockCode, market));
+
+  useEffect(() => {
+    if (!stockCode) return;
+    let cancelled = false;
+    void getApi<{ symbol: string }>(`/stocks/${encodeURIComponent(stockCode)}/chart-symbol`)
+      .then((response) => { if (!cancelled && response.symbol) setSymbol(response.symbol); })
+      .catch(() => { if (!cancelled) setSymbol(toTradingViewSymbol(stockCode, market)); });
+    return () => { cancelled = true; };
+  }, [market, stockCode]);
+
+  return symbol;
 }
