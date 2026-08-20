@@ -39,6 +39,10 @@ export default function CommunityCreateModal({ stockName, currency = 'KRW', poin
   }, [onClose]);
 
   function closeBackdrop(event: MouseEvent<HTMLDivElement>) { if (event.target === event.currentTarget) onClose(); }
+  function removePhoto() {
+    setFileName('');
+    if (fileRef.current) fileRef.current.value = '';
+  }
   function submit(event: FormEvent) {
     event.preventDefault();
     if (!canSubmit) return;
@@ -62,7 +66,17 @@ export default function CommunityCreateModal({ stockName, currency = 'KRW', poin
             <span className="flex items-center justify-between"><span>방을 만든 이유</span><span aria-live="polite" className="font-normal tabular-nums text-white/35">{content.length}/{MAX_CONTENT_LENGTH}자</span></span>
             <textarea value={content} maxLength={MAX_CONTENT_LENGTH} onChange={(e) => setContent(e.target.value)} rows={4} placeholder="왜 그렇게 보는지 적어주세요. 사진과 링크를 함께 올릴 수 있어요." className="mt-2 w-full resize-y rounded-lg border border-[#3a414d] bg-[#12151b] px-4 py-3 text-sm text-white placeholder:text-white/35 outline-none focus:border-blue-400" />
           </label>
-          <div className="flex flex-wrap items-center gap-2"><input ref={fileRef} type="file" accept="image/*" onChange={(e) => setFileName(e.target.files?.[0]?.name ?? '')} className="hidden" /><button type="button" onClick={() => fileRef.current?.click()} className="rounded-full bg-white/[.06] px-3 py-2 text-xs text-white/60 hover:text-white">▧ 사진 첨부</button><button type="button" className="rounded-full bg-white/[.06] px-3 py-2 text-xs text-white/60 hover:text-white">⌁ 자료 카드 첨부</button>{fileName && <span className="max-w-48 truncate text-xs text-blue-300">{fileName}</span>}</div>
+          <div className="flex flex-wrap items-center gap-2">
+            <input ref={fileRef} type="file" accept="image/*" onChange={(e) => setFileName(e.target.files?.[0]?.name ?? '')} className="hidden" />
+            <button type="button" onClick={() => fileRef.current?.click()} className="rounded-full bg-white/[.06] px-3 py-2 text-xs text-white/60 hover:text-white">▧ 사진 첨부</button>
+            <button type="button" className="rounded-full bg-white/[.06] px-3 py-2 text-xs text-white/60 hover:text-white">⌁ 자료 카드 첨부</button>
+            {fileName && (
+              <span className="inline-flex max-w-60 items-center gap-1 rounded-full bg-blue-400/10 py-1 pl-3 pr-1 text-xs text-blue-300">
+                <span className="truncate">{fileName}</span>
+                <button type="button" onClick={removePhoto} aria-label={`${fileName} 첨부 취소`} className="grid size-6 shrink-0 place-items-center rounded-full text-sm text-blue-200/70 hover:bg-white/10 hover:text-white">×</button>
+              </span>
+            )}
+          </div>
           <div className="grid grid-cols-[1fr_125px] gap-4">
             <fieldset><legend className="mb-2 text-xs font-medium text-white/45">내 의견</legend><div className="grid grid-cols-2 gap-2">{(['up', 'down'] as const).map((value) => <button key={value} type="button" onClick={() => setDirection(value)} aria-pressed={direction === value} className={`rounded-lg border py-3 text-sm font-bold ${direction === value ? value === 'up' ? 'border-emerald-400 bg-emerald-400/10 text-emerald-300' : 'border-orange-400 bg-orange-400/10 text-orange-300' : 'border-[#3a414d] bg-[#15181f] text-white/45'}`}>{value === 'up' ? '간다' : '안 간다'}</button>)}</div></fieldset>
             <label className="text-xs font-medium text-white/45">참여 포인트<input inputMode="numeric" value={bet} onChange={(e) => setBet(e.target.value.replace(/\D/g, ''))} className="mt-2 w-full rounded-lg border border-[#3a414d] bg-[#12151b] px-4 py-3 text-sm font-bold text-white outline-none focus:border-blue-400" /></label>
