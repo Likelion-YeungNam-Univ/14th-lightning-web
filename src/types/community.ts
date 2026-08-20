@@ -91,3 +91,10 @@ export interface RoomCreateResponse {
     body: string | null;
   };
 }
+
+export interface BettingEntryResponse {
+  room: RoomListItem & {
+    stock_code: string;
+    body: string | null;
+  };
+}
