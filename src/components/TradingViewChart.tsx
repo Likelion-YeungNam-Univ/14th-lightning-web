@@ -117,10 +117,6 @@ export default function TradingViewChart({
           <h3 className="mt-4 font-bold text-white">
             국내 종목 차트는 TradingView에서 확인할 수 있어요.
           </h3>
-          <p className="mt-2 text-sm leading-6 text-white/45">
-            {symbol}은 TradingView 정책상 외부 위젯에서 제공되지 않아 반복 알림
-            대신 안내로 표시했어요.
-          </p>
           <a
             href={tradingViewUrl}
             target="_blank"
