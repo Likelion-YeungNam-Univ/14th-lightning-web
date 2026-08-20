@@ -33,3 +33,43 @@ export interface CommunityPrediction {
   post: string;
   comments: CommunityComment[];
 }
+
+export interface RoomSideCount {
+  count: number;
+  points: number;
+}
+
+export interface RoomListItem {
+  id: number;
+  title: string;
+  target_price: number;
+  judge_date: string;
+  participant_count: number;
+  total_points: number;
+  up: RoomSideCount;
+  down: RoomSideCount;
+  leading_side: string;
+  status: string;
+  stock_code?: string;
+  body?: string | null;
+}
+
+export interface RoomListResponse {
+  items: RoomListItem[];
+}
+
+export interface RoomCreateRequest {
+  stock_code: string;
+  title: string;
+  target_price: number;
+  judge_date: string;
+  body: string | null;
+  amount: number;
+}
+
+export interface RoomCreateResponse {
+  room: RoomListItem & {
+    stock_code: string;
+    body: string | null;
+  };
+}
