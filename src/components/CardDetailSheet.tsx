@@ -193,7 +193,7 @@ export function CardDetailSheet({
         aria-modal="true"
         aria-labelledby="card-detail-title"
         onMouseDown={(event) => event.stopPropagation()}
-        className="relative max-h-[calc(100vh-48px)] w-full max-w-237.5 overflow-y-auto rounded-[20px] border border-[#303746] bg-[#1b1f2b] px-10 pb-10 pt-10 shadow-[0_28px_90px_rgba(0,0,0,.55)] max-[640px]:max-h-[calc(100vh-24px)] max-[640px]:rounded-2xl max-[640px]:px-5 max-[640px]:pb-6 max-[640px]:pt-6"
+        className={`relative max-h-[calc(100vh-48px)] w-full max-w-237.5 overflow-y-auto rounded-[20px] border border-[#303746] bg-[#1b1f2b] px-10 pb-10 pt-10 shadow-[0_28px_90px_rgba(0,0,0,.55)] max-[640px]:max-h-[calc(100vh-24px)] max-[640px]:rounded-2xl max-[640px]:px-5 max-[640px]:pb-6 max-[640px]:pt-6 ${videoCard ? "[scrollbar-width:none] [&::-webkit-scrollbar]:hidden" : ""}`}
       >
         <button
           type="button"

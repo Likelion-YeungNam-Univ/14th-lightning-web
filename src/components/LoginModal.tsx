@@ -41,7 +41,7 @@ export function LoginModal({ onClose, onLoginSuccess }: LoginModalProps) {
 
   return (
     <div
-      className="fixed inset-0 z-60 grid place-items-center bg-black/70 p-5 backdrop-blur-sm"
+      className="fixed inset-0 z-[90] grid place-items-center bg-black/70 p-5 backdrop-blur-sm"
       onMouseDown={onClose}
     >
       <section
