@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useTermExplanationStream } from "../hooks/useTermExplanationStream";
 import type { Card } from "../types/card";
 import { youtubeEmbedUrl } from "../utils/youtube";
 import { canSaveCardFromTab } from "../utils/savedCards";
+import { HardTermText } from "./HardTermText";
 
 type CardDetailSheetProps = {
   card: Card;
@@ -55,7 +56,6 @@ export function CardDetailSheet({
   onClose,
   onToggleSave,
 }: CardDetailSheetProps) {
-  const summaryRef = useRef<HTMLDivElement>(null);
   const [selectedTerm, setSelectedTerm] = useState("");
   const [selectionError, setSelectionError] = useState("");
   const {
@@ -90,23 +90,8 @@ export function CardDetailSheet({
   const displayLabel = labelText(card.label);
   const canSaveCard = canSaveCardFromTab(tab);
 
-  const captureSelectedTerm = () => {
-    const selection = window.getSelection();
-    const container = summaryRef.current;
-    if (!selection || selection.isCollapsed || !container) return;
-
-    const range = selection.getRangeAt(0);
-    const selectedNode = range.commonAncestorContainer;
-    const selectedElement =
-      selectedNode.nodeType === Node.ELEMENT_NODE
-        ? (selectedNode as Element)
-        : selectedNode.parentElement;
-    if (!selectedElement || !container.contains(selectedElement)) return;
-
-    const term = selection.toString().trim().replace(/\s+/g, " ");
-    if (!term) return;
-
-    const selectionRect = range.getBoundingClientRect();
+  const openHardTerm = (term: string, target: HTMLElement) => {
+    const selectionRect = target.getBoundingClientRect();
     const popoverWidth = Math.min(420, window.innerWidth - 32);
     const left = Math.min(
       Math.max(
@@ -122,12 +107,6 @@ export function CardDetailSheet({
         : Math.max(16, selectionRect.top - estimatedHeight - 12);
     setPopoverPosition({ left, top });
 
-    if (term.length > 50) {
-      resetTermExplanation();
-      setSelectedTerm(term.slice(0, 50));
-      setSelectionError("용어는 50자 이내로 선택해주세요.");
-      return;
-    }
     if (!tab) {
       resetTermExplanation();
       setSelectedTerm(term);
@@ -141,10 +120,6 @@ export function CardDetailSheet({
       tab,
       context: card.summary_full ?? card.summary_short,
     });
-  };
-
-  const scheduleSelectedTermCapture = () => {
-    window.setTimeout(captureSelectedTerm, 0);
   };
 
   return (
@@ -251,9 +226,6 @@ export function CardDetailSheet({
         )}
 
         <div
-          ref={summaryRef}
-          onPointerUp={scheduleSelectedTermCapture}
-          onKeyUp={scheduleSelectedTermCapture}
           className="mt-7 text-[15px] leading-[1.85] text-[#d9dee7]"
         >
           {linkSentence && (
@@ -267,7 +239,11 @@ export function CardDetailSheet({
           {paragraphs.length > 0 ? (
             paragraphs.map((paragraph, index) => (
               <p key={index} className="mb-4 mt-0">
-                {paragraph}
+                <HardTermText
+                  text={paragraph}
+                  terms={card.hard_terms}
+                  onTermClick={openHardTerm}
+                />
               </p>
             ))
           ) : !videoCard ? (
@@ -286,9 +262,9 @@ export function CardDetailSheet({
           </aside>
         )}
 
-        {!videoCard && (
+        {!videoCard && card.hard_terms && card.hard_terms.length > 0 && (
           <p className="mb-0 mt-6 text-xs text-[#9aa3b2]">
-            모르는 단어를 드래그하면 뜻을 알려드려요.
+            밑줄 친 어려운 용어를 누르면 뜻을 알려드려요.
           </p>
         )}
 

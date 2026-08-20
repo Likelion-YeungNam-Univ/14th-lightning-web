@@ -19,5 +19,6 @@ export type EconCardDetailResponse = {
   id: number;
   title: string;
   body: string;
+  hard_terms: string[] | null;
   sources: EconCardSource[];
 };

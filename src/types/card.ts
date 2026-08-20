@@ -17,6 +17,7 @@ export type Card = {
   doc_type_name: string | null;
   summary_short: string | null;
   summary_full: string | null;
+  hard_terms: string[] | null;
   source_name: string;
   published_at: string | null;
   origin_url: string | null;
