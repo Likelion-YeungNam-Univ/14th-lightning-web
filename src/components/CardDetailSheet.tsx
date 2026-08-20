@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { ApiError, postApi } from "../api/client";
-import type { Card, TermExplainResponse } from "../types/card";
+import { useTermExplanationStream } from "../hooks/useTermExplanationStream";
+import type { Card } from "../types/card";
 import { youtubeEmbedUrl } from "../utils/youtube";
 import { canSaveCardFromTab } from "../utils/savedCards";
 
@@ -39,22 +39,6 @@ function labelText(label: string | null) {
   return label;
 }
 
-// 용어 풀이 API 오류 코드를 사용자가 이해할 수 있는 메시지로 변환한다.
-function termErrorMessage(error: unknown) {
-  if (error instanceof ApiError) {
-    if (error.code === "rate_limited") {
-      return "요청이 많아요. 잠시 후 다시 선택해주세요.";
-    }
-    if (error.code === "llm_unavailable") {
-      return "지금은 용어 설명을 만들 수 없어요. 잠시 후 다시 시도해주세요.";
-    }
-    return error.message;
-  }
-  return error instanceof Error
-    ? error.message
-    : "용어 설명을 불러오지 못했어요.";
-}
-
 // 용어 풀이 출처 식별자를 사용자용 이름으로 변환한다.
 function termSourceLabel(source: string) {
   if (source === "bok_700") return "한국은행 경제금융용어 700선";
@@ -72,14 +56,15 @@ export function CardDetailSheet({
   onToggleSave,
 }: CardDetailSheetProps) {
   const summaryRef = useRef<HTMLDivElement>(null);
-  const explanationRequestRef = useRef(0);
   const [selectedTerm, setSelectedTerm] = useState("");
   const [selectionError, setSelectionError] = useState("");
-  const [termLoading, setTermLoading] = useState(false);
-  const [termError, setTermError] = useState("");
-  const [termResponse, setTermResponse] = useState<TermExplainResponse | null>(
-    null,
-  );
+  const {
+    termLoading,
+    termError,
+    termResponse,
+    explainTerm,
+    resetTermExplanation,
+  } = useTermExplanationStream();
   const [popoverPosition, setPopoverPosition] = useState({ left: 16, top: 16 });
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
 
@@ -105,39 +90,6 @@ export function CardDetailSheet({
   const displayLabel = labelText(card.label);
   const canSaveCard = canSaveCardFromTab(tab);
 
-  const explainTerm = async (term: string) => {
-    if (!tab) {
-      setTermError("용어 설명에 필요한 탭 정보를 확인하지 못했어요.");
-      return;
-    }
-    const requestId = ++explanationRequestRef.current;
-    setTermLoading(true);
-    setTermError("");
-    setTermResponse(null);
-    try {
-      const response = await postApi<TermExplainResponse>("/terms/explain", {
-        term,
-        tab,
-        context: card.summary_full ?? card.summary_short,
-      });
-      if (requestId === explanationRequestRef.current) {
-        setTermResponse(response);
-      }
-    } catch (error) {
-      if (requestId === explanationRequestRef.current) {
-        setTermError(termErrorMessage(error));
-      }
-    } finally {
-      if (requestId === explanationRequestRef.current) {
-        setTermLoading(false);
-      }
-    }
-  };
-
-  const scheduleSelectedTermCapture = () => {
-    window.setTimeout(captureSelectedTerm, 0);
-  };
-
   const captureSelectedTerm = () => {
     const selection = window.getSelection();
     const container = summaryRef.current;
@@ -153,18 +105,6 @@ export function CardDetailSheet({
 
     const term = selection.toString().trim().replace(/\s+/g, " ");
     if (!term) return;
-    if (term.length > 50) {
-      explanationRequestRef.current += 1;
-      setSelectedTerm(term.slice(0, 50));
-      setSelectionError("용어는 50자 이내로 선택해주세요.");
-      setTermLoading(false);
-      setTermError("");
-      setTermResponse(null);
-    } else {
-      setSelectionError("");
-      setSelectedTerm(term);
-      void explainTerm(term);
-    }
 
     const selectionRect = range.getBoundingClientRect();
     const popoverWidth = Math.min(420, window.innerWidth - 32);
@@ -181,6 +121,30 @@ export function CardDetailSheet({
         ? selectionRect.bottom + 12
         : Math.max(16, selectionRect.top - estimatedHeight - 12);
     setPopoverPosition({ left, top });
+
+    if (term.length > 50) {
+      resetTermExplanation();
+      setSelectedTerm(term.slice(0, 50));
+      setSelectionError("용어는 50자 이내로 선택해주세요.");
+      return;
+    }
+    if (!tab) {
+      resetTermExplanation();
+      setSelectedTerm(term);
+      setSelectionError("용어 설명에 필요한 탭 정보를 확인하지 못했어요.");
+      return;
+    }
+    setSelectionError("");
+    setSelectedTerm(term);
+    explainTerm({
+      term,
+      tab,
+      context: card.summary_full ?? card.summary_short,
+    });
+  };
+
+  const scheduleSelectedTermCapture = () => {
+    window.setTimeout(captureSelectedTerm, 0);
   };
 
   return (
