@@ -45,7 +45,7 @@ export function Header({
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [pointActionLoading, setPointActionLoading] = useState(false);
   const [pointActionError, setPointActionError] = useState("");
-  const [giftSuccess, setGiftSuccess] = useState("");
+  const [giftResult, setGiftResult] = useState<GifticonExchangeResponse | null>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const balance = points?.balance ?? 0;
   const held = points?.pizza_progress.held ?? balance;
@@ -83,13 +83,13 @@ export function Header({
     }
     if (item === "기프티콘 교환") {
       setPointActionError("");
-      setGiftSuccess("");
       setIsRedeemOpen(true);
     }
     if (item === "내 참여 내역") {
       setIsHistoryOpen(true);
     }
     if (item === "로그아웃") {
+      setGiftResult(null);
       onLogoutClick(); // 추가
     }
   }
@@ -110,10 +110,10 @@ export function Header({
   async function handleRedeemConfirm() {
     setPointActionLoading(true);
     setPointActionError("");
-    setGiftSuccess("");
+    setGiftResult(null);
     try {
       const response = await onRedeemGifticon();
-      setGiftSuccess(`교환이 완료됐어요. 발급 코드: ${response.issued_code}`);
+      setGiftResult(response);
     } catch (error) {
       setPointActionError(error instanceof Error ? error.message : "기프티콘 교환에 실패했습니다.");
     } finally {
@@ -131,7 +131,6 @@ export function Header({
             aria-label="피자 기프티콘 교환 진행률 보기"
             onClick={() => {
               setPointActionError("");
-              setGiftSuccess("");
               setIsRedeemOpen(true);
             }}
             className="relative h-[48px] w-[370px] rounded-full border-0 bg-[#1b2231] px-5 py-2 text-left transition hover:bg-[#222a3b] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#6f9fff] max-[860px]:hidden"
@@ -254,7 +253,7 @@ export function Header({
           onConfirm={handleRedeemConfirm}
           loading={pointActionLoading}
           error={pointActionError}
-          successMessage={giftSuccess}
+          exchangeResult={giftResult}
         />
       )}
 

@@ -1,4 +1,5 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import type { GifticonExchangeResponse } from "../types/points";
 
 interface GiftRedeemModalProps {
   pointBalance: number;
@@ -8,7 +9,7 @@ interface GiftRedeemModalProps {
   onConfirm: () => void;
   loading?: boolean;
   error?: string;
-  successMessage?: string;
+  exchangeResult?: GifticonExchangeResponse | null;
 }
 
 export default function GiftRedeemModal({
@@ -19,8 +20,9 @@ export default function GiftRedeemModal({
   onConfirm,
   loading = false,
   error = "",
-  successMessage = "",
+  exchangeResult = null,
 }: GiftRedeemModalProps) {
+  const [copied, setCopied] = useState(false);
   const percent = Math.min(100, Math.round((pointBalance / pizzaCost) * 100));
   const remaining = Math.max(0, pizzaCost - pointBalance);
   const canRedeem = !redeemedThisMonth && pointBalance >= pizzaCost;
@@ -37,6 +39,17 @@ export default function GiftRedeemModal({
       window.removeEventListener("keydown", closeOnEscape);
     };
   }, [onClose]);
+
+  const copyCouponCode = async () => {
+    if (!exchangeResult?.issued_code) return;
+    try {
+      await navigator.clipboard.writeText(exchangeResult.issued_code);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1600);
+    } catch {
+      setCopied(false);
+    }
+  };
 
   return (
     <div
@@ -56,7 +69,7 @@ export default function GiftRedeemModal({
             id="gift-redeem-title"
             className="m-0 text-2xl font-bold tracking-[-0.04em] text-[#f4f6fa]"
           >
-            피자 기프티콘 교환
+            {exchangeResult ? "교환이 끝났어요" : "피자 기프티콘 교환"}
           </h2>
           <button
             type="button"
@@ -69,6 +82,41 @@ export default function GiftRedeemModal({
         </div>
 
         <div className="min-h-0 overflow-y-auto px-7 pb-7 max-[640px]:px-5 max-[640px]:pb-6">
+        {exchangeResult ? (
+          <div>
+            <div className="rounded-[16px] bg-[#151820] px-5 py-6">
+              <h3 className="m-0 text-xl font-bold text-[#f4f6fa]">🍕 피자 한 판 기프티콘</h3>
+              <div className="mt-6 flex items-center justify-between gap-4">
+                <p className="m-0 min-w-0 text-sm text-[#9aa3b2]">
+                  쿠폰번호
+                  <strong className="ml-2 break-all text-base text-[#6f9fff]">
+                    {exchangeResult.issued_code}
+                  </strong>
+                </p>
+                <button
+                  type="button"
+                  onClick={() => void copyCouponCode()}
+                  className="h-10 shrink-0 rounded-[8px] border border-[#414958] bg-transparent px-4 text-sm text-[#c8ccd4] transition hover:bg-[#252a34] hover:text-white"
+                >
+                  {copied ? "복사됨" : "복사"}
+                </button>
+              </div>
+              <p className="mb-0 mt-5 text-sm text-[#9aa3b2]">유효기간은 발급된 쿠폰에서 확인해주세요.</p>
+              <p className="mb-0 mt-6 text-xl font-bold text-[#f4f6fa]">
+                남은 포인트 {exchangeResult.balance.toLocaleString()}P
+              </p>
+              <p className="mb-0 mt-5 text-xs text-[#d89b55]">⚠ 해커톤 시연용 데모 코드예요. 실제로 사용할 수 없어요.</p>
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="mt-7 h-12 w-full rounded-[12px] border-0 bg-[#6f9fff] text-sm font-bold text-[#0d1929] transition hover:bg-[#83adff]"
+            >
+              확인
+            </button>
+          </div>
+        ) : (
+          <>
         <div className="mb-7 rounded-[16px] bg-[#273044] px-5 py-5">
           <div className="mb-5 flex items-center justify-between gap-4 max-[520px]:items-start max-[520px]:flex-col">
             <span className="flex items-center gap-1 text-sm font-bold text-[#6fa8ff]">
@@ -108,7 +156,7 @@ export default function GiftRedeemModal({
 
         <button
           type="button"
-          disabled={!canRedeem || loading || Boolean(successMessage)}
+          disabled={!canRedeem || loading}
           onClick={onConfirm}
           className={`min-h-12 w-full rounded-[12px] border-0 text-sm font-bold transition-colors ${
             canRedeem
@@ -126,7 +174,6 @@ export default function GiftRedeemModal({
         </button>
 
         {error && <p role="alert" className="mb-0 mt-4 text-sm text-[#ef7b7b]">{error}</p>}
-        {successMessage && <p role="status" className="mb-0 mt-4 rounded-[12px] bg-[#193126] px-4 py-3 text-sm font-bold text-[#82d5a0]">{successMessage}</p>}
 
         <div className="mt-7 rounded-[16px] bg-[#151820] px-5 py-5">
           <p className="mb-4 mt-0 text-base font-bold text-[#6fa8ff]">
@@ -142,6 +189,8 @@ export default function GiftRedeemModal({
         <p className="mb-0 mt-6 text-xs text-[#9aa3b2]">
           교환은 계정당 월 1회, 교환한 기프티콘은 취소·환불되지 않아요.
         </p>
+          </>
+        )}
         </div>
       </section>
     </div>
