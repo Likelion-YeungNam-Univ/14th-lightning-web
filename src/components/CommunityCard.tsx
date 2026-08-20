@@ -13,6 +13,8 @@ function formatPrice(price: number, currency: 'KRW' | 'USD') {
 
 export default function CommunityCard({ prediction, onClick }: CommunityCardProps) {
   const isUp = prediction.direction === 'up';
+  const leadingRatio = isUp ? prediction.upRatio : 1 - prediction.upRatio;
+  const progressPercent = Math.min(100, Math.max(0, Math.round(leadingRatio * 100)));
 
   return (
     <button
@@ -58,7 +60,7 @@ export default function CommunityCard({ prediction, onClick }: CommunityCardProp
           className={`h-full rounded-full ${
             isUp ? 'bg-[#81f6ac]' : 'bg-[rgb(231,162,106)]'
           }`}
-          style={{ width: `${Math.round(prediction.upRatio * 100)}%` }}
+          style={{ width: `${progressPercent}%` }}
         />
       </div>
     </button>
