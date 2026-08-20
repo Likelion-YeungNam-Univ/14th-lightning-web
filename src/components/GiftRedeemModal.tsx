@@ -6,6 +6,9 @@ interface GiftRedeemModalProps {
   redeemedThisMonth?: boolean;
   onClose: () => void;
   onConfirm: () => void;
+  loading?: boolean;
+  error?: string;
+  successMessage?: string;
 }
 
 export default function GiftRedeemModal({
@@ -14,6 +17,9 @@ export default function GiftRedeemModal({
   redeemedThisMonth = false,
   onClose,
   onConfirm,
+  loading = false,
+  error = "",
+  successMessage = "",
 }: GiftRedeemModalProps) {
   const percent = Math.min(100, Math.round((pointBalance / pizzaCost) * 100));
   const remaining = Math.max(0, pizzaCost - pointBalance);
@@ -102,7 +108,7 @@ export default function GiftRedeemModal({
 
         <button
           type="button"
-          disabled={!canRedeem}
+          disabled={!canRedeem || loading || Boolean(successMessage)}
           onClick={onConfirm}
           className={`min-h-12 w-full rounded-[12px] border-0 text-sm font-bold transition-colors ${
             canRedeem
@@ -110,12 +116,17 @@ export default function GiftRedeemModal({
               : "cursor-default bg-[#35476a] text-[#aeb6c5]"
           }`}
         >
-          {redeemedThisMonth
+          {loading
+            ? "교환 중..."
+            : redeemedThisMonth
             ? "이번 달 교환을 완료했어요"
             : canRedeem
               ? `${pizzaCost.toLocaleString()}P로 교환하기`
               : "포인트가 부족해요"}
         </button>
+
+        {error && <p role="alert" className="mb-0 mt-4 text-sm text-[#ef7b7b]">{error}</p>}
+        {successMessage && <p role="status" className="mb-0 mt-4 rounded-[12px] bg-[#193126] px-4 py-3 text-sm font-bold text-[#82d5a0]">{successMessage}</p>}
 
         <div className="mt-7 rounded-[16px] bg-[#151820] px-5 py-5">
           <p className="mb-4 mt-0 text-base font-bold text-[#6fa8ff]">
