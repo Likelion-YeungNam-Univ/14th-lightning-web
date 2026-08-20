@@ -48,12 +48,12 @@ export default function PointChargeModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="point-charge-title"
-        className="relative flex max-h-[calc(100vh-48px)] w-full max-w-[640px] flex-col overflow-hidden rounded-[20px] border border-[#303746] bg-[#1b1f2b] shadow-[0_28px_90px_rgba(0,0,0,.55)] max-[640px]:max-h-[calc(100vh-24px)] max-[640px]:rounded-2xl"
+        className="relative flex max-h-[calc(100vh-48px)] w-full max-w-[520px] flex-col overflow-hidden rounded-[20px] border border-[#303746] bg-[#1b1f2b] shadow-[0_28px_90px_rgba(0,0,0,.55)] max-[640px]:max-h-[calc(100vh-24px)] max-[640px]:rounded-2xl"
       >
-        <div className="z-10 flex shrink-0 items-center justify-between bg-[#1b1f2b] px-10 pb-6 pt-10 max-[640px]:px-5 max-[640px]:pb-5 max-[640px]:pt-6">
+        <div className="z-10 flex shrink-0 items-center justify-between bg-[#1b1f2b] px-7 pb-4 pt-7 max-[640px]:px-5 max-[640px]:pt-6">
           <h2
             id="point-charge-title"
-            className="m-0 text-[28px] font-bold tracking-[-0.04em] text-[#f4f6fa] max-[640px]:text-2xl"
+            className="m-0 text-2xl font-bold tracking-[-0.04em] text-[#f4f6fa]"
           >
             포인트 충전
           </h2>
@@ -61,17 +61,17 @@ export default function PointChargeModal({
             type="button"
             onClick={onClose}
             aria-label="닫기"
-            className="grid size-12 place-items-center rounded-full border-0 bg-[#2a2f3a] text-[28px] font-light text-[#b9c1ce] transition hover:bg-[#343b48] hover:text-white max-[640px]:size-10"
+            className="grid size-10 place-items-center rounded-full border-0 bg-[#2a2f3a] text-2xl font-light text-[#b9c1ce] transition hover:bg-[#343b48] hover:text-white"
           >
             ×
           </button>
         </div>
 
-        <div className="min-h-0 overflow-y-auto px-10 pb-10 max-[640px]:px-5 max-[640px]:pb-6">
-        <div className="mb-10 rounded-[16px] bg-[#273044] px-7 py-7 max-[640px]:mb-7 max-[640px]:px-5">
+        <div className="min-h-0 overflow-y-auto px-7 pb-7 max-[640px]:px-5 max-[640px]:pb-6">
+        <div className="mb-7 rounded-[16px] bg-[#273044] px-5 py-5">
           <span className="text-sm font-bold text-[#6fa8ff]">현재 보유</span>
           <div className="mt-4 flex items-end justify-between gap-4 max-[480px]:items-start max-[480px]:flex-col">
-            <strong className="text-[36px] font-bold text-[#f4f6fa] max-[640px]:text-[30px]">
+            <strong className="text-[30px] font-bold text-[#f4f6fa]">
               {pointBalance.toLocaleString()}P
             </strong>
             <span className="pb-1 text-sm text-[#aeb7c6]">
@@ -80,15 +80,15 @@ export default function PointChargeModal({
           </div>
         </div>
 
-        <p className="mb-7 mt-0 text-sm font-bold text-[#9fb0cc]">1P = 1원</p>
+        <p className="mb-5 mt-0 text-sm font-bold text-[#9fb0cc]">1P = 1원</p>
 
-        <div className="mb-8 space-y-3">
+        <div className="mb-6 space-y-3">
           {TOPUP_OPTIONS.map((option) => (
             <button
               key={option.amount}
               type="button"
               onClick={() => setSelectedAmount(option.amount)}
-              className={`flex min-h-[84px] w-full items-center justify-between rounded-[16px] border px-7 py-5 text-left transition-colors max-[640px]:min-h-[72px] max-[640px]:px-5 ${
+              className={`flex min-h-[72px] w-full items-center justify-between rounded-[16px] border px-5 py-4 text-left transition-colors ${
                 selectedAmount === option.amount
                   ? "border-[#6f9fff] bg-[#151820] ring-1 ring-[#6f9fff]"
                   : "border-transparent bg-[#151820] hover:border-[#35425c]"
@@ -111,15 +111,15 @@ export default function PointChargeModal({
           ))}
         </div>
 
-        <p className="mb-7 mt-0 text-sm text-[#9fb0cc]">
+        <p className="mb-5 mt-0 text-sm text-[#9fb0cc]">
           ⚠ 테스트 결제입니다. 실제로 결제되지 않아요.
         </p>
 
-        <div className="mb-8 grid grid-cols-2 gap-5 max-[480px]:grid-cols-1 max-[480px]:gap-3">
+        <div className="mb-6 grid grid-cols-2 gap-3 max-[480px]:grid-cols-1">
           <button
             type="button"
             onClick={onClose}
-            className="min-h-14 rounded-[12px] border border-[#414958] bg-[#151820] text-base font-bold text-[#d9dee7] transition hover:bg-[#202530]"
+            className="min-h-12 rounded-[12px] border border-[#414958] bg-[#151820] text-sm font-bold text-[#d9dee7] transition hover:bg-[#202530]"
           >
             결제 취소 시연
           </button>
@@ -127,7 +127,7 @@ export default function PointChargeModal({
             type="button"
             disabled={!canPay}
             onClick={() => onConfirm(selectedAmount)}
-            className="min-h-14 rounded-[12px] border-0 bg-[#6f9fff] text-base font-bold text-[#0d1929] transition hover:bg-[#83adff] disabled:cursor-not-allowed disabled:opacity-40"
+            className="min-h-12 rounded-[12px] border-0 bg-[#6f9fff] text-sm font-bold text-[#0d1929] transition hover:bg-[#83adff] disabled:cursor-not-allowed disabled:opacity-40"
           >
             {selectedAmount.toLocaleString()}원 결제하기
           </button>
