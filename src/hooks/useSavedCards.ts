@@ -2,6 +2,11 @@ import { useLayoutEffect, useState } from "react";
 import { getApi } from "../api/client";
 import type { SourceTab } from "../components/SourceNav";
 import type { SavedCardListResponse } from "../types/card";
+import {
+  cacheSavedCards,
+  mergeSavedCards,
+  readSavedCardCache,
+} from "../utils/saved-card-cache";
 
 /** 저장 탭이 선택됐을 때 현재 종목의 저장 카드 목록을 조회한다. */
 export function useSavedCards(activeStockCode: string, activeTab: SourceTab) {
@@ -22,10 +27,27 @@ export function useSavedCards(activeStockCode: string, activeTab: SourceTab) {
         const response = await getApi<SavedCardListResponse>(
           `/me/saved-cards?stock_code=${encodeURIComponent(activeStockCode)}`,
         );
-        if (!cancelled) setSavedResponse(response);
+        if (!cancelled) {
+          const cachedForStock = readSavedCardCache().filter(
+            (item) => item.stock_code === activeStockCode,
+          );
+          const items = mergeSavedCards(cachedForStock, response.items);
+          cacheSavedCards(
+            mergeSavedCards(
+              readSavedCardCache().filter(
+                (item) => item.stock_code !== activeStockCode,
+              ),
+              items,
+            ),
+          );
+          setSavedResponse({ items });
+        }
       } catch (error) {
         if (cancelled) return;
-        setSavedResponse(null);
+        const cachedItems = readSavedCardCache().filter(
+          (item) => item.stock_code === activeStockCode,
+        );
+        setSavedResponse(cachedItems.length > 0 ? { items: cachedItems } : null);
         setSavedError(
           error instanceof Error
             ? error.message

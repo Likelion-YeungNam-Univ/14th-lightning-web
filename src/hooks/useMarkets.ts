@@ -2,10 +2,14 @@ import { useEffect, useState } from "react";
 import { getApi } from "../api/client";
 import type { MarketInfo, MarketsResponse } from "../types/market";
 
+const ACTIVE_MARKET_KEY = "assit:active-market";
+
 export function useMarkets() {
   // API가 제공하는 시장 목록과 사용자가 선택한 시장을 관리한다.
   const [markets, setMarkets] = useState<MarketInfo[]>([]);
-  const [activeMarket, setActiveMarket] = useState("");
+  const [activeMarket, setActiveMarket] = useState(
+    () => sessionStorage.getItem(ACTIVE_MARKET_KEY) ?? "",
+  );
   const [marketsLoading, setMarketsLoading] = useState(true);
   const [marketsError, setMarketsError] = useState("");
   const activeMarketInfo = markets.find(
@@ -18,7 +22,11 @@ export function useMarkets() {
       try {
         const response = await getApi<MarketsResponse>("/markets");
         setMarkets(response.markets);
-        setActiveMarket((current) => current || response.markets[0]?.market || "");
+        setActiveMarket((current) =>
+          response.markets.some((market) => market.market === current)
+            ? current
+            : response.markets[0]?.market || "",
+        );
       } catch (error) {
         setMarketsError(
           error instanceof Error
@@ -31,6 +39,10 @@ export function useMarkets() {
     };
     void loadMarkets();
   }, []);
+
+  useEffect(() => {
+    if (activeMarket) sessionStorage.setItem(ACTIVE_MARKET_KEY, activeMarket);
+  }, [activeMarket]);
 
   // 종목 추가 또는 삭제 후 stock_count와 last_stock_code를 다시 조회한다.
   const refreshMarkets = async () => {

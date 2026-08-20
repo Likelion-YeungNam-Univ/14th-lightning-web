@@ -9,6 +9,10 @@ import type {
   SavedCardListResponse,
 } from "../types/card";
 import { canSaveCardFromTab } from "../utils/savedCards";
+import {
+  cacheSavedCard,
+  removeCachedSavedCard,
+} from "../utils/saved-card-cache";
 
 type UseCardActionsParams = {
   activeStockCode: string;
@@ -59,6 +63,7 @@ export function useCardActions({
         card_id: card.card_id,
         stock_code: stockCode,
       });
+      cacheSavedCard(response.item);
       updateCardSaved(card.card_id, true);
       setSavedResponse((current) =>
         current &&
@@ -91,6 +96,7 @@ export function useCardActions({
       await deleteApi<SavedCardDeleteResponse>(
         `/me/saved-cards/${card.card_id}`,
       );
+      removeCachedSavedCard(card.card_id);
       updateCardSaved(card.card_id, false);
       setSavedResponse((current) =>
         current
@@ -123,6 +129,7 @@ export function useCardActions({
       await deleteApi<SavedCardDeleteResponse>(
         `/me/saved-cards/${item.card_id}`,
       );
+      removeCachedSavedCard(item.card_id);
       setSavedResponse((current) =>
         current
           ? {

@@ -44,6 +44,8 @@ const DEMO_TARGET_PRICES: Record<string, number> = {
   '000660': 220000,
 };
 
+const selectedRoomKey = (stockCode: string) => `assit:community-room:${stockCode}`;
+
 /** API 목록이 비었을 때 시연 화면을 유지하기 위한 종목별 기본 방 2개입니다. */
 function createDemoPredictions(stockCode: string, stockName: string, market: string): CommunityPrediction[] {
   const ticker = stockCode.toUpperCase().replace(/^.*:/, '');
@@ -108,7 +110,9 @@ export default function CommunityFeed({
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(
+    () => sessionStorage.getItem(selectedRoomKey(stockCode)),
+  );
   const [availablePoints, setAvailablePoints] = useState(pointBalance);
   const [createdMessage, setCreatedMessage] = useState('');
 
@@ -126,7 +130,6 @@ export default function CommunityFeed({
       const demoRooms = createDemoPredictions(stockCode, stockName, market);
       // 실제 방이 0~1개여도 시연 화면에는 종목별로 최소 2개 피드가 보이게 채운다.
       setPredictions(rooms.length >= 2 ? rooms : [...rooms, ...demoRooms].slice(0, 2));
-      setSelectedId(null);
     } catch (error) {
       // 커뮤니티 API가 일시적으로 실패해도 시연용 기본 피드는 사용할 수 있게 유지한다.
       setPredictions(createDemoPredictions(stockCode, stockName, market));
@@ -144,6 +147,22 @@ export default function CommunityFeed({
   }, [loadRooms]);
 
   useEffect(() => {
+    const savedRoomId = sessionStorage.getItem(selectedRoomKey(stockCode));
+    // 종목이 바뀌면 해당 종목에서 마지막으로 열었던 방을 복원한다.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setSelectedId(savedRoomId);
+  }, [stockCode]);
+
+  useEffect(() => {
+    if (loading || !selectedId) return;
+    if (predictions.some((prediction) => prediction.id === selectedId)) return;
+    sessionStorage.removeItem(selectedRoomKey(stockCode));
+    // 삭제되거나 목록에서 사라진 방은 해당 종목의 커뮤니티 목록으로 이동한다.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setSelectedId(null);
+  }, [loading, predictions, selectedId, stockCode]);
+
+  useEffect(() => {
     if (!createdMessage) return;
     const timer = window.setTimeout(() => setCreatedMessage(''), 3000);
     return () => window.clearTimeout(timer);
@@ -152,7 +171,7 @@ export default function CommunityFeed({
   const symbol = useTradingViewSymbol(stockCode, market);
   const selectedPrediction = predictions.find((prediction) => prediction.id === selectedId) ?? null;
   if (selectedPrediction) {
-    return <CommunityDetail prediction={selectedPrediction} stockCode={stockCode} pointBalance={availablePoints} authenticated={authenticated} onPointsSpent={(amount) => { setAvailablePoints((current) => Math.max(0, current - amount)); onSpendPoints?.(amount); }} onBack={() => setSelectedId(null)} />;
+    return <CommunityDetail prediction={selectedPrediction} stockCode={stockCode} pointBalance={availablePoints} authenticated={authenticated} onPointsSpent={(amount) => { setAvailablePoints((current) => Math.max(0, current - amount)); onSpendPoints?.(amount); }} onBack={() => { sessionStorage.removeItem(selectedRoomKey(stockCode)); setSelectedId(null); }} />;
   }
 
   async function handleCreateSubmit(data: CommunityCreateFormData) {
@@ -197,7 +216,7 @@ export default function CommunityFeed({
       ) : predictions.length === 0 ? (
         <div className="mt-5 rounded-2xl border border-white/10 bg-[#15181f] px-5 py-14 text-center"><p className="font-bold text-white">아직 만들어진 커뮤니티가 없어요.</p><p className="mt-2 text-sm text-white/40">첫 번째 커뮤니티를 만들어 의견을 나눠보세요.</p></div>
       ) : (
-        <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">{predictions.map((prediction) => <CommunityCard key={prediction.id} prediction={prediction} onClick={setSelectedId} />)}</div>
+        <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">{predictions.map((prediction) => <CommunityCard key={prediction.id} prediction={prediction} onClick={(roomId) => { sessionStorage.setItem(selectedRoomKey(stockCode), roomId); setSelectedId(roomId); }} />)}</div>
       )}
 
       {isCreateOpen && <CommunityCreateModal stockName={stockName} currency={currencyForMarket(market)} pointBalance={availablePoints} submitting={submitting} submitError={submitError} onClose={() => { if (!submitting) setIsCreateOpen(false); }} onSubmit={(data) => void handleCreateSubmit(data)} />}
