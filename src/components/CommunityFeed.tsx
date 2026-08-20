@@ -5,6 +5,7 @@ import type {
   CommunityPrediction,
   RoomCreateRequest,
   RoomCreateResponse,
+  RoomDetailResponse,
   RoomListItem,
   RoomListResponse,
 } from '../types/community';
@@ -81,6 +82,9 @@ export default function CommunityFeed({
   const [selectedId, setSelectedId] = useState<string | null>(
     () => sessionStorage.getItem(selectedRoomKey(stockCode)),
   );
+  const [selectedRoomDetail, setSelectedRoomDetail] = useState<CommunityPrediction | null>(null);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [detailError, setDetailError] = useState('');
   const [createdMessage, setCreatedMessage] = useState('');
 
   const loadRooms = useCallback(async () => {
@@ -114,7 +118,31 @@ export default function CommunityFeed({
     // 종목이 바뀌면 해당 종목에서 마지막으로 열었던 방을 복원한다.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setSelectedId(savedRoomId);
+    setSelectedRoomDetail(null);
+    setDetailError('');
   }, [stockCode]);
+
+  useEffect(() => {
+    if (!selectedId) return;
+
+    let cancelled = false;
+    // 선택한 방의 본문과 최신 참여 현황을 서버에서 조회한다.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setDetailLoading(true);
+    setDetailError('');
+    void getApi<RoomDetailResponse>(`/rooms/${encodeURIComponent(selectedId)}`)
+      .then((room) => {
+        if (!cancelled) setSelectedRoomDetail(roomToPrediction(room, stockName, market));
+      })
+      .catch((error) => {
+        if (!cancelled) setDetailError(apiErrorMessage(error));
+      })
+      .finally(() => {
+        if (!cancelled) setDetailLoading(false);
+      });
+
+    return () => { cancelled = true; };
+  }, [market, selectedId, stockName]);
 
   useEffect(() => {
     if (loading || !selectedId) return;
@@ -133,9 +161,24 @@ export default function CommunityFeed({
 
   const symbol = useTradingViewSymbol(stockCode, market);
 
-  const selectedPrediction = predictions.find((prediction) => prediction.id === selectedId) ?? null;
+  const selectedPrediction = selectedRoomDetail
+    ?? predictions.find((prediction) => prediction.id === selectedId)
+    ?? null;
   if (selectedPrediction) {
-    return <CommunityDetail prediction={selectedPrediction} stockCode={stockCode} pointBalance={pointBalance} authenticated={authenticated} onPointsSpent={(amount) => onSpendPoints?.(amount)} onBack={() => { sessionStorage.removeItem(selectedRoomKey(stockCode)); setSelectedId(null); }} />;
+    if (detailLoading && !selectedRoomDetail) {
+      return <div className="grid min-h-72 place-items-center"><div className="size-7 animate-spin rounded-full border-2 border-white/15 border-t-blue-400" aria-label="커뮤니티 상세 불러오는 중" /></div>;
+    }
+    if (detailError) {
+      return <div role="alert" className="rounded-xl border border-red-400/20 bg-red-500/5 p-5 text-sm text-red-300">커뮤니티 상세를 불러오지 못했습니다: {detailError}<button type="button" onClick={() => { sessionStorage.removeItem(selectedRoomKey(stockCode)); setSelectedId(null); setSelectedRoomDetail(null); }} className="ml-3 underline">목록으로 돌아가기</button></div>;
+    }
+    return <CommunityDetail prediction={selectedPrediction} stockCode={stockCode} pointBalance={pointBalance} authenticated={authenticated} onPointsSpent={(amount) => onSpendPoints?.(amount)} onRoomDeleted={() => {
+      const deletedId = selectedPrediction.id;
+      setPredictions((current) => current.filter((room) => room.id !== deletedId));
+      sessionStorage.removeItem(selectedRoomKey(stockCode));
+      setSelectedId(null);
+      setSelectedRoomDetail(null);
+      setCreatedMessage('커뮤니티 방을 삭제했어요.');
+    }} onBack={() => { sessionStorage.removeItem(selectedRoomKey(stockCode)); setSelectedId(null); setSelectedRoomDetail(null); }} />;
   }
 
   async function handleCreateSubmit(data: CommunityCreateFormData) {
@@ -197,7 +240,7 @@ export default function CommunityFeed({
       ) : predictions.length === 0 ? (
         <div className="mt-5 rounded-2xl border border-white/10 bg-[#15181f] px-5 py-14 text-center"><p className="font-bold text-white">아직 만들어진 커뮤니티가 없어요.</p><p className="mt-2 text-sm text-white/40">첫 번째 커뮤니티를 만들어 의견을 나눠보세요.</p></div>
       ) : (
-        <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">{predictions.map((prediction) => <CommunityCard key={prediction.id} prediction={prediction} onClick={(roomId) => { sessionStorage.setItem(selectedRoomKey(stockCode), roomId); setSelectedId(roomId); }} onDelete={prediction.id.startsWith('local-created-') ? deleteLocalRoom : undefined} />)}</div>
+        <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">{predictions.map((prediction) => <CommunityCard key={prediction.id} prediction={prediction} onClick={(roomId) => { sessionStorage.setItem(selectedRoomKey(stockCode), roomId); setSelectedRoomDetail(null); setSelectedId(roomId); }} onDelete={prediction.id.startsWith('local-created-') ? deleteLocalRoom : undefined} />)}</div>
       )}
 
       {isCreateOpen && <CommunityCreateModal stockName={stockName} stockCode={stockCode} currency={currencyForMarket(market)} pointBalance={pointBalance} submitting={submitting} submitError={submitError} onClose={() => { if (!submitting) setIsCreateOpen(false); }} onSubmit={(data) => void handleCreateSubmit(data)} />}
