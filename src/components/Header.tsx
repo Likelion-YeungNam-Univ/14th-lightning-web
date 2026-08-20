@@ -7,8 +7,8 @@ import type { PointBalanceResponse, PointHistoryEntry } from "../types/points";
 
 // 실제 내역 API 연결 전까지 쓰는 임시 목업
 const MOCK_HISTORY_ENTRIES: PointHistoryEntry[] = [
-  { id: "1", label: "삼성전자 · 베팅 정산 획득", amount: 1000, date_label: "08.10" },
-  { id: "2", label: "삼성전자 · 간다 베팅", amount: -500, date_label: "08.05" },
+  { id: "1", label: "삼성전자 · 참여 정산 획득", amount: 1000, date_label: "08.10" },
+  { id: "2", label: "삼성전자 · 간다 참여", amount: -500, date_label: "08.05" },
   { id: "3", label: "피자 기프티콘 교환", amount: -18000, date_label: "지난달" },
 ];
 
@@ -34,8 +34,8 @@ export function Header({
   const userMenuRef = useRef<HTMLDivElement>(null);
   const balance = points?.balance ?? 0;
   const held = points?.pizza_progress.held ?? balance;
-  const target = points?.pizza_progress.target ?? 18_000;
-  const percent = Math.min(100, Math.max(0, points?.pizza_progress.percent ?? 0));
+  const target = 23_000;
+  const percent = Math.min(100, Math.max(0, Math.round((held / target) * 100)));
   const numberFormatter = new Intl.NumberFormat("ko-KR");
 
   useEffect(() => {
@@ -90,8 +90,13 @@ export function Header({
       <Logo />
       {authenticated ? (
         <div className="flex items-center gap-3">
-          <div className="relative h-[48px] w-[370px] rounded-full bg-[#1b2231] px-5 py-2 max-[860px]:hidden">
-            <div className="flex items-center justify-between gap-6 text-[14px] font-bold">
+          <button
+            type="button"
+            aria-label="피자 기프티콘 교환 진행률 보기"
+            onClick={() => setIsRedeemOpen(true)}
+            className="relative h-[48px] w-[370px] rounded-full border-0 bg-[#1b2231] px-5 py-2 text-left transition hover:bg-[#222a3b] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#6f9fff] max-[860px]:hidden"
+          >
+            <div className="-translate-y-0.5 flex items-center justify-between gap-6 text-[14px] font-bold">
               <span className="text-[#6fa8ff]">🍕 피자까지</span>
               <strong className="text-[#f2f3f5]">
                 {numberFormatter.format(held)} / {numberFormatter.format(target)}P
@@ -103,11 +108,16 @@ export function Header({
                 style={{ width: `${percent}%` }}
               />
             </div>
-          </div>
+          </button>
 
-          <div className="grid h-[48px] min-w-[116px] place-items-center rounded-full bg-[#1b2231] px-5 text-[17px] font-bold text-[#6fa8ff] max-[560px]:min-w-0 max-[560px]:px-4 max-[560px]:text-sm">
+          <button
+            type="button"
+            aria-label="포인트 충전 열기"
+            onClick={() => setIsChargeOpen(true)}
+            className="grid h-[48px] min-w-[116px] place-items-center rounded-full border-0 bg-[#1b2231] px-5 text-[17px] font-bold text-[#6fa8ff] transition hover:bg-[#222a3b] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#6f9fff] max-[560px]:min-w-0 max-[560px]:px-4 max-[560px]:text-sm"
+          >
             {numberFormatter.format(balance)}P
-          </div>
+          </button>
 
           <div ref={userMenuRef} className="relative max-[560px]:hidden">
             <button
@@ -172,7 +182,8 @@ export function Header({
       {/* 기프티콘 교환 모달 */}
       {isRedeemOpen && (
         <GiftRedeemModal
-          pointBalance={balance}
+          pointBalance={held}
+          pizzaCost={target}
           onClose={() => setIsRedeemOpen(false)}
           onConfirm={handleRedeemConfirm}
         />
