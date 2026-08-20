@@ -11,11 +11,13 @@ export type MyStockItem = {
 
 /** StockList가 종목 상태와 사용자 동작을 전달받는 속성을 정의한다. */
 export type StockListProps = {
+  editable: boolean;
   stocks: MyStockItem[];
   activeStockCode: string;
   stocksLoading: boolean;
   stocksError: string;
   onSelectStock: (stockCode: string) => void;
+  onRequireLogin: () => void;
   onAddStock?: () => void;
   onReorderStocks?: (stockCodes: string[]) => void;
   reordering?: boolean;

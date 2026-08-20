@@ -29,7 +29,7 @@ type Props = {
   stocksError: string;
   onSelectStock: (stockCode: string) => void;
   onAddStock: () => void;
-  onReorderStocks: (stockCodes: string[]) => void;
+  onReorderStocks?: (stockCodes: string[]) => void;
   reordering: boolean;
   reorderError: string;
 
@@ -106,11 +106,13 @@ export function MainPage({
         onSelectMarket={onSelectMarket}
       />
       <StockList
+        editable={authenticated}
         stocks={marketStocks}
         activeStockCode={activeStockCode}
         stocksLoading={stocksLoading}
         stocksError={stocksError}
         onSelectStock={onSelectStock}
+        onRequireLogin={onRequireLogin}
         onAddStock={onAddStock}
         onReorderStocks={onReorderStocks}
         reordering={reordering}
