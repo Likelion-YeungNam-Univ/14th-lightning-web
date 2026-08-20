@@ -13,7 +13,8 @@ import { useStockActions } from "./hooks/useStockActions";
 import { useCardDetail } from "./hooks/useCardDetail";
 import { usePoints } from "./hooks/usePoints";
 import { logout } from "./api/auth";
-import type { AccountResponse } from "./types/session";
+import { postApi } from "./api/client";
+import type { AccountResponse, SessionResponse } from "./types/session";
 import { LOGIN_ID_STORAGE_KEY } from "./types/session";
 
 const ACTIVE_TAB_KEY = "assit:active-source-tab";
@@ -63,6 +64,10 @@ export default function App() {
     sessionStorage.setItem(ACTIVE_TAB_KEY, tab);
     setActiveTab(tab);
   }, []);
+  const handleLogout = async () => {
+    await logout();
+    await postApi<SessionResponse>("/session");
+  };
   const { cardResponse, setCardResponse, cardsLoading, cardsError, canLoadCards } =
     useCards(activeStockCode, activeTab, activeMarketInfo, selectTab);
   const { savedResponse, setSavedResponse, savedLoading, savedError } =
@@ -124,7 +129,7 @@ export default function App() {
         account={account}
         onLoginClick={() => setLoginOpen(true)}
         onLogoutClick={() => {
-          void logout().finally(() => {
+          void handleLogout().finally(() => {
             window.localStorage.removeItem(LOGIN_ID_STORAGE_KEY);
             setAuthenticated(false);
             setAccount(null);

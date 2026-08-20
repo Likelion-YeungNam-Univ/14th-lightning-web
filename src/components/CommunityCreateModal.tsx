@@ -30,6 +30,7 @@ export default function CommunityCreateModal({ stockName, stockCode, currency = 
   const [fileName, setFileName] = useState('');
   const [cardAttachOpen, setCardAttachOpen] = useState(false);
   const [savedCard, setSavedCard] = useState<SavedCardItem | null>(null);
+  const [validationError, setValidationError] = useState('');
   const today = new Date().toLocaleDateString('en-CA');
   const betNumber = Number(bet);
   const canSubmit = Boolean(title.trim() && Number(price) > 0 && deadline >= today && content.trim()) && betNumber > 0 && betNumber <= MAX_BET && betNumber <= pointBalance;
@@ -50,7 +51,14 @@ export default function CommunityCreateModal({ stockName, stockCode, currency = 
   }
   function submit(event: FormEvent) {
     event.preventDefault();
-    if (!canSubmit) return;
+    if (!title.trim()) { setValidationError('방 제목을 입력해주세요.'); titleRef.current?.focus(); return; }
+    if (Number(price) <= 0) { setValidationError('기준 가격을 입력해주세요.'); return; }
+    if (!deadline) { setValidationError('결과일을 선택해주세요.'); return; }
+    if (deadline < today) { setValidationError('결과일은 오늘 이후로 선택해주세요.'); return; }
+    if (!content.trim()) { setValidationError('작성글을 입력해주세요.'); return; }
+    if (betNumber < 100 || betNumber > MAX_BET) { setValidationError(`참여 포인트는 100~${MAX_BET.toLocaleString()}P로 입력해주세요.`); return; }
+    if (betNumber > pointBalance) { setValidationError(`포인트가 부족해요. 현재 ${pointBalance.toLocaleString()}P를 사용할 수 있어요.`); return; }
+    setValidationError('');
     onSubmit({ stockName, title: title.trim(), expectedPrice: Number(price), deadlineDate: deadline, content: content.trim(), direction, betAmount: betNumber, maxParticipants: participants, savedCard });
   }
 
@@ -98,8 +106,8 @@ export default function CommunityCreateModal({ stockName, stockCode, currency = 
           <p className="-mt-3 text-[11px] text-white/35">최대 {MAX_BET.toLocaleString()}P · 현재 참여 가능 포인트 {pointBalance.toLocaleString()}P</p>
           <fieldset className="rounded-xl border border-[#445064] p-4"><legend className="px-1 text-xs font-bold text-white/65">참여 인원</legend><p className="mb-3 text-[11px] text-white/35">방장을 포함해 2~4명으로 정할 수 있어요.</p><div className="grid grid-cols-3 gap-2">{PARTICIPANTS.map((count) => <button key={count} type="button" onClick={() => setParticipants(count)} aria-pressed={participants === count} className={`rounded-lg border p-3 text-left ${participants === count ? 'border-blue-400 bg-blue-500/20' : 'border-[#445064] bg-[#15181f]'}`}><strong className="block text-sm text-white">{count}명</strong><span className="mt-1 block text-[10px] text-white/45">{count === 2 ? '빠르게 의견 나누기' : count === 3 ? '균형 있게 모으기' : '여러 의견 함께 보기'}</span></button>)}</div></fieldset>
           <p className="text-xs leading-5 text-white/40">참여 포인트를 걸고 내 의견을 고르면 방장 본인 몫을 먼저 내고 방이 열려요. 참여자도 같은 금액을 내요.</p>
-          {submitError && <p role="alert" className="rounded-lg bg-red-500/10 px-3 py-2 text-xs text-red-300">{submitError}</p>}
-          <button type="submit" disabled={!canSubmit || submitting} className="w-full rounded-lg bg-[#4d9fff] py-4 text-sm font-bold text-[#07111f] transition hover:bg-[#6aafff] disabled:opacity-40">{submitting ? '커뮤니티 만드는 중...' : `커뮤니티 만들고 ${betNumber.toLocaleString()}P 내기`}</button>
+          {(validationError || submitError) && <p role="alert" className="rounded-lg bg-red-500/10 px-3 py-2 text-xs text-red-300">{validationError || submitError}</p>}
+          <button type="submit" disabled={submitting} className={`w-full rounded-lg py-4 text-sm font-bold text-[#07111f] transition disabled:cursor-wait ${canSubmit ? 'bg-[#4d9fff] hover:bg-[#6aafff]' : 'bg-[#3f6089] hover:bg-[#5277a5]'}`}>{submitting ? '커뮤니티 만드는 중...' : `커뮤니티 만들고 ${betNumber.toLocaleString()}P 내기`}</button>
         </div>
       </form>
       {cardAttachOpen && <CommunityCardAttachModal stockCode={stockCode} selected={savedCard} onClose={() => setCardAttachOpen(false)} onSelect={(item) => { setSavedCard(item); setCardAttachOpen(false); }} />}
