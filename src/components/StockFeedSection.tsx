@@ -10,6 +10,8 @@ type StockFeedSectionProps = {
   stockName: string;
   stockCode: string;
   authenticated: boolean;
+  pointBalance: number;
+  onSpendPoints: (amount: number) => void;
   tabs?: string[];
   disabled: boolean;
   activeTab: SourceTab;
@@ -35,6 +37,8 @@ export function StockFeedSection({
   stockName,
   stockCode,
   authenticated,
+  pointBalance,
+  onSpendPoints,
   tabs,
   disabled,
   activeTab,
@@ -75,6 +79,8 @@ export function StockFeedSection({
           stockCode={stockCode}
           market={market}
           authenticated={authenticated}
+          pointBalance={pointBalance}
+          onSpendPoints={onSpendPoints}
         />
       ) : activeTab === "saved" ? (
         <SavedCardFeed

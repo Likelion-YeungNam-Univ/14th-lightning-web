@@ -1,5 +1,6 @@
 import { useAddStockModal } from "../hooks/useAddStockModal";
 import type { MyStockItem, StockAddResponse, StockChanges } from "../types/stock";
+import { displayStockName } from "../utils/stock-name";
 
 type Props = {
   market: string;
@@ -99,7 +100,7 @@ export function AddStockModal({
                     onClick={() => addStock(stock)}
                     className="rounded-full border border-[#343b48] bg-transparent px-4 py-2 text-sm text-[#aab3c1] transition hover:border-[#4d9fff] hover:text-[#f2f3f5] disabled:cursor-default disabled:opacity-25"
                   >
-                    {stock.name}
+                    {displayStockName(stock)}
                   </button>
                 );
               })}
@@ -131,7 +132,7 @@ export function AddStockModal({
                 onClick={() => removeStock(stock.stock_code)}
                 className="inline-flex items-center gap-2 rounded-full border-0 bg-[#4d9fff] px-4 py-2.5 text-sm font-bold text-[#0f1115]"
               >
-                {stock.name}
+                {displayStockName(stock)}
                 <span className="font-normal opacity-60">×</span>
               </button>
             ))}

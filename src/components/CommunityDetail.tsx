@@ -1,10 +1,15 @@
-import { useState } from 'react';
-import type { CommunityPrediction } from '../types/community';
+import { useEffect, useState } from 'react';
+import { getApi, postApi } from '../api/client';
+import type { SavedCardItem } from '../types/card';
+import type { CommentApiItem, CommentCreateResponse, CommentListResponse, CommunityComment, CommunityPrediction } from '../types/community';
+import CommunityCardAttachModal from './CommunityCardAttachModal';
 
 interface CommunityDetailProps {
   prediction: CommunityPrediction;
   pointBalance: number;
   authenticated?: boolean; // 로그인 여부 — 실제 인증 연결 전까지 기본 false
+  stockCode: string;
+  onPointsSpent?: (amount: number) => void;
   onBack: () => void;
 }
 
@@ -18,6 +23,8 @@ export default function CommunityDetail({
   prediction,
   pointBalance,
   authenticated = false,
+  stockCode,
+  onPointsSpent,
   onBack,
 }: CommunityDetailProps) {
   const [betAmount, setBetAmount] = useState(500);
@@ -27,6 +34,25 @@ export default function CommunityDetail({
   const [commentSide, setCommentSide] = useState<'up' | 'down'>('up');
   const [replyTargetId, setReplyTargetId] = useState<string | null>(null);
   const [replyDraft, setReplyDraft] = useState('');
+  const [attachOpen, setAttachOpen] = useState(false);
+  const [attachedCard, setAttachedCard] = useState<SavedCardItem | null>(null);
+  const [commentSubmitting, setCommentSubmitting] = useState(false);
+  const [commentError, setCommentError] = useState('');
+  const [participationMessage, setParticipationMessage] = useState('');
+  const isDemoRoom = prediction.id.startsWith('demo-');
+
+  function mapComment(item: CommentApiItem): CommunityComment {
+    return { id: String(item.id), author: item.author_tag, side: item.side === 'down' ? 'down' : 'up', body: item.body ?? '', likes: 0, replies: [], attachedCard: item.saved_card_snapshot };
+  }
+
+  useEffect(() => {
+    if (prediction.id.startsWith('demo-')) return;
+    let cancelled = false;
+    void getApi<CommentListResponse>(`/rooms/${encodeURIComponent(prediction.id)}/comments`)
+      .then((response) => { if (!cancelled) setComments(response.items.filter((item) => !item.deleted).map(mapComment)); })
+      .catch(() => undefined);
+    return () => { cancelled = true; };
+  }, [prediction.id]);
 
   const totalPeople = prediction.participantCount;
   const upRatio = Math.round(prediction.upRatio * 100);
@@ -39,8 +65,22 @@ export default function CommunityDetail({
 
   function handleBet(side: 'up' | 'down') {
     if (myBet || totalPeople >= prediction.maxParticipants) return;
+    const amount = Math.min(1000, Math.max(100, betAmount));
+    if (amount > pointBalance) {
+      setParticipationMessage('참여 포인트가 부족해요.');
+      return;
+    }
+    setBetAmount(amount);
     setMyBet(side);
+    onPointsSpent?.(amount);
+    setParticipationMessage(`${side === 'up' ? '간다' : '안 간다'}에 ${amount.toLocaleString()}P를 냈어요.`);
   }
+
+  useEffect(() => {
+    if (!participationMessage) return;
+    const timer = window.setTimeout(() => setParticipationMessage(''), 3000);
+    return () => window.clearTimeout(timer);
+  }, [participationMessage]);
 
   function toggleLike(commentId: string) {
     if (!authenticated) return;
@@ -53,15 +93,36 @@ export default function CommunityDetail({
     );
   }
 
-  function submitComment() {
+  async function submitComment() {
     if (!authenticated) return;
     const body = commentDraft.trim();
     if (!body) return;
-    setComments((prev) => [
-      ...prev,
-      { id: `local-${Date.now()}`, author: '나', side: commentSide, body, likes: 0, replies: [] },
-    ]);
-    setCommentDraft('');
+    setCommentSubmitting(true);
+    setCommentError('');
+    try {
+      if (isDemoRoom) {
+        setComments((prev) => [...prev, {
+          id: `local-${Date.now()}`,
+          author: '나',
+          side: commentSide,
+          body,
+          likes: 0,
+          replies: [],
+          attachedCard: attachedCard?.snapshot ?? null,
+        }]);
+        setCommentDraft('');
+        setAttachedCard(null);
+        return;
+      }
+      const response = await postApi<CommentCreateResponse>(`/rooms/${encodeURIComponent(prediction.id)}/comments`, { body, saved_card_id: attachedCard?.card_id ?? null });
+      setComments((prev) => [...prev, mapComment(response.item)]);
+      setCommentDraft('');
+      setAttachedCard(null);
+    } catch (error) {
+      setCommentError(error instanceof Error ? error.message : '댓글을 등록하지 못했습니다.');
+    } finally {
+      setCommentSubmitting(false);
+    }
   }
 
   function submitReply(commentId: string) {
@@ -177,6 +238,12 @@ export default function CommunityDetail({
             </button>
           </div>
 
+          {myBet && (
+            <div className="mt-3 rounded-lg bg-[#15181f] px-3 py-2.5 text-xs text-emerald-300">
+              ✓ {myBet === 'up' ? '간다' : '안 간다'}에 {betAmount.toLocaleString()}P 참여 중
+            </div>
+          )}
+
           <p className="text-xs text-white/30 mt-3 text-center">
             판가름 날짜의 종가로 자동 판정돼요.
           </p>
@@ -208,6 +275,7 @@ export default function CommunityDetail({
                     <span className="font-bold">{comment.author}</span>{' '}
                     <span className="text-white/80">{comment.body}</span>
                   </p>
+                  {comment.attachedCard && <AttachedCard snapshot={comment.attachedCard} />}
                   <div className="flex items-center gap-4 mt-1.5">
                     <button
                       type="button"
@@ -278,10 +346,14 @@ export default function CommunityDetail({
           placeholder={authenticated ? '자료를 보고 든 생각을 남겨보세요.' : '로그인하면 댓글을 남길 수 있어요.'}
           className="w-full resize-none rounded-lg bg-[#171a21] border border-white/[0.06] px-3.5 py-3 text-sm text-white placeholder:text-white/30 outline-none focus:border-sky-500/50 disabled:opacity-60"
         />
+        {attachedCard && <div className="mt-2 flex items-center justify-between rounded-lg border border-blue-400/30 bg-blue-500/10 p-3"><div className="min-w-0"><span className="text-[11px] font-bold text-blue-300">첨부 자료</span><p className="truncate text-sm font-semibold text-white">{snapshotText(attachedCard.snapshot, 'title') || '저장한 자료'}</p></div><button type="button" onClick={() => setAttachedCard(null)} className="ml-3 text-xs text-white/45 hover:text-white">첨부 해제</button></div>}
+        {commentError && <p role="alert" className="mt-2 text-xs text-red-300">{commentError}</p>}
         <div className="flex items-center justify-between mt-2.5">
           <div className="flex items-center gap-2">
             <button
               type="button"
+              disabled={!authenticated}
+              onClick={() => setAttachOpen(true)}
               className="text-xs text-white/50 border border-white/10 rounded-md px-2.5 py-1.5 hover:text-white/80"
             >
               🔗 자료 카드
@@ -315,15 +387,17 @@ export default function CommunityDetail({
             <span className="text-xs text-white/30">{commentDraft.length}/200 · ⌘/Ctrl+Enter</span>
             <button
               type="button"
-              onClick={submitComment}
-              disabled={!authenticated}
+              onClick={() => void submitComment()}
+              disabled={!authenticated || commentSubmitting || !commentDraft.trim()}
               className="text-sm font-semibold px-4 py-2 rounded-full bg-[#3b82f6] text-white hover:bg-[#2563eb] disabled:opacity-40"
             >
-              {authenticated ? '댓글 남기기' : '로그인하고 댓글 쓰기'}
+              {commentSubmitting ? '등록 중...' : authenticated ? '댓글 남기기' : '로그인하고 댓글 쓰기'}
             </button>
           </div>
         </div>
       </div>
+      {attachOpen && <CommunityCardAttachModal stockCode={stockCode} selected={attachedCard} onClose={() => setAttachOpen(false)} onSelect={(item) => { setAttachedCard(item); setAttachOpen(false); }} />}
+      {participationMessage && <div role="status" className="status-banner--info fixed bottom-5 left-1/2 z-[80] -translate-x-1/2 rounded-lg border border-white/10 bg-[#20252f] px-4 py-3 text-xs font-bold text-white shadow-2xl"><span className="mr-2">✓</span>{participationMessage}</div>}
     </div>
   );
 }
@@ -375,4 +449,17 @@ function SideBox({
       </div>
     </div>
   );
+}
+
+function snapshotText(snapshot: Record<string, unknown>, key: string) {
+  return typeof snapshot[key] === 'string' ? String(snapshot[key]) : '';
+}
+
+function AttachedCard({ snapshot }: { snapshot: Record<string, unknown> }) {
+  const title = snapshotText(snapshot, 'title') || '첨부된 자료';
+  const summary = snapshotText(snapshot, 'summary_short');
+  const source = snapshotText(snapshot, 'source_name');
+  const url = snapshotText(snapshot, 'origin_url');
+  const content = <><span className="text-[11px] font-bold text-blue-300">🔗 첨부 자료 {source && `· ${source}`}</span><strong className="mt-1 block text-sm text-white">{title}</strong>{summary && <span className="mt-1 block line-clamp-2 text-xs text-white/45">{summary}</span>}</>;
+  return url ? <a href={url} target="_blank" rel="noreferrer" className="mt-2 block rounded-lg border border-blue-400/25 bg-[#12213a] p-3 hover:border-blue-400/50">{content}</a> : <div className="mt-2 rounded-lg border border-blue-400/25 bg-[#12213a] p-3">{content}</div>;
 }

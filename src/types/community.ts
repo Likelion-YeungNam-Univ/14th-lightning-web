@@ -15,7 +15,22 @@ export interface CommunityComment {
   likes: number;
   likedByMe?: boolean;
   replies: CommunityReply[];
+  attachedCard?: Record<string, unknown> | null;
 }
+
+export interface CommentApiItem {
+  id: number;
+  author_tag: string;
+  is_mine: boolean;
+  side: string | null;
+  body: string | null;
+  deleted: boolean;
+  saved_card_snapshot: Record<string, unknown> | null;
+  created_at: string;
+}
+
+export interface CommentListResponse { items: CommentApiItem[]; }
+export interface CommentCreateResponse { item: CommentApiItem; }
 
 export interface CommunityPrediction {
   id: string;

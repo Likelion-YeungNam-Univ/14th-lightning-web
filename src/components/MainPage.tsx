@@ -9,9 +9,12 @@ import { savedItemToCard } from "../utils/card";
 import type { Card, CardListResponse, SavedCardItem, SavedCardListResponse } from "../types/card";
 import type { MarketInfo } from "../types/market";
 import type { MyStockItem } from "../types/stock";
+import { displayStockName } from "../utils/stock-name";
 
 type Props = {
   authenticated: boolean;
+  pointBalance: number;
+  onSpendPoints: (amount: number) => void;
   markets: MarketInfo[];
   activeMarket: string;
   marketsLoading: boolean;
@@ -54,6 +57,8 @@ type Props = {
 /** 시장·종목 선택부터 카드 피드까지 메인 화면의 콘텐츠를 렌더링한다. */
 export function MainPage({
   authenticated,
+  pointBalance,
+  onSpendPoints,
   markets,
   activeMarket,
   marketsLoading,
@@ -86,9 +91,8 @@ export function MainPage({
   onOpenDetail,
   sessionError,
 }: Props) {
-  const activeStockName =
-    marketStocks.find((stock) => stock.stock_code === activeStockCode)?.name ??
-    activeStockCode;
+  const activeStock = marketStocks.find((stock) => stock.stock_code === activeStockCode);
+  const activeStockName = activeStock ? displayStockName(activeStock) : activeStockCode;
 
   return (
     <main id="main" className="px-6 pt-16">
@@ -132,6 +136,8 @@ export function MainPage({
           stockName={activeStockName}
           stockCode={activeStockCode}
           authenticated={authenticated}
+          pointBalance={pointBalance}
+          onSpendPoints={onSpendPoints}
           tabs={activeMarketInfo?.tabs}
           disabled={stocksLoading || !activeStockCode}
           activeTab={activeTab}
