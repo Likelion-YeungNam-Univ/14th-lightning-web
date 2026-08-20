@@ -14,6 +14,7 @@ import { useCardDetail } from "./hooks/useCardDetail";
 import { usePoints } from "./hooks/usePoints";
 import { logout } from "./api/auth";
 import type { AccountResponse } from "./types/session";
+import { LOGIN_ID_STORAGE_KEY } from "./types/session";
 
 const ACTIVE_TAB_KEY = "assit:active-source-tab";
 
@@ -120,6 +121,7 @@ export default function App() {
         onLoginClick={() => setLoginOpen(true)}
         onLogoutClick={() => {
           void logout().finally(() => {
+            window.localStorage.removeItem(LOGIN_ID_STORAGE_KEY);
             setAuthenticated(false);
             setAccount(null);
           });

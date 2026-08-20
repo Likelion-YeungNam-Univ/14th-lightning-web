@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { postApi } from "../api/client";
-import type { SessionResponse } from "../types/session";
+import { LOGIN_ID_STORAGE_KEY, type SessionResponse } from "../types/session";
 import type { AccountResponse } from "../types/session";
 
 /** 첫 진입 시 세션을 생성하거나 재사용하고 인증 상태를 관리한다. */
@@ -19,12 +19,15 @@ export function useSession() {
         setAccount(
           session.authenticated && session.nickname
             ? {
-                login_id: "",
+                login_id: window.localStorage.getItem(LOGIN_ID_STORAGE_KEY) ?? "",
                 nickname: session.nickname,
                 authenticated: true,
               }
             : null,
         );
+        if (!session.authenticated) {
+          window.localStorage.removeItem(LOGIN_ID_STORAGE_KEY);
+        }
       } catch (error) {
         setSessionError(
           error instanceof Error

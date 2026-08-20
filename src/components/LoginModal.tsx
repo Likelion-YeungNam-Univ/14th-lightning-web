@@ -5,6 +5,7 @@ import type {
   SessionResponse,
   SignupRequest,
 } from "../types/session";
+import { LOGIN_ID_STORAGE_KEY } from "../types/session";
 import { Logo } from "./Logo";
 
 type LoginModalProps = {
@@ -13,6 +14,7 @@ type LoginModalProps = {
 };
 
 type AuthMode = "login" | "signup";
+const LOGIN_ID_PATTERN = /^[a-z0-9_]{4,20}$/;
 const fieldClass = "h-12 w-full rounded-[10px] border border-[#3a4250] bg-[#12151b] px-4 text-sm text-[#f2f3f5] outline-none placeholder:text-[#737b88] focus:border-[#6f9fff]";
 
 function authErrorMessage(error: unknown, fallback: string) {
@@ -68,7 +70,7 @@ export function LoginModal({ onClose, onLoginSuccess }: LoginModalProps) {
   };
 
   const validateSignup = () => {
-    if (!/^[a-z0-9_]{4,20}$/.test(loginId)) return "아이디는 영문 소문자·숫자·밑줄을 사용해 4~20자로 입력해주세요.";
+    if (!LOGIN_ID_PATTERN.test(loginId)) return "아이디는 영문 소문자, 숫자, 밑줄만 사용해 4~20자로 입력해주세요.";
     if (password.length < 8 || password.length > 64) return "비밀번호는 8~64자로 입력해주세요.";
     if (password !== passwordConfirm) return "비밀번호 확인이 일치하지 않습니다.";
     if (nickname.trim().length < 1 || nickname.trim().length > 12) return "닉네임은 1~12자로 입력해주세요.";
@@ -95,6 +97,7 @@ export function LoginModal({ onClose, onLoginSuccess }: LoginModalProps) {
         : await postApi<AccountResponse>("/auth/login", {
             login_id: loginId.trim(), password,
           });
+      window.localStorage.setItem(LOGIN_ID_STORAGE_KEY, account.login_id);
       onLoginSuccess(account);
     } catch (requestError) {
       setError(authErrorMessage(requestError, mode === "signup" ? "회원가입에 실패했습니다." : "로그인 요청에 실패했습니다."));
@@ -115,8 +118,8 @@ export function LoginModal({ onClose, onLoginSuccess }: LoginModalProps) {
           <p className="mb-6 mt-2 text-[13px] leading-6 text-[#9aa3b2]">{mode === "signup" ? "아이디와 비밀번호, 커뮤니티에서 사용할 닉네임을 만들어 주세요." : "아이디와 비밀번호를 입력해 주세요."}</p>
           <form onSubmit={submit}>
             <label htmlFor="auth-id" className="mb-2 block text-sm font-bold text-[#c8ccd4]">아이디</label>
-            <input id="auth-id" autoFocus autoComplete="username" value={loginId} onChange={(e) => setLoginId(e.target.value)} placeholder={mode === "signup" ? "예) assit_user" : "아이디 입력"} className={fieldClass} />
-            {mode === "signup" && <p className="mb-5 mt-2 text-xs text-[#9aa3b2]">영문 소문자·숫자·밑줄, 4~20자</p>}
+            <input id="auth-id" autoFocus autoComplete="username" autoCapitalize="none" spellCheck={false} minLength={mode === "signup" ? 4 : undefined} maxLength={mode === "signup" ? 20 : undefined} pattern={mode === "signup" ? "[a-z0-9_]{4,20}" : undefined} value={loginId} onChange={(e) => setLoginId(e.target.value)} placeholder={mode === "signup" ? "예) assit_user" : "아이디 입력"} className={fieldClass} />
+            {mode === "signup" && <p className="mb-5 mt-2 text-xs text-[#9aa3b2]">영문 소문자·숫자·밑줄 중 사용, 4~20자</p>}
             <label htmlFor="auth-password" className="mb-2 mt-5 block text-sm font-bold text-[#c8ccd4]">비밀번호</label>
             <input id="auth-password" type="password" autoComplete={mode === "signup" ? "new-password" : "current-password"} value={password} onChange={(e) => setPassword(e.target.value)} placeholder={mode === "signup" ? "8자 이상" : "비밀번호 입력"} className={fieldClass} />
             {mode === "signup" && <p className="mb-5 mt-2 text-xs text-[#9aa3b2]">8~64자로 입력해 주세요.</p>}
