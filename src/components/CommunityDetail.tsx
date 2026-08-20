@@ -141,7 +141,7 @@ export default function CommunityDetail({
   }
 
   return (
-    <div>
+    <div className="pb-12">
       {/* 뒤로가기 */}
       <button
         type="button"

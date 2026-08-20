@@ -19,16 +19,16 @@ export function toTradingViewSymbol(stockCode: string, market: string): string {
 
 /** 백엔드가 확정한 거래소 심볼을 우선 사용하고 실패 시 로컬 매핑으로 대체합니다. */
 export function useTradingViewSymbol(stockCode: string, market: string) {
-  const [symbol, setSymbol] = useState(() => toTradingViewSymbol(stockCode, market));
+  const [resolved, setResolved] = useState<{ stockCode: string; symbol: string } | null>(null);
 
   useEffect(() => {
     if (!stockCode) return;
     let cancelled = false;
     void getApi<{ symbol: string }>(`/stocks/${encodeURIComponent(stockCode)}/chart-symbol`)
-      .then((response) => { if (!cancelled && response.symbol) setSymbol(response.symbol); })
-      .catch(() => { if (!cancelled) setSymbol(toTradingViewSymbol(stockCode, market)); });
+      .then((response) => { if (!cancelled && response.symbol) setResolved({ stockCode, symbol: response.symbol }); })
+      .catch(() => { if (!cancelled) setResolved({ stockCode, symbol: toTradingViewSymbol(stockCode, market) }); });
     return () => { cancelled = true; };
   }, [market, stockCode]);
 
-  return symbol;
+  return resolved?.stockCode === stockCode ? resolved.symbol : null;
 }
