@@ -14,6 +14,12 @@ const DEFAULT_OVERSEAS_STOCKS: MyStockItem[] = [
   { stock_code: "AAPL", name: "Apple", market: "overseas", display_order: 2, is_default: true },
   { stock_code: "MSFT", name: "Microsoft", market: "overseas", display_order: 3, is_default: true },
 ];
+const DEFAULT_DOMESTIC_STOCKS: MyStockItem[] = [
+  { stock_code: "005930", name: "삼성전자", market: "domestic", display_order: 0, is_default: true },
+  { stock_code: "000660", name: "SK하이닉스", market: "domestic", display_order: 1, is_default: true },
+  { stock_code: "005380", name: "현대차", market: "domestic", display_order: 2, is_default: true },
+  { stock_code: "035420", name: "NAVER", market: "domestic", display_order: 3, is_default: true },
+];
 const OVERSEAS_ORDER_KEY = "assit:overseas-stock-order";
 
 function applySavedOverseasOrder(stocks: MyStockItem[]) {
@@ -53,13 +59,18 @@ export function useStocks(activeMarket: string, markets: MarketInfo[]) {
           `/me/stocks?market=${encodeURIComponent(activeMarket)}`,
         );
         if (cancelled) return;
-        const sourceItems = activeMarket === "overseas"
+        const defaultStocks = activeMarket === "overseas"
+          ? DEFAULT_OVERSEAS_STOCKS
+          : activeMarket === "domestic"
+            ? DEFAULT_DOMESTIC_STOCKS
+            : [];
+        const sourceItems = defaultStocks.length > 0
           ? [
-              ...DEFAULT_OVERSEAS_STOCKS,
+              ...defaultStocks,
               ...response.items.filter(
                 (stock) =>
                   !stock.is_default &&
-                  !DEFAULT_OVERSEAS_STOCKS.some(
+                  !defaultStocks.some(
                     (defaultStock) => defaultStock.stock_code === stock.stock_code,
                   ),
               ),
