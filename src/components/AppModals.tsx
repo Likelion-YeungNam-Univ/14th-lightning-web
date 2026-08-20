@@ -3,11 +3,12 @@ import { CardDetailSheet } from "./CardDetailSheet";
 import { LoginModal } from "./LoginModal";
 import type { Card } from "../types/card";
 import type { MyStockItem, StockAddResponse, StockChanges } from "../types/stock";
+import type { AccountResponse } from "../types/session";
 
 type Props = {
   loginOpen: boolean;
   onLoginClose: () => void;
-  onLoginSuccess: () => void;
+  onLoginSuccess: (account: AccountResponse) => void;
   stockModalOpen: boolean;
   activeMarket: string;
   marketStocks: MyStockItem[];

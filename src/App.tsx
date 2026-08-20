@@ -12,6 +12,8 @@ import { useCardActions } from "./hooks/useCardActions";
 import { useStockActions } from "./hooks/useStockActions";
 import { useCardDetail } from "./hooks/useCardDetail";
 import { usePoints } from "./hooks/usePoints";
+import { logout } from "./api/auth";
+import type { AccountResponse } from "./types/session";
 
 const ACTIVE_TAB_KEY = "assit:active-source-tab";
 
@@ -25,7 +27,7 @@ function initialSourceTab(): SourceTab {
 /** 세션부터 시장·종목·카드·로그인 모달까지 메인 화면의 전체 흐름을 연결한다. */
 export default function App() {
   // 첫 진입 세션과 로그인 모달 표시 상태를 관리한다.
-  const { authenticated, setAuthenticated, sessionLoading, sessionError } =
+  const { authenticated, setAuthenticated, account, setAccount, sessionLoading, sessionError } =
     useSession();
   const [loginOpen, setLoginOpen] = useState(false);
   const { points, spendPoints } = usePoints(authenticated);
@@ -114,9 +116,22 @@ export default function App() {
         authenticated={authenticated}
         sessionLoading={sessionLoading}
         points={points}
-        onLoginClick={() => setLoginOpen(true)} onLogoutClick={function (): void {
-          throw new Error("Function not implemented.");
-        } }      />
+        account={account}
+        onLoginClick={() => setLoginOpen(true)}
+        onLogoutClick={() => {
+          void logout().finally(() => {
+            setAuthenticated(false);
+            setAccount(null);
+          });
+        }}
+        onNicknameChange={(nickname) =>
+          setAccount((current) =>
+            current
+              ? { ...current, nickname }
+              : { login_id: "", nickname, authenticated: true },
+          )
+        }
+      />
       <MainPage
         authenticated={authenticated}
         pointBalance={points?.balance ?? 0}
@@ -156,9 +171,10 @@ export default function App() {
       <AppModals
         loginOpen={loginOpen}
         onLoginClose={() => setLoginOpen(false)}
-        onLoginSuccess={() => {
+        onLoginSuccess={(nextAccount: AccountResponse) => {
           // 로그인 전에 보류된 카드 저장과 종목 변경 요청을 성공 후 다시 실행한다.
           setAuthenticated(true);
+          setAccount(nextAccount);
           setLoginOpen(false);
           if (pendingSave) {
             void saveCard(
