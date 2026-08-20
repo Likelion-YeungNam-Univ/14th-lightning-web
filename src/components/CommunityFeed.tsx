@@ -24,8 +24,6 @@ interface CommunityFeedProps {
   onSpendPoints?: (amount: number) => void;
 }
 
-const USE_SERVER_COMMUNITY_ROOMS = false;
-
 function apiErrorMessage(error: unknown) {
   if (error instanceof ApiError) return error.message;
   return error instanceof Error ? error.message : '요청을 처리하지 못했습니다.';
@@ -38,41 +36,7 @@ function currencyForMarket(market: string): CommunityCurrency {
     : 'KRW';
 }
 
-const DEMO_TARGET_PRICES: Record<string, number> = {
-  NVDA: 260,
-  TSLA: 450,
-  AAPL: 300,
-  MSFT: 650,
-  '005930': 80000,
-  '000660': 220000,
-};
-
 const selectedRoomKey = (stockCode: string) => `assit:community-room:${stockCode}`;
-
-/** API 목록이 비었을 때 시연 화면을 유지하기 위한 종목별 기본 방 2개입니다. */
-function createDemoPredictions(stockCode: string, stockName: string, market: string): CommunityPrediction[] {
-  const ticker = stockCode.toUpperCase().replace(/^.*:/, '');
-  const currency = currencyForMarket(market);
-  const targetPrice = DEMO_TARGET_PRICES[ticker] ?? (currency === 'USD' ? 260 : 100000);
-  const priceLabel = currency === 'USD' ? `${targetPrice.toLocaleString()}달러` : `${targetPrice.toLocaleString()}원`;
-  const demoComments = [
-    { id: `demo-${ticker}-comment-1`, author: '반도체러버', side: 'up' as const, body: '공개된 소각·실적 자료부터 같이 보세요.', likes: 3, replies: [{ id: `demo-${ticker}-reply-1`, author: '공시읽는날', body: '다음 공시 일정도 함께 볼게요.' }] },
-    { id: `demo-${ticker}-comment-2`, author: '준비는승리', side: 'down' as const, body: '이미 반영된 변수도 많아 보여요.', likes: 1, replies: [] },
-  ];
-  const demoPost = `${stockName}의 공개 자료와 업황 흐름을 함께 보면, 결과일까지 이 가격대는 충분히 확인할 수 있다고 봐요. 반대로 보시는 분들은 근거를 남겨주세요.`;
-  return [
-    {
-      id: `demo-${ticker}-up`, stockName, title: `9월 말까지 ${priceLabel} 간다`, direction: 'up',
-      targetPrice, currency, deadlineLabel: '09.30', participantCount: 3, maxParticipants: 4,
-      totalPoints: 1500, upRatio: 0.67, creatorName: '반도체러버', post: demoPost, comments: demoComments,
-    },
-    {
-      id: `demo-${ticker}-down`, stockName, title: `실적 발표 전에 ${priceLabel} 아래로 내려간다`, direction: 'down',
-      targetPrice, currency, deadlineLabel: '09.12', participantCount: 1, maxParticipants: 4,
-      totalPoints: 5000, upRatio: 0, creatorName: '준비는승리', post: demoPost, comments: demoComments,
-    },
-  ];
-}
 
 function roomToPrediction(room: RoomListItem, stockName: string, market: string): CommunityPrediction {
   const totalCount = room.up.count + room.down.count;
@@ -128,18 +92,12 @@ export default function CommunityFeed({
     setLoading(true);
     setLoadError('');
     try {
-      if (!USE_SERVER_COMMUNITY_ROOMS) {
-        setPredictions(createDemoPredictions(stockCode, stockName, market));
-        return;
-      }
       const response = await getApi<RoomListResponse>(`/rooms?stock_code=${encodeURIComponent(stockCode)}&status=open`);
       const rooms = response.items.map((room) => roomToPrediction(room, stockName, market));
-      const demoRooms = createDemoPredictions(stockCode, stockName, market);
-      setPredictions(rooms.length >= 2 ? rooms : [...rooms, ...demoRooms].slice(0, 2));
+      setPredictions(rooms);
     } catch (error) {
-      setPredictions(createDemoPredictions(stockCode, stockName, market));
-      setLoadError('');
-      console.warn('커뮤니티 API 대신 시연용 피드를 표시합니다.', apiErrorMessage(error));
+      setPredictions([]);
+      setLoadError(apiErrorMessage(error));
     } finally {
       setLoading(false);
     }
