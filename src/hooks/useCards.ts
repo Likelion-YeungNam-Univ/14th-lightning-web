@@ -3,7 +3,6 @@ import { ApiError, getApi } from "../api/client";
 import type { SourceTab } from "../components/SourceNav";
 import type { CardListResponse } from "../types/card";
 import type { MarketInfo } from "../types/market";
-import { readSavedCardCache } from "../utils/saved-card-cache";
 
 /** 선택한 종목과 출처 탭의 카드 목록 및 조회 상태를 관리한다. */
 export function useCards(
@@ -40,17 +39,7 @@ export function useCards(
           `/cards?tab=${encodeURIComponent(activeTab)}&stock_code=${encodeURIComponent(activeStockCode)}`,
         );
         if (!cancelled) {
-          const cachedIds = new Set(
-            readSavedCardCache()
-              .filter((item) => item.stock_code === activeStockCode)
-              .map((item) => item.card_id),
-          );
-          setCardResponse({
-            ...response,
-            items: response.items.map((card) =>
-              cachedIds.has(card.card_id) ? { ...card, is_saved: true } : card,
-            ),
-          });
+          setCardResponse(response);
         }
       } catch (error) {
         if (cancelled) return;

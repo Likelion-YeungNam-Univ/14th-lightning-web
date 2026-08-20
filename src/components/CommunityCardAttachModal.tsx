@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { getApi } from '../api/client';
 import type { SavedCardItem, SavedCardListResponse } from '../types/card';
-import { cacheSavedCards, mergeSavedCards, readSavedCardCache } from '../utils/saved-card-cache';
 
 const tabs: Array<[string, string]> = [['all', '전체'], ['disclosure', '공시'], ['regulation', '규제동향'], ['bok', '한국은행'], ['fed', '미국 Fed'], ['youtube', '유튜브']];
 
@@ -28,16 +27,12 @@ export default function CommunityCardAttachModal({ stockCode, selected, onSelect
     void getApi<SavedCardListResponse>(`/me/saved-cards?stock_code=${encodeURIComponent(stockCode)}`)
       .then((response) => {
         if (cancelled) return;
-        const cachedForStock = readSavedCardCache().filter((item) => item.stock_code === stockCode);
-        const merged = mergeSavedCards(cachedForStock, response.items);
-        cacheSavedCards(mergeSavedCards(readSavedCardCache().filter((item) => item.stock_code !== stockCode), merged));
-        setItems(merged.filter((item) => item.card_id !== null));
+        setItems(response.items.filter((item) => item.card_id !== null));
       })
       .catch((reason: unknown) => {
         if (cancelled) return;
-        const cached = readSavedCardCache().filter((item) => item.stock_code === stockCode && item.card_id !== null);
-        setItems(cached);
-        if (cached.length === 0) setError(reason instanceof Error ? reason.message : '저장 자료를 불러오지 못했습니다.');
+        setItems([]);
+        setError(reason instanceof Error ? reason.message : '저장 자료를 불러오지 못했습니다.');
       })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };

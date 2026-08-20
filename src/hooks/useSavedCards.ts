@@ -2,14 +2,13 @@ import { useLayoutEffect, useState } from "react";
 import { getApi } from "../api/client";
 import type { SourceTab } from "../components/SourceNav";
 import type { SavedCardListResponse } from "../types/card";
-import {
-  cacheSavedCards,
-  mergeSavedCards,
-  readSavedCardCache,
-} from "../utils/saved-card-cache";
 
 /** 저장 탭이 선택됐을 때 현재 종목의 저장 카드 목록을 조회한다. */
-export function useSavedCards(activeStockCode: string, activeTab: SourceTab) {
+export function useSavedCards(
+  activeStockCode: string,
+  activeTab: SourceTab,
+  authenticated: boolean,
+) {
   const [savedResponse, setSavedResponse] =
     useState<SavedCardListResponse | null>(null);
   const [savedLoading, setSavedLoading] = useState(false);
@@ -17,7 +16,7 @@ export function useSavedCards(activeStockCode: string, activeTab: SourceTab) {
 
   // 일반 출처 탭에서는 요청하지 않고 저장 탭 진입 시에만 API를 호출한다.
   useLayoutEffect(() => {
-    if (!activeStockCode || activeTab !== "saved") return;
+    if (!authenticated || !activeStockCode || activeTab !== "saved") return;
     let cancelled = false;
     const loadSavedCards = async () => {
       setSavedResponse(null);
@@ -28,26 +27,11 @@ export function useSavedCards(activeStockCode: string, activeTab: SourceTab) {
           `/me/saved-cards?stock_code=${encodeURIComponent(activeStockCode)}`,
         );
         if (!cancelled) {
-          const cachedForStock = readSavedCardCache().filter(
-            (item) => item.stock_code === activeStockCode,
-          );
-          const items = mergeSavedCards(cachedForStock, response.items);
-          cacheSavedCards(
-            mergeSavedCards(
-              readSavedCardCache().filter(
-                (item) => item.stock_code !== activeStockCode,
-              ),
-              items,
-            ),
-          );
-          setSavedResponse({ items });
+          setSavedResponse(response);
         }
       } catch (error) {
         if (cancelled) return;
-        const cachedItems = readSavedCardCache().filter(
-          (item) => item.stock_code === activeStockCode,
-        );
-        setSavedResponse(cachedItems.length > 0 ? { items: cachedItems } : null);
+        setSavedResponse(null);
         setSavedError(
           error instanceof Error
             ? error.message
@@ -61,7 +45,7 @@ export function useSavedCards(activeStockCode: string, activeTab: SourceTab) {
     return () => {
       cancelled = true;
     };
-  }, [activeStockCode, activeTab]);
+  }, [activeStockCode, activeTab, authenticated]);
 
   return { savedResponse, setSavedResponse, savedLoading, savedError };
 }

@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Header } from "./components/Header";
 import type { SourceTab } from "./components/SourceNav";
 import { AppModals } from "./components/AppModals";
@@ -18,6 +18,7 @@ import type { AccountResponse, SessionResponse } from "./types/session";
 import { LOGIN_ID_STORAGE_KEY } from "./types/session";
 
 const ACTIVE_TAB_KEY = "assit:active-source-tab";
+const LEGACY_SAVED_CARD_CACHE_KEY = "assit:saved-card-snapshots:v1";
 
 function initialSourceTab(): SourceTab {
   const value = sessionStorage.getItem(ACTIVE_TAB_KEY);
@@ -28,6 +29,10 @@ function initialSourceTab(): SourceTab {
 
 /** 세션부터 시장·종목·카드·로그인 모달까지 메인 화면의 전체 흐름을 연결한다. */
 export default function App() {
+  useEffect(() => {
+    localStorage.removeItem(LEGACY_SAVED_CARD_CACHE_KEY);
+  }, []);
+
   // 첫 진입 세션과 로그인 모달 표시 상태를 관리한다.
   const { authenticated, setAuthenticated, account, setAccount, sessionLoading, sessionError } =
     useSession();
@@ -71,7 +76,7 @@ export default function App() {
   const { cardResponse, setCardResponse, cardsLoading, cardsError, canLoadCards } =
     useCards(activeStockCode, activeTab, activeMarketInfo, selectTab);
   const { savedResponse, setSavedResponse, savedLoading, savedError } =
-    useSavedCards(activeStockCode, activeTab);
+    useSavedCards(activeStockCode, activeTab, authenticated);
   const { detailCard, detailTab, detailLinkSentence, setDetailCard, openDetail, closeDetail } =
     useCardDetail();
   const {
@@ -97,6 +102,7 @@ export default function App() {
     retryPendingStockAdd,
     requireLoginForStocks,
     openStockModal,
+    resetStockActions,
   } = useStockActions({
     authenticated,
     activeMarket,
@@ -132,6 +138,8 @@ export default function App() {
         onLogoutClick={() => {
           void handleLogout().finally(() => {
             window.localStorage.removeItem(LOGIN_ID_STORAGE_KEY);
+            setSavedResponse(null);
+            resetStockActions();
             setAuthenticated(false);
             setAccount(null);
           });
