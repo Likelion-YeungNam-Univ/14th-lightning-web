@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { getApi } from "../api/client";
 import { useTermExplanationStream } from "../hooks/useTermExplanationStream";
 import type {
@@ -6,6 +6,7 @@ import type {
   EconCardItem,
   EconCardListResponse,
 } from "../types/econCard";
+import { HardTermText } from "./HardTermText";
 
 function sourceHostname(url: string) {
   try {
@@ -57,7 +58,6 @@ function EconCardDialog({
   error: string;
   onClose: () => void;
 }) {
-  const bodyRef = useRef<HTMLDivElement>(null);
   const [selectedTerm, setSelectedTerm] = useState("");
   const {
     termLoading,
@@ -81,31 +81,9 @@ function EconCardDialog({
     };
   }, [onClose]);
 
-  const scheduleSelectedTermCapture = () => {
-    window.setTimeout(captureSelectedTerm, 0);
-  };
-
-  const captureSelectedTerm = () => {
+  const openHardTerm = (term: string, target: HTMLElement) => {
     if (!detail) return;
-    const selection = window.getSelection();
-    const container = bodyRef.current;
-    if (!selection || selection.isCollapsed || !container) return;
-    const range = selection.getRangeAt(0);
-    const selectedNode = range.commonAncestorContainer;
-    const selectedElement =
-      selectedNode.nodeType === Node.ELEMENT_NODE
-        ? (selectedNode as Element)
-        : selectedNode.parentElement;
-    if (!selectedElement || !container.contains(selectedElement)) return;
-
-    const term = selection.toString().trim().replace(/\s+/g, " ");
-    if (!term) return;
-    if (term.length > 50) {
-      resetTermExplanation("용어는 50자 이내로 선택해주세요.");
-      setSelectedTerm(term.slice(0, 50));
-      return;
-    }
-    const selectionRect = range.getBoundingClientRect();
+    const selectionRect = target.getBoundingClientRect();
     const popoverWidth = Math.min(420, window.innerWidth - 32);
     const left = Math.min(
       Math.max(
@@ -168,20 +146,23 @@ function EconCardDialog({
         ) : detail ? (
           <>
             <div
-              ref={bodyRef}
-              onPointerUp={scheduleSelectedTermCapture}
-              onKeyUp={scheduleSelectedTermCapture}
               className="border-b border-[#3a3e48] py-7 text-[15px] leading-[1.85] text-[#d9dee7] max-[640px]:py-7"
             >
               {paragraphs.map((paragraph, index) => (
                 <p key={index} className="mb-6 mt-0 last:mb-0">
-                  {paragraph}
+                  <HardTermText
+                    text={paragraph}
+                    terms={detail.hard_terms}
+                    onTermClick={openHardTerm}
+                  />
                 </p>
               ))}
             </div>
-            <p className="mb-0 mt-6 text-xs text-[#9aa3b2]">
-              모르는 단어를 드래그하면 뜻을 알려드려요
-            </p>
+            {detail.hard_terms && detail.hard_terms.length > 0 && (
+              <p className="mb-0 mt-6 text-xs text-[#9aa3b2]">
+                밑줄 친 어려운 용어를 누르면 뜻을 알려드려요
+              </p>
+            )}
             {detail.sources.length > 0 && (
               <div className="mt-12">
                 <h3 className="m-0 text-xs font-bold text-[#aab3c1]">

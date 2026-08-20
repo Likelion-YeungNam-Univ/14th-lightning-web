@@ -13,6 +13,16 @@ function snapshotNumber(snapshot: Record<string, unknown>, key: string) {
   return typeof value === "number" ? value : null;
 }
 
+// 저장 카드 스냅샷에서 어려운 용어 문자열 배열만 안전하게 복원한다.
+function snapshotHardTerms(snapshot: Record<string, unknown>) {
+  const value = snapshot.hard_terms;
+  if (!Array.isArray(value)) return null;
+  const terms = value.filter(
+    (term): term is string => typeof term === "string" && term.trim().length > 0,
+  );
+  return terms.length > 0 ? terms : null;
+}
+
 // 스냅샷 상세 배열에서 카드 상세 형식에 맞는 항목만 추린다.
 function snapshotDetails(snapshot: Record<string, unknown>) {
   const value = snapshot.details;
@@ -41,6 +51,7 @@ export function savedItemToCard(item: SavedCardItem): Card | null {
     doc_type_name: snapshotString(snapshot, "doc_type_name"),
     summary_short: snapshotString(snapshot, "summary_short"),
     summary_full: snapshotString(snapshot, "summary_full"),
+    hard_terms: snapshotHardTerms(snapshot),
     source_name:
       snapshotString(snapshot, "source_name") ??
       ({
