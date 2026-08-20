@@ -7,11 +7,11 @@ export interface CommunityCreateFormData {
   content: string; direction: CommunityDirection; betAmount: number; maxParticipants: number;
 }
 
-interface Props { stockName: string; pointBalance: number; submitting?: boolean; submitError?: string; onClose: () => void; onSubmit: (data: CommunityCreateFormData) => void; }
+interface Props { stockName: string; currency?: 'KRW' | 'USD'; pointBalance: number; submitting?: boolean; submitError?: string; onClose: () => void; onSubmit: (data: CommunityCreateFormData) => void; }
 const MAX_BET = 1000;
 const PARTICIPANTS = [2, 3, 4] as const;
 
-export default function CommunityCreateModal({ stockName, pointBalance, submitting = false, submitError = '', onClose, onSubmit }: Props) {
+export default function CommunityCreateModal({ stockName, currency = 'KRW', pointBalance, submitting = false, submitError = '', onClose, onSubmit }: Props) {
   const headingId = useId();
   const titleRef = useRef<HTMLInputElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -49,9 +49,9 @@ export default function CommunityCreateModal({ stockName, pointBalance, submitti
         <header className="mb-6 flex items-center justify-between"><h2 id={headingId} className="text-lg font-bold text-white">{stockName} 커뮤니티 만들기</h2><button type="button" onClick={onClose} aria-label="닫기" className="p-1 text-xl text-white/45 hover:text-white">×</button></header>
         <div className="space-y-5">
           <label className="block text-xs font-medium text-white/45">종목<span className="mt-2 flex items-center justify-between rounded-lg bg-[#15181f] px-4 py-3 text-sm text-white"><b>{stockName}</b><span className="text-xs font-normal text-white/35">상단에서 선택한 종목이에요</span></span></label>
-          <label className="block text-xs font-medium text-white/45">방 제목<input ref={titleRef} value={title} maxLength={50} onChange={(e) => setTitle(e.target.value)} placeholder="예) 9월 말까지 8만원 간다" className="mt-2 w-full rounded-lg border border-[#3a414d] bg-[#12151b] px-4 py-3 text-sm text-white placeholder:text-white/35 outline-none focus:border-blue-400" /></label>
+          <label className="block text-xs font-medium text-white/45">방 제목<input ref={titleRef} value={title} maxLength={50} onChange={(e) => setTitle(e.target.value)} placeholder={currency === 'USD' ? '예) 9월 말까지 260달러 간다' : '예) 9월 말까지 8만원 간다'} className="mt-2 w-full rounded-lg border border-[#3a414d] bg-[#12151b] px-4 py-3 text-sm text-white placeholder:text-white/35 outline-none focus:border-blue-400" /></label>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <label className="text-xs font-medium text-white/45">기준 가격<div className="relative mt-2"><input inputMode="numeric" value={price ? Number(price).toLocaleString() : ''} onChange={(e) => setPrice(e.target.value.replace(/\D/g, ''))} placeholder="80,000" className="w-full rounded-lg border border-[#3a414d] bg-[#12151b] px-4 py-3 pr-9 text-sm font-semibold text-white outline-none focus:border-blue-400" /><span className="absolute right-4 top-3 text-sm text-white/55">원</span></div></label>
+            <label className="text-xs font-medium text-white/45">기준 가격<div className="relative mt-2"><input inputMode="numeric" value={price ? Number(price).toLocaleString() : ''} onChange={(e) => setPrice(e.target.value.replace(/\D/g, ''))} placeholder={currency === 'USD' ? '260' : '80,000'} className="w-full rounded-lg border border-[#3a414d] bg-[#12151b] px-4 py-3 pr-12 text-sm font-semibold text-white outline-none focus:border-blue-400" /><span className="absolute right-4 top-3 text-sm text-white/55">{currency === 'USD' ? '달러' : '원'}</span></div></label>
             <label className="text-xs font-medium text-white/45">결과일<input type="date" min={today} value={deadline} onChange={(e) => setDeadline(e.target.value)} className="mt-2 w-full rounded-lg border border-[#3a414d] bg-[#12151b] px-4 py-3 text-sm font-semibold text-white outline-none [color-scheme:dark] focus:border-blue-400" /></label>
           </div>
           <label className="block text-xs font-medium text-white/45">방을 만든 이유<textarea value={content} maxLength={500} onChange={(e) => setContent(e.target.value)} rows={4} placeholder="왜 그렇게 보는지 적어주세요. 사진과 링크를 함께 올릴 수 있어요." className="mt-2 w-full resize-y rounded-lg border border-[#3a414d] bg-[#12151b] px-4 py-3 text-sm text-white placeholder:text-white/35 outline-none focus:border-blue-400" /></label>

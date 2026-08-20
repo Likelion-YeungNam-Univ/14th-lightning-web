@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from 'react';
 
 interface TradingViewChartProps {
   symbol: string; // 예: "KRX:005930", "NASDAQ:NVDA"
@@ -36,13 +36,13 @@ export default function TradingViewChart({
   height = 420,
 }: TradingViewChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [error, setError] = useState("");
+  const [error, setError] = useState('');
   // 심볼마다 고유한 DOM id가 있어야 위젯이 꼬이지 않는다.
   const containerId = `tv-chart-${symbol.replace(/[^a-zA-Z0-9]/g, "-")}`;
 
   useEffect(() => {
     let cancelled = false;
-    setError("");
+    setError('');
 
     loadTradingViewScript()
       .then(() => {
@@ -74,6 +74,9 @@ export default function TradingViewChart({
               : "차트를 불러오지 못했어요.",
           );
       });
+    }).catch((reason: unknown) => {
+      if (!cancelled) setError(reason instanceof Error ? reason.message : '차트를 불러오지 못했어요.');
+    });
 
     return () => {
       cancelled = true;

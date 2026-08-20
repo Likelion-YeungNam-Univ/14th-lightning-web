@@ -8,6 +8,35 @@ import type {
   StockOrderResponse,
 } from "../types/stock";
 
+const DEFAULT_OVERSEAS_STOCKS: MyStockItem[] = [
+  { stock_code: "NVDA", name: "NVIDIA", market: "overseas", display_order: 0, is_default: true },
+  { stock_code: "TSLA", name: "Tesla", market: "overseas", display_order: 1, is_default: true },
+  { stock_code: "AAPL", name: "Apple", market: "overseas", display_order: 2, is_default: true },
+  { stock_code: "MSFT", name: "Microsoft", market: "overseas", display_order: 3, is_default: true },
+];
+const DEFAULT_DOMESTIC_STOCKS: MyStockItem[] = [
+  { stock_code: "005930", name: "삼성전자", market: "domestic", display_order: 0, is_default: true },
+  { stock_code: "000660", name: "SK하이닉스", market: "domestic", display_order: 1, is_default: true },
+  { stock_code: "005380", name: "현대차", market: "domestic", display_order: 2, is_default: true },
+  { stock_code: "035420", name: "NAVER", market: "domestic", display_order: 3, is_default: true },
+];
+const OVERSEAS_ORDER_KEY = "assit:overseas-stock-order";
+
+function applySavedOverseasOrder(stocks: MyStockItem[]) {
+  try {
+    const saved = JSON.parse(localStorage.getItem(OVERSEAS_ORDER_KEY) ?? "[]") as unknown;
+    if (!Array.isArray(saved)) return stocks;
+    const rank = new Map(saved.filter((code): code is string => typeof code === "string").map((code, index) => [code, index]));
+    return [...stocks].sort((a, b) => {
+      const aRank = rank.get(a.stock_code) ?? Number.MAX_SAFE_INTEGER;
+      const bRank = rank.get(b.stock_code) ?? Number.MAX_SAFE_INTEGER;
+      return aRank - bRank || a.display_order - b.display_order;
+    }).map((stock, index) => ({ ...stock, display_order: index }));
+  } catch {
+    return stocks;
+  }
+}
+
 export function useStocks(activeMarket: string, markets: MarketInfo[]) {
   // 현재 시장의 종목 목록과 화면에서 선택한 종목 코드를 관리한다.
   const [marketStocks, setMarketStocks] = useState<MyStockItem[]>([]);
@@ -30,9 +59,27 @@ export function useStocks(activeMarket: string, markets: MarketInfo[]) {
           `/me/stocks?market=${encodeURIComponent(activeMarket)}`,
         );
         if (cancelled) return;
-        const ordered = [...response.items].sort(
-          (a, b) => a.display_order - b.display_order,
-        );
+        const defaultStocks = activeMarket === "overseas"
+          ? DEFAULT_OVERSEAS_STOCKS
+          : activeMarket === "domestic"
+            ? DEFAULT_DOMESTIC_STOCKS
+            : [];
+        const sourceItems = defaultStocks.length > 0
+          ? [
+              ...defaultStocks,
+              ...response.items.filter(
+                (stock) =>
+                  !stock.is_default &&
+                  !defaultStocks.some(
+                    (defaultStock) => defaultStock.stock_code === stock.stock_code,
+                  ),
+              ),
+            ]
+          : response.items;
+        const serverOrdered = [...sourceItems].sort((a, b) => a.display_order - b.display_order);
+        const ordered = activeMarket === "overseas"
+          ? applySavedOverseasOrder(serverOrdered)
+          : serverOrdered;
         const lastStockCode = markets.find(
           (market) => market.market === activeMarket,
         )?.last_stock_code;
@@ -92,6 +139,18 @@ export function useStocks(activeMarket: string, markets: MarketInfo[]) {
     setMarketStocks(reordered);
     setReordering(true);
     setReorderError("");
+
+    // 해외 기본 종목은 서버 등록 목록과 다를 수 있어 화면 순서를 브라우저에 저장한다.
+    if (activeMarket === "overseas") {
+      try {
+        localStorage.setItem(OVERSEAS_ORDER_KEY, JSON.stringify(stockCodes));
+      } catch {
+        setReorderError("이 브라우저에서는 종목 순서를 저장할 수 없습니다.");
+      } finally {
+        setReordering(false);
+      }
+      return;
+    }
 
     try {
       const request: StockOrderRequest = {
