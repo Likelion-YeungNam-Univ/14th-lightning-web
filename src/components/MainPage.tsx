@@ -13,6 +13,7 @@ import { displayStockName } from "../utils/stock-name";
 
 type Props = {
   authenticated: boolean;
+  onRequireLogin: () => void;
   pointBalance: number;
   onSpendPoints: (amount: number) => void;
   markets: MarketInfo[];
@@ -57,6 +58,7 @@ type Props = {
 /** 시장·종목 선택부터 카드 피드까지 메인 화면의 콘텐츠를 렌더링한다. */
 export function MainPage({
   authenticated,
+  onRequireLogin,
   pointBalance,
   onSpendPoints,
   markets,
@@ -136,6 +138,7 @@ export function MainPage({
           stockName={activeStockName}
           stockCode={activeStockCode}
           authenticated={authenticated}
+          onRequireLogin={onRequireLogin}
           pointBalance={pointBalance}
           onSpendPoints={onSpendPoints}
           tabs={activeMarketInfo?.tabs}

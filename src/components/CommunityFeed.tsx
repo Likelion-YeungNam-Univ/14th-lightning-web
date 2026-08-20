@@ -20,6 +20,7 @@ interface CommunityFeedProps {
   market: string;
   pointBalance?: number;
   authenticated: boolean;
+  onRequireLogin: () => void;
   onSpendPoints?: (amount: number) => void;
 }
 
@@ -102,6 +103,7 @@ export default function CommunityFeed({
   market,
   pointBalance = 7200,
   authenticated,
+  onRequireLogin,
   onSpendPoints,
 }: CommunityFeedProps) {
   const [predictions, setPredictions] = useState<CommunityPrediction[]>([]);
@@ -113,7 +115,6 @@ export default function CommunityFeed({
   const [selectedId, setSelectedId] = useState<string | null>(
     () => sessionStorage.getItem(selectedRoomKey(stockCode)),
   );
-  const [availablePoints, setAvailablePoints] = useState(pointBalance);
   const [createdMessage, setCreatedMessage] = useState('');
 
   const loadRooms = useCallback(async () => {
@@ -168,18 +169,19 @@ export default function CommunityFeed({
     return () => window.clearTimeout(timer);
   }, [createdMessage]);
 
-  
   const symbol = useTradingViewSymbol(stockCode, market);
-
-  console.log("TradingView symbol:", symbol);
 
   const selectedPrediction = predictions.find((prediction) => prediction.id === selectedId) ?? null;
   if (selectedPrediction) {
-    return <CommunityDetail prediction={selectedPrediction} stockCode={stockCode} pointBalance={availablePoints} authenticated={authenticated} onPointsSpent={(amount) => { setAvailablePoints((current) => Math.max(0, current - amount)); onSpendPoints?.(amount); }} onBack={() => { sessionStorage.removeItem(selectedRoomKey(stockCode)); setSelectedId(null); }} />;
+    return <CommunityDetail prediction={selectedPrediction} stockCode={stockCode} pointBalance={pointBalance} authenticated={authenticated} onPointsSpent={(amount) => onSpendPoints?.(amount)} onBack={() => { sessionStorage.removeItem(selectedRoomKey(stockCode)); setSelectedId(null); }} />;
   }
 
   async function handleCreateSubmit(data: CommunityCreateFormData) {
     if (submitting) return;
+    if (data.betAmount > pointBalance) {
+      setSubmitError('참여 포인트가 부족해요. 보유 포인트를 확인해주세요.');
+      return;
+    }
     setSubmitting(true);
     setSubmitError('');
     const request: RoomCreateRequest = {
@@ -193,8 +195,9 @@ export default function CommunityFeed({
     try {
       const response = await postApi<RoomCreateResponse>('/rooms', request);
       const created = roomToPrediction(response.room, stockName, market);
+      // API로 생성된 방을 현재 표시 중인 기본 카드들보다 항상 앞에 배치한다.
       setPredictions((current) => [created, ...current.filter((room) => room.id !== created.id)]);
-      setAvailablePoints((current) => Math.max(0, current - data.betAmount));
+      onSpendPoints?.(data.betAmount);
       setIsCreateOpen(false);
       setCreatedMessage(`커뮤니티를 만들고 ${data.betAmount.toLocaleString()}P를 냈어요.`);
     } catch (error) {
@@ -211,7 +214,7 @@ export default function CommunityFeed({
       <div className="mb-5">{symbol ? <TradingViewChart key={symbol} symbol={symbol} height={420} /> : <div className="grid h-[420px] place-items-center rounded-2xl border border-white/[0.06] bg-[#131722]"><div className="text-center"><div className="mx-auto size-7 animate-spin rounded-full border-2 border-white/15 border-t-blue-400" /><p className="mt-3 text-sm text-white/40">종목 차트를 불러오는 중이에요.</p></div></div>}</div>
       <div className="mb-1 flex items-start justify-between gap-4">
         <div><h2 className="text-lg font-bold text-white">{stockName} 커뮤니티</h2><p className="mt-1 text-sm text-white/40">사용자가 만든 방이에요. 판가름 날짜에 결과가 자동으로 정해져요.</p></div>
-        <div className="flex shrink-0 items-center gap-2"><span className="rounded border border-black/50 bg-white/3 px-3.5 py-2 text-xs font-bold text-blue-400">진행 중</span><button type="button" onClick={() => { setSubmitError(''); setIsCreateOpen(true); }} className="rounded-lg bg-blue-400 px-6 py-3 text-sm font-semibold text-black">+ 커뮤니티 만들기</button></div>
+        <div className="flex shrink-0 items-center gap-2"><span className="rounded border border-black/50 bg-white/3 px-3.5 py-2 text-xs font-bold text-blue-400">진행 중</span><button type="button" onClick={() => { if (!authenticated) { onRequireLogin(); return; } setSubmitError(''); setIsCreateOpen(true); }} className="rounded-lg bg-blue-400 px-6 py-3 text-sm font-semibold text-black">+ 커뮤니티 만들기</button></div>
       </div>
 
       {loading ? (
@@ -224,7 +227,7 @@ export default function CommunityFeed({
         <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">{predictions.map((prediction) => <CommunityCard key={prediction.id} prediction={prediction} onClick={(roomId) => { sessionStorage.setItem(selectedRoomKey(stockCode), roomId); setSelectedId(roomId); }} />)}</div>
       )}
 
-      {isCreateOpen && <CommunityCreateModal stockName={stockName} stockCode={stockCode} currency={currencyForMarket(market)} pointBalance={availablePoints} submitting={submitting} submitError={submitError} onClose={() => { if (!submitting) setIsCreateOpen(false); }} onSubmit={(data) => void handleCreateSubmit(data)} />}
+      {isCreateOpen && <CommunityCreateModal stockName={stockName} stockCode={stockCode} currency={currencyForMarket(market)} pointBalance={pointBalance} submitting={submitting} submitError={submitError} onClose={() => { if (!submitting) setIsCreateOpen(false); }} onSubmit={(data) => void handleCreateSubmit(data)} />}
     </div>
   );
 }

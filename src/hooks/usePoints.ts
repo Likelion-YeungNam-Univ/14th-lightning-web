@@ -6,11 +6,11 @@ import type {
   PointChargeResponse,
 } from "../types/points";
 
-export function usePoints(authenticated: boolean) {
+export function usePoints(authenticated: boolean, sessionReady = authenticated) {
   const [points, setPoints] = useState<PointBalanceResponse | null>(null);
 
   useEffect(() => {
-    if (!authenticated) return;
+    if (!sessionReady) return;
 
     let cancelled = false;
     const loadPoints = async () => {
@@ -25,7 +25,7 @@ export function usePoints(authenticated: boolean) {
     return () => {
       cancelled = true;
     };
-  }, [authenticated]);
+  }, [authenticated, sessionReady]);
 
   const visiblePoints = authenticated ? points : null;
 
@@ -71,5 +71,6 @@ export function usePoints(authenticated: boolean) {
     } : current);
   };
 
+  return { points: visiblePoints, sessionPoints: points, spendPoints };
   return { points: visiblePoints, spendPoints, chargePoints, redeemGifticon };
 }

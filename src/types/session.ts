@@ -7,6 +7,10 @@ export type SessionResponse = {
   nickname?: string | null;
 };
 
+// POST /auth/mock-login
+// 설정한거 확인
+export type LoginResponse = { authenticated: boolean };
+export type LogoutResponse = { authenticated: boolean };
 export type AccountResponse = {
   login_id: string;
   nickname: string;
