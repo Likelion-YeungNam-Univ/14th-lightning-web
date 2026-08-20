@@ -77,11 +77,15 @@ function LoadingCards({ video }: { video: boolean }) {
         >
           {video && <div className="h-45 animate-pulse bg-[#2a2e36]" />}
           <div className={`space-y-3 p-4 ${video ? "" : "min-h-48.5"}`}>
-            {!video && <div className="h-6 w-2/5 animate-pulse rounded bg-[#2a2e36]" />}
+            {!video && (
+              <div className="h-6 w-2/5 animate-pulse rounded bg-[#2a2e36]" />
+            )}
             <div className="h-4 w-full animate-pulse rounded bg-[#2a2e36]" />
             <div className="h-4 w-3/4 animate-pulse rounded bg-[#2a2e36]" />
             <div className="h-3 w-1/2 animate-pulse rounded bg-[#2a2e36]" />
-            {!video && <div className="h-3 w-full animate-pulse rounded bg-[#252a33]" />}
+            {!video && (
+              <div className="h-3 w-full animate-pulse rounded bg-[#252a33]" />
+            )}
           </div>
         </article>
       ))}
@@ -143,9 +147,7 @@ export function CardFeed({
             ⓘ
           </span>
           <p className="m-0">
-            <strong className="text-[#f2f3f5]">
-              참고용 · 개인 의견입니다.
-            </strong>{" "}
+            <strong className="text-[#f2f3f5]">참고용 의견입니다.</strong>{" "}
             영상은 개인의 해석을 담고 있어요. 기관 자료와 함께 비교해보세요.
           </p>
         </aside>
@@ -191,20 +193,22 @@ export function CardFeed({
                   <span className="absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center gap-1.5 rounded-full border border-white/15 bg-[#0f1115]/80 px-3 py-2 text-xs font-bold opacity-0 transition group-hover:opacity-100">
                     <span aria-hidden="true">▶</span> 재생
                   </span>
-                  {canSaveCards && <button
-                    type="button"
-                    aria-label={
-                      card.is_saved ? "즐겨찾기 해제" : "즐겨찾기 추가"
-                    }
-                    disabled={!onToggleSave}
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      onToggleSave?.(card);
-                    }}
-                    className={`absolute right-2 top-2 grid size-9 place-items-center rounded-full border-0 bg-[#0f1115]/60 text-lg transition ${card.is_saved ? "text-[#ffbf00] hover:text-[#ffd24d]" : "text-[#c8ccd4] hover:text-[#f2f3f5]"} disabled:cursor-default`}
-                  >
-                    {card.is_saved ? "★" : "☆"}
-                  </button>}
+                  {canSaveCards && (
+                    <button
+                      type="button"
+                      aria-label={
+                        card.is_saved ? "즐겨찾기 해제" : "즐겨찾기 추가"
+                      }
+                      disabled={!onToggleSave}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        onToggleSave?.(card);
+                      }}
+                      className={`absolute right-2 top-2 grid size-9 place-items-center rounded-full border-0 bg-[#0f1115]/60 text-lg transition ${card.is_saved ? "text-[#ffbf00] hover:text-[#ffd24d]" : "text-[#c8ccd4] hover:text-[#f2f3f5]"} disabled:cursor-default`}
+                    >
+                      {card.is_saved ? "★" : "☆"}
+                    </button>
+                  )}
                 </div>
               )}
               <div className={videoCard ? "p-4" : "min-h-48.5 p-4"}>
@@ -222,20 +226,22 @@ export function CardFeed({
                         {card.source_name}
                       </span>
                     </div>
-                    {canSaveCards && <button
-                      type="button"
-                      aria-label={
-                        card.is_saved ? "즐겨찾기 해제" : "즐겨찾기 추가"
-                      }
-                      disabled={!onToggleSave}
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        onToggleSave?.(card);
-                      }}
-                      className={`-mr-1 -mt-1 shrink-0 border-0 bg-transparent px-1 text-lg transition ${card.is_saved ? "text-[#ffbf00] hover:text-[#ffd24d]" : "text-[#c8ccd4] hover:text-[#f2f3f5]"} disabled:cursor-default`}
-                    >
-                      {card.is_saved ? "★" : "☆"}
-                    </button>}
+                    {canSaveCards && (
+                      <button
+                        type="button"
+                        aria-label={
+                          card.is_saved ? "즐겨찾기 해제" : "즐겨찾기 추가"
+                        }
+                        disabled={!onToggleSave}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          onToggleSave?.(card);
+                        }}
+                        className={`-mr-1 -mt-1 shrink-0 border-0 bg-transparent px-1 text-lg transition ${card.is_saved ? "text-[#ffbf00] hover:text-[#ffd24d]" : "text-[#c8ccd4] hover:text-[#f2f3f5]"} disabled:cursor-default`}
+                      >
+                        {card.is_saved ? "★" : "☆"}
+                      </button>
+                    )}
                   </div>
                 )}
                 {card.indicator_value && (
