@@ -7,10 +7,13 @@ interface TradingViewChartProps {
 
 declare global {
   interface Window {
-    TradingView?: { widget: new (options: Record<string, unknown>) => unknown };
+    TradingView?: {
+      widget: new (options: Record<string, unknown>) => unknown;
+    };
   }
 }
 
+const TRADING_VIEW_SCRIPT_URL = "https://s3.tradingview.com/tv.js";
 let scriptLoadingPromise: Promise<void> | null = null;
 
 function loadTradingViewScript(): Promise<void> {
@@ -19,28 +22,25 @@ function loadTradingViewScript(): Promise<void> {
 
   scriptLoadingPromise = new Promise((resolve, reject) => {
     const existingScript = document.querySelector<HTMLScriptElement>(
-      'script[src="https://s3.tradingview.com/tv.js"]',
+      `script[src="${TRADING_VIEW_SCRIPT_URL}"]`,
     );
     const script = existingScript ?? document.createElement("script");
 
     script.addEventListener("load", () => resolve(), { once: true });
-    script.addEventListener("error", () => {
-      scriptLoadingPromise = null;
-      reject(new Error("TradingView 스크립트를 불러오지 못했어요."));
-    }, { once: true });
+    script.addEventListener(
+      "error",
+      () => {
+        scriptLoadingPromise = null;
+        reject(new Error("TradingView 스크립트를 불러오지 못했어요."));
+      },
+      { once: true },
+    );
 
     if (!existingScript) {
-      script.src = "https://s3.tradingview.com/tv.js";
+      script.src = TRADING_VIEW_SCRIPT_URL;
       script.async = true;
       document.body.appendChild(script);
     }
-    const script = document.createElement("script");
-    script.src = "https://s3.tradingview.com/tv.js";
-    script.async = true;
-    script.onload = () => resolve();
-    script.onerror = () =>
-      reject(new Error("TradingView 스크립트를 불러오지 못했어요."));
-    document.body.appendChild(script);
   });
 
   return scriptLoadingPromise;
@@ -55,39 +55,21 @@ export default function TradingViewChart({
   const [failedSymbol, setFailedSymbol] = useState("");
   const isRestrictedKrxSymbol = symbol.startsWith("KRX:");
   const containerId = `tv-chart-${reactId.replace(/:/g, "")}-${symbol.replace(/[^a-zA-Z0-9]/g, "-")}`;
-  const [error, setError] = useState('');
-  const isRestrictedKrxSymbol = symbol.startsWith('KRX:');
-  const [error, setError] = useState("");
-  // 심볼마다 고유한 DOM id가 있어야 위젯이 꼬이지 않는다.
-  const containerId = `tv-chart-${symbol.replace(/[^a-zA-Z0-9]/g, "-")}`;
 
   useEffect(() => {
-    if (isRestrictedKrxSymbol) return;
+    if (!symbol || isRestrictedKrxSymbol) return;
 
     let cancelled = false;
     const container = containerRef.current;
     if (!container) return;
+
     container.innerHTML = "";
 
     void loadTradingViewScript()
       .then(() => {
         if (cancelled || !window.TradingView) return;
+
         container.innerHTML = "";
-    // 종목 변경 및 React StrictMode 이중 effect 실행 시 남아 있는 위젯 DOM을 제거한다.
-    container.innerHTML = '';
-
-    loadTradingViewScript().then(() => {
-      if (cancelled || !window.TradingView) return;
-
-      container.innerHTML = '';
-    setError("");
-
-    loadTradingViewScript()
-      .then(() => {
-        if (cancelled || !containerRef.current || !window.TradingView) return;
-
-        containerRef.current.innerHTML = ""; // 이전 위젯 흔적 제거
-
         new window.TradingView.widget({
           symbol,
           container_id: containerId,
@@ -106,13 +88,6 @@ export default function TradingViewChart({
       })
       .catch(() => {
         if (!cancelled) setFailedSymbol(symbol);
-      .catch((reason: unknown) => {
-        if (!cancelled)
-          setError(
-            reason instanceof Error
-              ? reason.message
-              : "차트를 불러오지 못했어요.",
-          );
       });
 
     return () => {
@@ -123,27 +98,46 @@ export default function TradingViewChart({
 
   if (isRestrictedKrxSymbol) {
     const tradingViewUrl = `https://kr.tradingview.com/chart/?symbol=${encodeURIComponent(symbol)}`;
-    return <div className="relative grid overflow-hidden rounded-2xl border border-white/[0.06] bg-[#131722]" style={{ height, minHeight: height }}>
-      <span className="absolute right-4 top-4 rounded-full border border-amber-400/25 bg-amber-400/10 px-3 py-1.5 text-[11px] font-semibold text-amber-300">KRX 외부 차트 제한</span>
-      <div className="m-auto max-w-md px-6 text-center">
-        <div className="mx-auto grid size-11 place-items-center rounded-full bg-blue-400/10 text-xl text-blue-300">↗</div>
-        <h3 className="mt-4 font-bold text-white">국내 종목 차트는 TradingView에서 확인할 수 있어요.</h3>
-        <p className="mt-2 text-sm leading-6 text-white/45">{symbol}은 TradingView 정책상 외부 위젯에서 제공되지 않아 반복 알림 대신 안내로 표시했어요.</p>
-        <a href={tradingViewUrl} target="_blank" rel="noreferrer" className="mt-5 inline-flex rounded-lg bg-[#4d9fff] px-4 py-2.5 text-sm font-bold text-[#07111f] hover:bg-[#6aafff]">TradingView에서 차트 보기</a>
+
+    return (
+      <div
+        className="relative grid overflow-hidden rounded-2xl border border-white/[0.06] bg-[#131722]"
+        style={{ height, minHeight: height }}
+      >
+        <span className="absolute right-4 top-4 rounded-full border border-amber-400/25 bg-amber-400/10 px-3 py-1.5 text-[11px] font-semibold text-amber-300">
+          KRX 외부 차트 제한
+        </span>
+        <div className="m-auto max-w-md px-6 text-center">
+          <div className="mx-auto grid size-11 place-items-center rounded-full bg-blue-400/10 text-xl text-blue-300">
+            ↗
+          </div>
+          <h3 className="mt-4 font-bold text-white">
+            국내 종목 차트는 TradingView에서 확인할 수 있어요.
+          </h3>
+          <p className="mt-2 text-sm leading-6 text-white/45">
+            {symbol}은 외부 위젯 대신 TradingView 차트 페이지로 연결합니다.
+          </p>
+          <a
+            href={tradingViewUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="mt-5 inline-flex rounded-lg bg-[#4d9fff] px-4 py-2.5 text-sm font-bold text-[#07111f] hover:bg-[#6aafff]"
+          >
+            TradingView에서 차트 보기
+          </a>
+        </div>
       </div>
-    </div>;
+    );
   }
 
   const hasError = failedSymbol === symbol;
-  return <div className="overflow-hidden rounded-2xl border border-white/[0.06] bg-[#131722]" style={{ height, minHeight: height }}>
-    {hasError ? <div className="grid h-full place-items-center px-6 text-center"><div><p className="font-bold text-white">차트를 불러오지 못했어요.</p><p className="mt-2 text-sm text-white/40">네트워크 연결을 확인한 뒤 다시 시도해주세요.</p></div></div> : <div id={containerId} ref={containerRef} className="h-full w-full" />}
-  </div>;
+
   return (
     <div
-      className="rounded-2xl overflow-hidden border border-white/[0.06] bg-[#131722]"
-      style={{ height }}
+      className="overflow-hidden rounded-2xl border border-white/[0.06] bg-[#131722]"
+      style={{ height, minHeight: height }}
     >
-      {error ? (
+      {hasError ? (
         <div className="grid h-full place-items-center px-6 text-center">
           <div>
             <p className="font-bold text-white">차트를 불러오지 못했어요.</p>
