@@ -5,9 +5,27 @@ interface TradingViewChartProps {
   height?: number;
 }
 
+interface TradingViewWidgetOptions {
+  symbol: string;
+  container_id: string;
+  autosize: boolean;
+  interval: string;
+  timezone: string;
+  theme: 'dark' | 'light';
+  style: string;
+  locale: string;
+  toolbar_bg: string;
+  enable_publishing: boolean;
+  hide_top_toolbar: boolean;
+  hide_legend: boolean;
+  allow_symbol_change: boolean;
+}
+
 declare global {
   interface Window {
-    TradingView?: any;
+    TradingView?: {
+      widget: new (options: TradingViewWidgetOptions) => unknown;
+    };
   }
 }
 
