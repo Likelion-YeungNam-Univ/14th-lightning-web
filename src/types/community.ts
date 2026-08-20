@@ -10,6 +10,7 @@ export interface CommunityReply {
 export interface CommunityComment {
   id: string;
   author: string;
+  isMine?: boolean;
   side: CommunityDirection;
   body: string;
   likes: number;
