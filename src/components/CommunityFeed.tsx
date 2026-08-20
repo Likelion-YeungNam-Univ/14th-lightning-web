@@ -104,7 +104,7 @@ export default function CommunityFeed({
 
   const selectedPrediction = predictions.find((prediction) => prediction.id === selectedId) ?? null;
   if (selectedPrediction) {
-    return <CommunityDetail prediction={selectedPrediction} pointBalance={availablePoints} authenticated={authenticated} onBack={() => setSelectedId(null)} />;
+    return <CommunityDetail prediction={selectedPrediction} stockCode={stockCode} pointBalance={availablePoints} authenticated={authenticated} onBack={() => setSelectedId(null)} />;
   }
 
   async function handleCreateSubmit(data: CommunityCreateFormData) {
