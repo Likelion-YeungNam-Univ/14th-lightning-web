@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { Header } from "./components/Header";
 import type { SourceTab } from "./components/SourceNav";
 import { AppModals } from "./components/AppModals";
@@ -13,6 +13,14 @@ import { useStockActions } from "./hooks/useStockActions";
 import { useCardDetail } from "./hooks/useCardDetail";
 import { usePoints } from "./hooks/usePoints";
 
+const ACTIVE_TAB_KEY = "assit:active-source-tab";
+
+function initialSourceTab(): SourceTab {
+  const value = sessionStorage.getItem(ACTIVE_TAB_KEY);
+  return value === "youtube" || value === "disclosure" || value === "regulation" || value === "bok" || value === "fed" || value === "saved" || value === "community"
+    ? value
+    : "youtube";
+}
 
 /** 세션부터 시장·종목·카드·로그인 모달까지 메인 화면의 전체 흐름을 연결한다. */
 export default function App() {
@@ -43,9 +51,13 @@ export default function App() {
   } = useStocks(activeMarket, markets);
 
   // 선택한 종목과 출처 탭에 맞는 일반 카드와 저장 카드를 각각 조회한다.
-  const [activeTab, setActiveTab] = useState<SourceTab>("youtube");
+  const [activeTab, setActiveTab] = useState<SourceTab>(initialSourceTab);
+  const selectTab = useCallback((tab: SourceTab) => {
+    sessionStorage.setItem(ACTIVE_TAB_KEY, tab);
+    setActiveTab(tab);
+  }, []);
   const { cardResponse, setCardResponse, cardsLoading, cardsError, canLoadCards } =
-    useCards(activeStockCode, activeTab, activeMarketInfo, setActiveTab);
+    useCards(activeStockCode, activeTab, activeMarketInfo, selectTab);
   const { savedResponse, setSavedResponse, savedLoading, savedError } =
     useSavedCards(activeStockCode, activeTab);
   const { detailCard, detailTab, detailLinkSentence, setDetailCard, openDetail, closeDetail } =
@@ -127,7 +139,7 @@ export default function App() {
         stockActionError={stockActionError}
         stockActionNotice={stockActionNotice}
         activeTab={activeTab}
-        onSelectTab={setActiveTab}
+        onSelectTab={selectTab}
         saveError={saveError}
         savedResponse={savedResponse}
         savedLoading={savedLoading}

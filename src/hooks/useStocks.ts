@@ -21,6 +21,7 @@ const DEFAULT_DOMESTIC_STOCKS: MyStockItem[] = [
   { stock_code: "035420", name: "NAVER", market: "domestic", display_order: 3, is_default: true },
 ];
 const OVERSEAS_ORDER_KEY = "assit:overseas-stock-order";
+const activeStockKey = (market: string) => `assit:active-stock:${market}`;
 
 function applySavedOverseasOrder(stocks: MyStockItem[]) {
   try {
@@ -83,12 +84,15 @@ export function useStocks(activeMarket: string, markets: MarketInfo[]) {
         const lastStockCode = markets.find(
           (market) => market.market === activeMarket,
         )?.last_stock_code;
+        const savedStockCode = sessionStorage.getItem(activeStockKey(activeMarket));
 
         // 서버의 노출 순서대로 목록을 저장하고 마지막 선택 종목을 우선 복원한다.
         setMarketStocks(ordered);
         setActiveStockCode((current) =>
           ordered.some((stock) => stock.stock_code === current)
             ? current
+            : ordered.some((stock) => stock.stock_code === savedStockCode)
+              ? (savedStockCode ?? "")
             : ordered.some((stock) => stock.stock_code === lastStockCode)
               ? (lastStockCode ?? "")
               : (ordered[0]?.stock_code ?? ""),
@@ -111,6 +115,12 @@ export function useStocks(activeMarket: string, markets: MarketInfo[]) {
       cancelled = true;
     };
   }, [activeMarket, markets, stockRefreshKey]);
+
+  useEffect(() => {
+    if (activeMarket && activeStockCode) {
+      sessionStorage.setItem(activeStockKey(activeMarket), activeStockCode);
+    }
+  }, [activeMarket, activeStockCode]);
 
   // 종목 추가 또는 삭제 후 조회 효과를 다시 실행한다.
   const refreshStocks = () => setStockRefreshKey((current) => current + 1);
