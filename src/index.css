@@ -66,7 +66,8 @@ body {
 }
 
 button,
-input {
+input,
+textarea {
   font-family: inherit;
 }
 
@@ -76,6 +77,7 @@ button:not(:disabled) {
 
 button:focus-visible,
 input:focus-visible,
+textarea:focus-visible,
 a:focus-visible {
   outline: 2px solid var(--assit-primary);
   outline-offset: 3px;

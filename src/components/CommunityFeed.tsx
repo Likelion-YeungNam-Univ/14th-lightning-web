@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { CommunityPrediction, CommunityCurrency } from '../types/community';
 import CommunityCard from './CommunityCard';
 import CommunityDetail from './CommunityDetail';
@@ -107,9 +107,22 @@ export default function CommunityFeed({
   pointBalance = 7200,
   authenticated,
 }: CommunityFeedProps) {
-  const predictions = generatePredictions(stockName);
+  const [predictions, setPredictions] = useState(() => generatePredictions(stockName));
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [availablePoints, setAvailablePoints] = useState(pointBalance);
+  const [createdMessage, setCreatedMessage] = useState('');
+
+  useEffect(() => {
+    setPredictions(generatePredictions(stockName));
+    setSelectedId(null);
+  }, [stockName]);
+
+  useEffect(() => {
+    if (!createdMessage) return;
+    const timer = window.setTimeout(() => setCreatedMessage(''), 3000);
+    return () => window.clearTimeout(timer);
+  }, [createdMessage]);
 
   const selectedPrediction = predictions.find((p) => p.id === selectedId) ?? null;
 
@@ -118,7 +131,7 @@ export default function CommunityFeed({
     return (
       <CommunityDetail
         prediction={selectedPrediction}
-        pointBalance={pointBalance}
+        pointBalance={availablePoints}
         authenticated={authenticated}
         onBack={() => setSelectedId(null)}
       />
@@ -128,12 +141,37 @@ export default function CommunityFeed({
   const symbol = toTradingViewSymbol(stockCode, market);
 
   function handleCreateSubmit(data: CommunityCreateFormData) {
-    console.log('제출된 폼 데이터:', data); // TODO: 실제 저장 API 연결 지점 (postApi 등)
+    const config = STOCK_MOCK_CONFIG[stockName] ?? { currency: 'KRW' as const, basePrice: 100000 };
+    // 생성 직후 최근 생성된 방과 피드 최상단에서 바로 확인할 수 있게 반영한다.
+    setPredictions((current) => [{
+      id: `local-${Date.now()}`,
+      stockName: data.stockName,
+      title: data.title,
+      direction: data.direction,
+      targetPrice: data.expectedPrice,
+      currency: config.currency,
+      deadlineLabel: data.deadlineDate.slice(5).replace('-', '.'),
+      participantCount: 1,
+      maxParticipants: data.maxParticipants,
+      totalPoints: data.betAmount,
+      upRatio: data.direction === 'up' ? 1 : 0,
+      creatorName: '나',
+      post: data.content,
+      comments: [],
+    }, ...current]);
     setIsCreateOpen(false);
+    setAvailablePoints((current) => current - data.betAmount);
+    setCreatedMessage(`커뮤니티를 만들고 ${data.betAmount.toLocaleString()}P를 냈어요.`);
   }
 
   return (
     <div>
+      {createdMessage && (
+        <div role="status" className="status-banner--info fixed left-1/2 top-4 z-[60] -translate-x-1/2 rounded-lg border border-white/10 bg-[#20252f] px-4 py-3 text-xs font-bold text-white shadow-2xl">
+          <span className="mr-2 inline-grid size-4 place-items-center rounded-full bg-white text-[10px] text-[#20252f]">✓</span>
+          {createdMessage}
+        </div>
+      )}
       {/* 차트 */}
       <div className="mb-5">
         <TradingViewChart symbol={symbol} height={420} />
@@ -179,7 +217,7 @@ export default function CommunityFeed({
       {isCreateOpen && (
         <CommunityCreateModal
           stockName={stockName}
-          pointBalance={pointBalance}
+          pointBalance={availablePoints}
           onClose={() => setIsCreateOpen(false)}
           onSubmit={handleCreateSubmit}
         />
