@@ -4,6 +4,8 @@ import PointChargeModal from "./PointChargeModal";
 import GiftRedeemModal from "./GiftRedeemModal";
 import PointHistoryModal from "./PointHistoryModal";
 import type { PointBalanceResponse, PointHistoryEntry } from "../types/points";
+import type { AccountResponse } from "../types/session";
+import { ProfileModal } from "./ProfileModal";
 
 // 실제 내역 API 연결 전까지 쓰는 임시 목업
 const MOCK_HISTORY_ENTRIES: PointHistoryEntry[] = [
@@ -16,21 +18,26 @@ type HeaderProps = {
   authenticated: boolean;
   sessionLoading: boolean;
   points: PointBalanceResponse | null;
+  account: AccountResponse | null;
   onLoginClick: () => void;
   onLogoutClick: () => void; // 추가
+  onNicknameChange: (nickname: string) => void;
 };
 
 export function Header({
   authenticated,
   sessionLoading,
   points,
+  account,
   onLoginClick,
   onLogoutClick, // 추가
+  onNicknameChange,
 }: HeaderProps) {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [isChargeOpen, setIsChargeOpen] = useState(false);
   const [isRedeemOpen, setIsRedeemOpen] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const balance = points?.balance ?? 0;
   const held = points?.pizza_progress.held ?? balance;
@@ -59,6 +66,9 @@ export function Header({
   // 메뉴 항목 클릭 시 동작 분기
   function handleMenuItemClick(item: string) {
     setUserMenuOpen(false);
+    if (item === "내 프로필") {
+      setIsProfileOpen(true);
+    }
     if (item === "포인트 충전") {
       setIsChargeOpen(true);
     }
@@ -128,12 +138,25 @@ export function Header({
               onClick={() => setUserMenuOpen((open) => !open)}
               className="flex h-[48px] items-center gap-3 rounded-lg border-0 bg-transparent px-2 text-[16px] font-medium text-[#f2f3f5] transition hover:bg-[#1b2231]"
             >
-              반도체러버
+              {account?.nickname ?? "사용자"}
               <span
                 aria-hidden="true"
-                className={`text-xl text-[#a4adbb] transition-transform ${userMenuOpen ? "rotate-180" : ""}`}
+                className={`grid size-5 shrink-0 place-items-center text-[#a4adbb] transition-transform ${userMenuOpen ? "rotate-180" : ""}`}
               >
-                ⌄
+                <svg
+                  viewBox="0 0 20 20"
+                  fill="none"
+                  className="size-4"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="m5 7.5 5 5 5-5"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
               </span>
             </button>
 
@@ -143,7 +166,7 @@ export function Header({
                 aria-label="사용자 메뉴"
                 className="absolute right-0 top-[54px] w-[176px] overflow-hidden rounded-[12px] border border-[#343b49] bg-[#20232c] p-1.5 shadow-[0_18px_45px_rgba(0,0,0,.45)]"
               >
-                {["포인트 충전", "기프티콘 교환", "내 참여 내역", "로그아웃"].map(
+                {["내 프로필", "포인트 충전", "기프티콘 교환", "내 참여 내역", "로그아웃"].map(
                   (item) => (
                     <button
                       key={item}
@@ -171,6 +194,14 @@ export function Header({
       )}
 
       {/* 포인트 충전 모달 */}
+      {isProfileOpen && (
+        <ProfileModal
+          account={account}
+          onClose={() => setIsProfileOpen(false)}
+          onNicknameChange={onNicknameChange}
+        />
+      )}
+
       {isChargeOpen && (
         <PointChargeModal
           pointBalance={balance}
