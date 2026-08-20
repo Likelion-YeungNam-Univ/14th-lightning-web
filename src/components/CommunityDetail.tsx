@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { deleteApi, getApi, postApi } from '../api/client';
 import type { SavedCardItem } from '../types/card';
-import type { BettingEntryResponse, CommentApiItem, CommentCreateResponse, CommentLikeResponse, CommentListResponse, CommunityComment, CommunityPrediction } from '../types/community';
+import type { BettingEntryResponse, CommentApiItem, CommentCreateResponse, CommentLikeResponse, CommentListResponse, CommunityComment, CommunityPrediction, RoomDeleteResponse } from '../types/community';
 import { LOGIN_ID_STORAGE_KEY } from '../types/session';
 import CommunityCardAttachModal from './CommunityCardAttachModal';
 
@@ -11,6 +11,7 @@ interface CommunityDetailProps {
   authenticated?: boolean; // 로그인 여부 — 실제 인증 연결 전까지 기본 false
   stockCode: string;
   onPointsSpent?: (amount: number) => void;
+  onRoomDeleted: () => void;
   onBack: () => void;
 }
 
@@ -62,6 +63,7 @@ export default function CommunityDetail({
   authenticated = false,
   stockCode,
   onPointsSpent,
+  onRoomDeleted,
   onBack,
 }: CommunityDetailProps) {
   const savedParticipation = readParticipation(prediction.id);
@@ -80,6 +82,8 @@ export default function CommunityDetail({
   const [pendingLikeIds, setPendingLikeIds] = useState<Set<string>>(() => new Set());
   const [pendingDeleteIds, setPendingDeleteIds] = useState<Set<string>>(() => new Set());
   const [participationMessage, setParticipationMessage] = useState('');
+  const [roomDeletePending, setRoomDeletePending] = useState(false);
+  const [roomDeleteError, setRoomDeleteError] = useState('');
   const isDemoRoom = prediction.id.startsWith('demo-') || prediction.id.startsWith('local-created-');
 
   function mapComment(item: CommentApiItem): CommunityComment {
@@ -243,6 +247,35 @@ export default function CommunityDetail({
     }
   }
 
+  async function deleteRoom() {
+    if (!authenticated || roomDeletePending) return;
+    if (!window.confirm('이 커뮤니티 방을 삭제할까요?')) return;
+
+    setRoomDeletePending(true);
+    setRoomDeleteError('');
+    try {
+      const response = await deleteApi<RoomDeleteResponse>(`/rooms/${encodeURIComponent(prediction.id)}`);
+      if (!response?.removed) throw new Error('방이 삭제되지 않았습니다. 잠시 후 다시 시도해주세요.');
+      onRoomDeleted();
+    } catch (error) {
+      const code = error && typeof error === 'object' && 'code' in error ? String(error.code) : '';
+      const message = code === 'not_room_owner'
+        ? '방을 만든 사용자만 삭제할 수 있어요.'
+        : code === 'room_has_entrants'
+          ? '다른 참여자가 있는 방은 삭제할 수 없어요.'
+          : code === 'room_not_open'
+            ? '진행 중인 방만 삭제할 수 있어요.'
+            : code === 'room_not_found'
+              ? '이미 삭제되었거나 존재하지 않는 방이에요.'
+              : code === 'login_required'
+                ? '로그인 후 방을 삭제할 수 있어요.'
+                : error instanceof Error ? error.message : '방을 삭제하지 못했습니다.';
+      setRoomDeleteError(message);
+    } finally {
+      setRoomDeletePending(false);
+    }
+  }
+
   function submitReply(commentId: string) {
     if (!authenticated) return;
     const body = replyDraft.trim();
@@ -275,10 +308,24 @@ export default function CommunityDetail({
           <span className="rounded-md bg-[#17432f] px-3 py-1 text-xs font-bold text-[#4ade80]">
             진행 중
           </span>
-          <span className="text-xs text-white/35">
-            만든 사람 {prediction.creatorName || '반도체러버'} · 2일 전
-          </span>
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-white/35">
+              만든 사람 {prediction.creatorName || '반도체러버'} · 2일 전
+            </span>
+            {authenticated && !isDemoRoom && (
+              <button
+                type="button"
+                onClick={() => void deleteRoom()}
+                disabled={roomDeletePending}
+                className="rounded-md border border-red-300/20 px-2.5 py-1 text-xs font-semibold text-red-300 hover:bg-red-400/10 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {roomDeletePending ? '삭제 중...' : '방 삭제'}
+              </button>
+            )}
+          </div>
         </div>
+
+        {roomDeleteError && <p role="alert" className="mb-4 text-right text-xs text-red-300">{roomDeleteError}</p>}
 
         <h1 className="mb-6 text-xl font-bold tracking-[-0.02em] text-white">{prediction.title}</h1>
 

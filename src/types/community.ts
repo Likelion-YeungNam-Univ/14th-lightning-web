@@ -95,6 +95,12 @@ export interface RoomCreateResponse {
   };
 }
 
+export type RoomDetailResponse = RoomCreateResponse['room'];
+
+export interface RoomDeleteResponse {
+  removed: boolean;
+}
+
 export interface BettingEntryResponse {
   room: RoomListItem & {
     stock_code: string;
