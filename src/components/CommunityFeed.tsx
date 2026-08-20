@@ -117,11 +117,15 @@ export default function CommunityFeed({
     try {
       const response = await getApi<RoomListResponse>(`/rooms?stock_code=${encodeURIComponent(stockCode)}&status=open`);
       const rooms = response.items.map((room) => roomToPrediction(room, stockName, market));
-      setPredictions(rooms.length > 0 ? rooms : createDemoPredictions(stockCode, stockName, market));
+      const demoRooms = createDemoPredictions(stockCode, stockName, market);
+      // 실제 방이 0~1개여도 시연 화면에는 종목별로 최소 2개 피드가 보이게 채운다.
+      setPredictions(rooms.length >= 2 ? rooms : [...rooms, ...demoRooms].slice(0, 2));
       setSelectedId(null);
     } catch (error) {
-      setPredictions([]);
-      setLoadError(apiErrorMessage(error));
+      // 커뮤니티 API가 일시적으로 실패해도 시연용 기본 피드는 사용할 수 있게 유지한다.
+      setPredictions(createDemoPredictions(stockCode, stockName, market));
+      setLoadError('');
+      console.warn('커뮤니티 API 대신 시연용 피드를 표시합니다.', apiErrorMessage(error));
     } finally {
       setLoading(false);
     }
