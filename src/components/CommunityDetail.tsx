@@ -60,20 +60,20 @@ export default function CommunityDetail({
   const [commentError, setCommentError] = useState('');
   const [pendingLikeIds, setPendingLikeIds] = useState<Set<string>>(() => new Set());
   const [participationMessage, setParticipationMessage] = useState('');
-  const isDemoRoom = prediction.id.startsWith('demo-');
+  const isDemoRoom = prediction.id.startsWith('demo-') || prediction.id.startsWith('local-created-');
 
   function mapComment(item: CommentApiItem): CommunityComment {
     return { id: String(item.id), author: item.author_tag, side: item.side === 'down' ? 'down' : 'up', body: item.body ?? '', likes: item.like_count, likedByMe: item.liked_by_me, replies: [], attachedCard: item.saved_card_snapshot };
   }
 
   useEffect(() => {
-    if (prediction.id.startsWith('demo-')) return;
+    if (isDemoRoom) return;
     let cancelled = false;
     void getApi<CommentListResponse>(`/rooms/${encodeURIComponent(prediction.id)}/comments`)
       .then((response) => { if (!cancelled) setComments(response.items.filter((item) => !item.deleted).map(mapComment)); })
       .catch(() => undefined);
     return () => { cancelled = true; };
-  }, [authenticated, prediction.id]);
+  }, [authenticated, isDemoRoom, prediction.id]);
 
   const totalPeople = prediction.participantCount;
   const upRatio = Math.round(prediction.upRatio * 100);
