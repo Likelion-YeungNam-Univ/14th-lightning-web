@@ -71,6 +71,11 @@ export function usePoints(authenticated: boolean, sessionReady = authenticated) 
     } : current);
   };
 
-  return { points: visiblePoints, sessionPoints: points, spendPoints };
-  return { points: visiblePoints, spendPoints, chargePoints, redeemGifticon };
+  return {
+    points: visiblePoints,
+    sessionPoints: points,
+    spendPoints,
+    chargePoints,
+    redeemGifticon,
+  };
 }
