@@ -5,6 +5,8 @@ interface PointChargeModalProps {
   pointCap?: number;
   onClose: () => void;
   onConfirm: (amount: number) => void;
+  loading?: boolean;
+  error?: string;
 }
 
 const TOPUP_OPTIONS = [
@@ -18,8 +20,10 @@ export default function PointChargeModal({
   pointCap = 30000,
   onClose,
   onConfirm,
+  loading = false,
+  error = "",
 }: PointChargeModalProps) {
-  const [selectedAmount, setSelectedAmount] = useState(5000);
+  const [selectedAmount, setSelectedAmount] = useState(10000);
 
   const remainingCap = pointCap - pointBalance;
   const canPay = selectedAmount > 0 && selectedAmount <= remainingCap;
@@ -125,13 +129,15 @@ export default function PointChargeModal({
           </button>
           <button
             type="button"
-            disabled={!canPay}
+            disabled={!canPay || loading}
             onClick={() => onConfirm(selectedAmount)}
             className="min-h-12 rounded-[12px] border-0 bg-[#6f9fff] text-sm font-bold text-[#0d1929] transition hover:bg-[#83adff] disabled:cursor-not-allowed disabled:opacity-40"
           >
-            {selectedAmount.toLocaleString()}원 결제하기
+            {loading ? "충전 중..." : `${selectedAmount.toLocaleString()}원 충전하기`}
           </button>
         </div>
+
+        {error && <p role="alert" className="mb-5 mt-0 text-sm text-[#ef7b7b]">{error}</p>}
 
         <p className="m-0 text-xs leading-6 text-[#9aa3b2]">
           카드 · 카카오페이 · 토스페이

@@ -31,7 +31,7 @@ export default function App() {
   const { authenticated, setAuthenticated, account, setAccount, sessionLoading, sessionError } =
     useSession();
   const [loginOpen, setLoginOpen] = useState(false);
-  const { points, spendPoints } = usePoints(authenticated);
+  const { points, spendPoints, chargePoints, redeemGifticon } = usePoints(authenticated);
   const {
     markets,
     activeMarket,
@@ -133,6 +133,8 @@ export default function App() {
               : { login_id: "", nickname, authenticated: true },
           )
         }
+        onChargePoints={chargePoints}
+        onRedeemGifticon={redeemGifticon}
       />
       <MainPage
         authenticated={authenticated}

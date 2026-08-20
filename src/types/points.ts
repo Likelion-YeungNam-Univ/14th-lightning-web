@@ -9,6 +9,18 @@ export type PointBalanceResponse = {
   pizza_progress: PizzaProgress;
 };
 
+export type PointChargeResponse = {
+  balance: number;
+  charged: number;
+};
+
+export type GifticonExchangeResponse = {
+  order_id: number;
+  points_used: number;
+  issued_code: string;
+  balance: number;
+};
+
 export type PointHistoryEntry = {
   id: string;
   label: string; // "삼성전자 · 베팅 정산 획득"

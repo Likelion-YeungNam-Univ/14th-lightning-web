@@ -4,6 +4,7 @@ import PointChargeModal from "./PointChargeModal";
 import GiftRedeemModal from "./GiftRedeemModal";
 import PointHistoryModal from "./PointHistoryModal";
 import type { PointBalanceResponse, PointHistoryEntry } from "../types/points";
+import type { GifticonExchangeResponse, PointChargeResponse } from "../types/points";
 import type { AccountResponse } from "../types/session";
 import { ProfileModal } from "./ProfileModal";
 
@@ -22,6 +23,8 @@ type HeaderProps = {
   onLoginClick: () => void;
   onLogoutClick: () => void; // 추가
   onNicknameChange: (nickname: string) => void;
+  onChargePoints: (amount: number) => Promise<PointChargeResponse>;
+  onRedeemGifticon: () => Promise<GifticonExchangeResponse>;
 };
 
 export function Header({
@@ -32,12 +35,17 @@ export function Header({
   onLoginClick,
   onLogoutClick, // 추가
   onNicknameChange,
+  onChargePoints,
+  onRedeemGifticon,
 }: HeaderProps) {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [isChargeOpen, setIsChargeOpen] = useState(false);
   const [isRedeemOpen, setIsRedeemOpen] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [pointActionLoading, setPointActionLoading] = useState(false);
+  const [pointActionError, setPointActionError] = useState("");
+  const [giftSuccess, setGiftSuccess] = useState("");
   const userMenuRef = useRef<HTMLDivElement>(null);
   const balance = points?.balance ?? 0;
   const held = points?.pizza_progress.held ?? balance;
@@ -70,9 +78,12 @@ export function Header({
       setIsProfileOpen(true);
     }
     if (item === "포인트 충전") {
+      setPointActionError("");
       setIsChargeOpen(true);
     }
     if (item === "기프티콘 교환") {
+      setPointActionError("");
+      setGiftSuccess("");
       setIsRedeemOpen(true);
     }
     if (item === "내 참여 내역") {
@@ -83,16 +94,31 @@ export function Header({
     }
   }
 
-  // 충전 확정 처리 (실제 API 연결 전까지 임시)
-  function handleChargeConfirm(amount: number) {
-    console.log("충전 금액:", amount); // TODO: 실제 결제/충전 API 연결 지점
-    setIsChargeOpen(false);
+  async function handleChargeConfirm(amount: number) {
+    setPointActionLoading(true);
+    setPointActionError("");
+    try {
+      await onChargePoints(amount);
+      setIsChargeOpen(false);
+    } catch (error) {
+      setPointActionError(error instanceof Error ? error.message : "포인트 충전에 실패했습니다.");
+    } finally {
+      setPointActionLoading(false);
+    }
   }
 
-  // 기프티콘 교환 확정 처리 (실제 API 연결 전까지 임시)
-  function handleRedeemConfirm() {
-    console.log("피자 기프티콘 교환"); // TODO: 실제 교환 API 연결 지점
-    setIsRedeemOpen(false);
+  async function handleRedeemConfirm() {
+    setPointActionLoading(true);
+    setPointActionError("");
+    setGiftSuccess("");
+    try {
+      const response = await onRedeemGifticon();
+      setGiftSuccess(`교환이 완료됐어요. 발급 코드: ${response.issued_code}`);
+    } catch (error) {
+      setPointActionError(error instanceof Error ? error.message : "기프티콘 교환에 실패했습니다.");
+    } finally {
+      setPointActionLoading(false);
+    }
   }
 
   return (
@@ -103,7 +129,11 @@ export function Header({
           <button
             type="button"
             aria-label="피자 기프티콘 교환 진행률 보기"
-            onClick={() => setIsRedeemOpen(true)}
+            onClick={() => {
+              setPointActionError("");
+              setGiftSuccess("");
+              setIsRedeemOpen(true);
+            }}
             className="relative h-[48px] w-[370px] rounded-full border-0 bg-[#1b2231] px-5 py-2 text-left transition hover:bg-[#222a3b] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#6f9fff] max-[860px]:hidden"
           >
             <div className="-translate-y-0.5 flex items-center justify-between gap-6 text-[14px] font-bold">
@@ -123,7 +153,10 @@ export function Header({
           <button
             type="button"
             aria-label="포인트 충전 열기"
-            onClick={() => setIsChargeOpen(true)}
+            onClick={() => {
+              setPointActionError("");
+              setIsChargeOpen(true);
+            }}
             className="grid h-[48px] min-w-[116px] place-items-center rounded-full border-0 bg-[#1b2231] px-5 text-[17px] font-bold text-[#6fa8ff] transition hover:bg-[#222a3b] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#6f9fff] max-[560px]:min-w-0 max-[560px]:px-4 max-[560px]:text-sm"
           >
             {numberFormatter.format(balance)}P
@@ -207,6 +240,8 @@ export function Header({
           pointBalance={balance}
           onClose={() => setIsChargeOpen(false)}
           onConfirm={handleChargeConfirm}
+          loading={pointActionLoading}
+          error={pointActionError}
         />
       )}
 
@@ -217,6 +252,9 @@ export function Header({
           pizzaCost={target}
           onClose={() => setIsRedeemOpen(false)}
           onConfirm={handleRedeemConfirm}
+          loading={pointActionLoading}
+          error={pointActionError}
+          successMessage={giftSuccess}
         />
       )}
 
