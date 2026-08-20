@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from "react";
 
 interface TradingViewChartProps {
   symbol: string; // 예: "KRX:005930", "NASDAQ:NVDA"
@@ -19,23 +19,28 @@ function loadTradingViewScript(): Promise<void> {
   if (scriptLoadingPromise) return scriptLoadingPromise;
 
   scriptLoadingPromise = new Promise((resolve, reject) => {
-    const script = document.createElement('script');
-    script.src = 'https://s3.tradingview.com/tv.js';
+    const script = document.createElement("script");
+    script.src = "https://s3.tradingview.com/tv.js";
     script.async = true;
     script.onload = () => resolve();
-    script.onerror = () => reject(new Error('TradingView 스크립트를 불러오지 못했어요.'));
+    script.onerror = () =>
+      reject(new Error("TradingView 스크립트를 불러오지 못했어요."));
     document.body.appendChild(script);
   });
 
   return scriptLoadingPromise;
 }
 
-export default function TradingViewChart({ symbol, height = 420 }: TradingViewChartProps) {
+export default function TradingViewChart({
+  symbol,
+  height = 420,
+}: TradingViewChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [error, setError] = useState('');
   const isRestrictedKrxSymbol = symbol.startsWith('KRX:');
+  const [error, setError] = useState("");
   // 심볼마다 고유한 DOM id가 있어야 위젯이 꼬이지 않는다.
-  const containerId = `tv-chart-${symbol.replace(/[^a-zA-Z0-9]/g, '-')}`;
+  const containerId = `tv-chart-${symbol.replace(/[^a-zA-Z0-9]/g, "-")}`;
 
   useEffect(() => {
     // TradingView는 KRX 심볼을 외부 위젯에서 제한하며 iframe 내부 알림을 반복 표시한다.
@@ -52,25 +57,38 @@ export default function TradingViewChart({ symbol, height = 420 }: TradingViewCh
       if (cancelled || !window.TradingView) return;
 
       container.innerHTML = '';
+    setError("");
 
-      new window.TradingView.widget({
-        symbol,
-        container_id: containerId,
-        autosize: true,
-        interval: 'D',
-        timezone: 'Asia/Seoul',
-        theme: 'dark',
-        style: '1',
-        locale: 'kr',
-        toolbar_bg: '#131722',
-        enable_publishing: false,
-        hide_top_toolbar: false,
-        hide_legend: false,
-        allow_symbol_change: false,
+    loadTradingViewScript()
+      .then(() => {
+        if (cancelled || !containerRef.current || !window.TradingView) return;
+
+        containerRef.current.innerHTML = ""; // 이전 위젯 흔적 제거
+
+        new window.TradingView.widget({
+          symbol,
+          container_id: containerId,
+          autosize: true,
+          interval: "D",
+          timezone: "Asia/Seoul",
+          theme: "dark",
+          style: "1",
+          locale: "kr",
+          toolbar_bg: "#131722",
+          enable_publishing: false,
+          hide_top_toolbar: false,
+          hide_legend: false,
+          allow_symbol_change: false,
+        });
+      })
+      .catch((reason: unknown) => {
+        if (!cancelled)
+          setError(
+            reason instanceof Error
+              ? reason.message
+              : "차트를 불러오지 못했어요.",
+          );
       });
-    }).catch((reason: unknown) => {
-      if (!cancelled) setError(reason instanceof Error ? reason.message : '차트를 불러오지 못했어요.');
-    });
 
     return () => {
       cancelled = true;
@@ -102,7 +120,18 @@ export default function TradingViewChart({ symbol, height = 420 }: TradingViewCh
       className="rounded-2xl overflow-hidden border border-white/[0.06] bg-[#131722]"
       style={{ height }}
     >
-      {error ? <div className="grid h-full place-items-center px-6 text-center"><div><p className="font-bold text-white">차트를 불러오지 못했어요.</p><p className="mt-2 text-sm text-white/40">네트워크 연결을 확인한 뒤 다시 시도해주세요.</p></div></div> : <div id={containerId} ref={containerRef} className="h-full w-full" />}
+      {error ? (
+        <div className="grid h-full place-items-center px-6 text-center">
+          <div>
+            <p className="font-bold text-white">차트를 불러오지 못했어요.</p>
+            <p className="mt-2 text-sm text-white/40">
+              네트워크 연결을 확인한 뒤 다시 시도해주세요.
+            </p>
+          </div>
+        </div>
+      ) : (
+        <div id={containerId} ref={containerRef} className="h-full w-full" />
+      )}
     </div>
   );
 }
