@@ -18,3 +18,5 @@ export type SignupRequest = {
   password: string;
   nickname: string;
 };
+
+export const LOGIN_ID_STORAGE_KEY = "assit_login_id";
