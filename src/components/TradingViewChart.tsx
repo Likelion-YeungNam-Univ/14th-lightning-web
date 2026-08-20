@@ -34,17 +34,32 @@ function loadTradingViewScript(): Promise<void> {
       script.async = true;
       document.body.appendChild(script);
     }
+    const script = document.createElement("script");
+    script.src = "https://s3.tradingview.com/tv.js";
+    script.async = true;
+    script.onload = () => resolve();
+    script.onerror = () =>
+      reject(new Error("TradingView 스크립트를 불러오지 못했어요."));
+    document.body.appendChild(script);
   });
 
   return scriptLoadingPromise;
 }
 
-export default function TradingViewChart({ symbol, height = 420 }: TradingViewChartProps) {
+export default function TradingViewChart({
+  symbol,
+  height = 420,
+}: TradingViewChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const reactId = useId();
   const [failedSymbol, setFailedSymbol] = useState("");
   const isRestrictedKrxSymbol = symbol.startsWith("KRX:");
   const containerId = `tv-chart-${reactId.replace(/:/g, "")}-${symbol.replace(/[^a-zA-Z0-9]/g, "-")}`;
+  const [error, setError] = useState('');
+  const isRestrictedKrxSymbol = symbol.startsWith('KRX:');
+  const [error, setError] = useState("");
+  // 심볼마다 고유한 DOM id가 있어야 위젯이 꼬이지 않는다.
+  const containerId = `tv-chart-${symbol.replace(/[^a-zA-Z0-9]/g, "-")}`;
 
   useEffect(() => {
     if (isRestrictedKrxSymbol) return;
@@ -58,6 +73,21 @@ export default function TradingViewChart({ symbol, height = 420 }: TradingViewCh
       .then(() => {
         if (cancelled || !window.TradingView) return;
         container.innerHTML = "";
+    // 종목 변경 및 React StrictMode 이중 effect 실행 시 남아 있는 위젯 DOM을 제거한다.
+    container.innerHTML = '';
+
+    loadTradingViewScript().then(() => {
+      if (cancelled || !window.TradingView) return;
+
+      container.innerHTML = '';
+    setError("");
+
+    loadTradingViewScript()
+      .then(() => {
+        if (cancelled || !containerRef.current || !window.TradingView) return;
+
+        containerRef.current.innerHTML = ""; // 이전 위젯 흔적 제거
+
         new window.TradingView.widget({
           symbol,
           container_id: containerId,
@@ -76,6 +106,13 @@ export default function TradingViewChart({ symbol, height = 420 }: TradingViewCh
       })
       .catch(() => {
         if (!cancelled) setFailedSymbol(symbol);
+      .catch((reason: unknown) => {
+        if (!cancelled)
+          setError(
+            reason instanceof Error
+              ? reason.message
+              : "차트를 불러오지 못했어요.",
+          );
       });
 
     return () => {
@@ -101,4 +138,23 @@ export default function TradingViewChart({ symbol, height = 420 }: TradingViewCh
   return <div className="overflow-hidden rounded-2xl border border-white/[0.06] bg-[#131722]" style={{ height, minHeight: height }}>
     {hasError ? <div className="grid h-full place-items-center px-6 text-center"><div><p className="font-bold text-white">차트를 불러오지 못했어요.</p><p className="mt-2 text-sm text-white/40">네트워크 연결을 확인한 뒤 다시 시도해주세요.</p></div></div> : <div id={containerId} ref={containerRef} className="h-full w-full" />}
   </div>;
+  return (
+    <div
+      className="rounded-2xl overflow-hidden border border-white/[0.06] bg-[#131722]"
+      style={{ height }}
+    >
+      {error ? (
+        <div className="grid h-full place-items-center px-6 text-center">
+          <div>
+            <p className="font-bold text-white">차트를 불러오지 못했어요.</p>
+            <p className="mt-2 text-sm text-white/40">
+              네트워크 연결을 확인한 뒤 다시 시도해주세요.
+            </p>
+          </div>
+        </div>
+      ) : (
+        <div id={containerId} ref={containerRef} className="h-full w-full" />
+      )}
+    </div>
+  );
 }

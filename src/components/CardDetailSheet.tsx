@@ -80,6 +80,7 @@ export function CardDetailSheet({
   const [termResponse, setTermResponse] = useState<TermExplainResponse | null>(
     null,
   );
+  const [popoverPosition, setPopoverPosition] = useState({ left: 16, top: 16 });
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
 
   useEffect(() => {
@@ -133,6 +134,10 @@ export function CardDetailSheet({
     }
   };
 
+  const scheduleSelectedTermCapture = () => {
+    window.setTimeout(captureSelectedTerm, 0);
+  };
+
   const captureSelectedTerm = () => {
     const selection = window.getSelection();
     const container = summaryRef.current;
@@ -150,16 +155,32 @@ export function CardDetailSheet({
     if (!term) return;
     if (term.length > 50) {
       explanationRequestRef.current += 1;
-      setSelectedTerm("");
+      setSelectedTerm(term.slice(0, 50));
       setSelectionError("용어는 50자 이내로 선택해주세요.");
       setTermLoading(false);
       setTermError("");
       setTermResponse(null);
-      return;
+    } else {
+      setSelectionError("");
+      setSelectedTerm(term);
+      void explainTerm(term);
     }
-    setSelectionError("");
-    setSelectedTerm(term);
-    void explainTerm(term);
+
+    const selectionRect = range.getBoundingClientRect();
+    const popoverWidth = Math.min(420, window.innerWidth - 32);
+    const left = Math.min(
+      Math.max(
+        16,
+        selectionRect.left + selectionRect.width / 2 - popoverWidth / 2,
+      ),
+      window.innerWidth - popoverWidth - 16,
+    );
+    const estimatedHeight = 230;
+    const top =
+      selectionRect.bottom + 12 + estimatedHeight <= window.innerHeight
+        ? selectionRect.bottom + 12
+        : Math.max(16, selectionRect.top - estimatedHeight - 12);
+    setPopoverPosition({ left, top });
   };
 
   return (
@@ -267,8 +288,8 @@ export function CardDetailSheet({
 
         <div
           ref={summaryRef}
-          onMouseUp={captureSelectedTerm}
-          onTouchEnd={captureSelectedTerm}
+          onPointerUp={scheduleSelectedTermCapture}
+          onKeyUp={scheduleSelectedTermCapture}
           className="mt-7 text-[15px] leading-[1.85] text-[#d9dee7]"
         >
           {linkSentence && (
@@ -307,51 +328,6 @@ export function CardDetailSheet({
           </p>
         )}
 
-        {selectedTerm && (
-          <aside
-            role="status"
-            className="mt-3 rounded-[10px] border border-[#315b84] bg-[#17283a] px-4 py-3"
-          >
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-xs font-bold text-[#79b8ff]">
-                선택한 용어
-              </span>
-              <strong className="text-sm text-[#e6f1ff]">{selectedTerm}</strong>
-            </div>
-            {termLoading && (
-              <p className="mb-0 mt-3 text-sm text-[#b7c6d9]">
-                쉬운 설명을 불러오고 있어요...
-              </p>
-            )}
-            {termResponse && (
-              <div className="mt-3 border-t border-[#31506d] pt-3">
-                <p className="m-0 text-sm leading-6 text-[#e1e8f2]">
-                  {termResponse.explanation ??
-                    "이 용어는 현재 설명하기 어려워요."}
-                </p>
-                {termResponse.sources.length > 0 && (
-                  <p className="mb-0 mt-2 text-[11px] text-[#8fa9c4]">
-                    근거:{" "}
-                    {termResponse.sources
-                      .map((source) => termSourceLabel(source.source))
-                      .join(", ")}
-                  </p>
-                )}
-              </div>
-            )}
-            {termError && (
-              <p role="alert" className="mb-0 mt-3 text-sm text-[#f0a868]">
-                {termError}
-              </p>
-            )}
-          </aside>
-        )}
-        {selectionError && (
-          <p role="alert" className="mb-0 mt-3 text-xs text-[#f0a868]">
-            {selectionError}
-          </p>
-        )}
-
         <footer className="mt-7 flex min-h-14.5 items-center justify-between gap-4 border-t border-[#313744] pt-5 max-[540px]:items-stretch max-[540px]:flex-col">
           <span className="text-[13px] text-[#b4bdca]">
             {[card.source_name, publishedAt].filter(Boolean).join(" · ")}
@@ -378,6 +354,54 @@ export function CardDetailSheet({
           </div>
         </footer>
       </section>
+
+      {selectedTerm && (
+        <aside
+          role="status"
+          onMouseDown={(event) => event.stopPropagation()}
+          style={{ left: popoverPosition.left, top: popoverPosition.top }}
+          className="fixed z-80 w-[min(420px,calc(100vw-32px))] rounded-[16px] border border-[#3c424e] bg-[#282c36] px-6 py-5 shadow-[0_24px_80px_rgba(0,0,0,.55)] max-[640px]:px-5 max-[640px]:py-5"
+        >
+          <button
+            type="button"
+            aria-label="용어 설명 닫기"
+            onClick={() => setSelectedTerm("")}
+            className="absolute right-4 top-4 grid size-9 place-items-center rounded-full border-0 bg-[#343945] text-2xl text-[#c3cad5]"
+          >
+            ×
+          </button>
+          <div className="flex flex-wrap items-center gap-2 pr-10">
+            <span className="text-xs font-bold text-[#79b8ff]">선택한 용어</span>
+            <strong className="text-sm text-[#e6f1ff]">{selectedTerm}</strong>
+          </div>
+          {termLoading && (
+            <p className="mb-0 mt-5 text-sm text-[#b7c6d9]">
+              쉬운 설명을 불러오고 있어요...
+            </p>
+          )}
+          {termResponse && (
+            <>
+              <p className="mb-0 mt-5 text-sm leading-6 text-[#e1e8f2]">
+                {termResponse.explanation ??
+                  "이 용어는 현재 설명하기 어려워요."}
+              </p>
+              {termResponse.sources.length > 0 && (
+                <p className="mb-0 mt-6 text-[11px] text-[#8fa9c4]">
+                  근거:{" "}
+                  {termResponse.sources
+                    .map((source) => termSourceLabel(source.source))
+                    .join(", ")}
+                </p>
+              )}
+            </>
+          )}
+          {(selectionError || termError) && (
+            <p role="alert" className="mb-0 mt-5 text-sm text-[#f0a868]">
+              {selectionError || termError}
+            </p>
+          )}
+        </aside>
+      )}
     </div>
   );
 }
