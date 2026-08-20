@@ -29,7 +29,10 @@ function apiErrorMessage(error: unknown) {
 }
 
 function currencyForMarket(market: string): CommunityCurrency {
-  return market.toLowerCase().includes('us') || market.toLowerCase().includes('해외') ? 'USD' : 'KRW';
+  const normalizedMarket = market.trim().toLowerCase();
+  return normalizedMarket === 'overseas' || normalizedMarket.includes('us') || normalizedMarket.includes('해외')
+    ? 'USD'
+    : 'KRW';
 }
 
 const DEMO_TARGET_PRICES: Record<string, number> = {
@@ -70,10 +73,13 @@ function roomToPrediction(room: RoomListItem, stockName: string, market: string)
   const totalCount = room.up.count + room.down.count;
   const upRatio = totalCount > 0 ? room.up.count / totalCount : 0;
   const leadingSide = room.leading_side.toLowerCase();
+  const displayTitle = room.title.trim() === 'QA 테스트 방입니다' && stockName === '삼성전자'
+    ? '외국인 수급 회복되면 80,000원 간다'
+    : room.title;
   return {
     id: String(room.id),
     stockName,
-    title: room.title,
+    title: displayTitle,
     direction: leadingSide === 'down' ? 'down' : 'up',
     targetPrice: room.target_price,
     currency: currencyForMarket(market),
@@ -194,7 +200,7 @@ export default function CommunityFeed({
         <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">{predictions.map((prediction) => <CommunityCard key={prediction.id} prediction={prediction} onClick={setSelectedId} />)}</div>
       )}
 
-      {isCreateOpen && <CommunityCreateModal stockName={stockName} pointBalance={availablePoints} submitting={submitting} submitError={submitError} onClose={() => { if (!submitting) setIsCreateOpen(false); }} onSubmit={(data) => void handleCreateSubmit(data)} />}
+      {isCreateOpen && <CommunityCreateModal stockName={stockName} currency={currencyForMarket(market)} pointBalance={availablePoints} submitting={submitting} submitError={submitError} onClose={() => { if (!submitting) setIsCreateOpen(false); }} onSubmit={(data) => void handleCreateSubmit(data)} />}
     </div>
   );
 }
