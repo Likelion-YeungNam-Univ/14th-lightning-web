@@ -172,7 +172,7 @@ export default function CommunityFeed({
   const symbol = useTradingViewSymbol(stockCode, market);
 
   console.log("TradingView symbol:", symbol);
-  
+
   const selectedPrediction = predictions.find((prediction) => prediction.id === selectedId) ?? null;
   if (selectedPrediction) {
     return <CommunityDetail prediction={selectedPrediction} stockCode={stockCode} pointBalance={availablePoints} authenticated={authenticated} onPointsSpent={(amount) => { setAvailablePoints((current) => Math.max(0, current - amount)); onSpendPoints?.(amount); }} onBack={() => { sessionStorage.removeItem(selectedRoomKey(stockCode)); setSelectedId(null); }} />;
@@ -203,6 +203,7 @@ export default function CommunityFeed({
       setSubmitting(false);
     }
   }
+  
 
   return (
     <div className="pb-12">
@@ -223,7 +224,7 @@ export default function CommunityFeed({
         <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">{predictions.map((prediction) => <CommunityCard key={prediction.id} prediction={prediction} onClick={(roomId) => { sessionStorage.setItem(selectedRoomKey(stockCode), roomId); setSelectedId(roomId); }} />)}</div>
       )}
 
-      {isCreateOpen && <CommunityCreateModal stockName={stockName} currency={currencyForMarket(market)} pointBalance={availablePoints} submitting={submitting} submitError={submitError} onClose={() => { if (!submitting) setIsCreateOpen(false); }} onSubmit={(data) => void handleCreateSubmit(data)} />}
+      {isCreateOpen && <CommunityCreateModal stockName={stockName} stockCode={stockCode} currency={currencyForMarket(market)} pointBalance={availablePoints} submitting={submitting} submitError={submitError} onClose={() => { if (!submitting) setIsCreateOpen(false); }} onSubmit={(data) => void handleCreateSubmit(data)} />}
     </div>
   );
 }

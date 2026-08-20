@@ -1,19 +1,22 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import type { FormEvent, MouseEvent } from 'react';
 import type { CommunityDirection } from '../types/community';
+import type { SavedCardItem } from '../types/card';
+import CommunityCardAttachModal from './CommunityCardAttachModal';
 
 export interface CommunityCreateFormData {
   stockName: string; title: string; expectedPrice: number; deadlineDate: string;
   content: string; direction: CommunityDirection; betAmount: number; maxParticipants: number;
+  savedCard: SavedCardItem | null;
 }
 
-interface Props { stockName: string; currency?: 'KRW' | 'USD'; pointBalance: number; submitting?: boolean; submitError?: string; onClose: () => void; onSubmit: (data: CommunityCreateFormData) => void; }
+interface Props { stockName: string; stockCode: string; currency?: 'KRW' | 'USD'; pointBalance: number; submitting?: boolean; submitError?: string; onClose: () => void; onSubmit: (data: CommunityCreateFormData) => void; }
 const MAX_BET = 1000;
 const MAX_TITLE_LENGTH = 50;
 const MAX_CONTENT_LENGTH = 500;
 const PARTICIPANTS = [2, 3, 4] as const;
 
-export default function CommunityCreateModal({ stockName, currency = 'KRW', pointBalance, submitting = false, submitError = '', onClose, onSubmit }: Props) {
+export default function CommunityCreateModal({ stockName, stockCode, currency = 'KRW', pointBalance, submitting = false, submitError = '', onClose, onSubmit }: Props) {
   const headingId = useId();
   const titleRef = useRef<HTMLInputElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -25,6 +28,8 @@ export default function CommunityCreateModal({ stockName, currency = 'KRW', poin
   const [bet, setBet] = useState('500');
   const [participants, setParticipants] = useState(4);
   const [fileName, setFileName] = useState('');
+  const [cardAttachOpen, setCardAttachOpen] = useState(false);
+  const [savedCard, setSavedCard] = useState<SavedCardItem | null>(null);
   const today = new Date().toLocaleDateString('en-CA');
   const betNumber = Number(bet);
   const canSubmit = Boolean(title.trim() && Number(price) > 0 && deadline >= today && content.trim()) && betNumber > 0 && betNumber <= MAX_BET && betNumber <= pointBalance;
@@ -46,7 +51,7 @@ export default function CommunityCreateModal({ stockName, currency = 'KRW', poin
   function submit(event: FormEvent) {
     event.preventDefault();
     if (!canSubmit) return;
-    onSubmit({ stockName, title: title.trim(), expectedPrice: Number(price), deadlineDate: deadline, content: content.trim(), direction, betAmount: betNumber, maxParticipants: participants });
+    onSubmit({ stockName, title: title.trim(), expectedPrice: Number(price), deadlineDate: deadline, content: content.trim(), direction, betAmount: betNumber, maxParticipants: participants, savedCard });
   }
 
   return (
@@ -69,7 +74,7 @@ export default function CommunityCreateModal({ stockName, currency = 'KRW', poin
           <div className="flex flex-wrap items-center gap-2">
             <input ref={fileRef} type="file" accept="image/*" onChange={(e) => setFileName(e.target.files?.[0]?.name ?? '')} className="hidden" />
             <button type="button" onClick={() => fileRef.current?.click()} className="rounded-full bg-white/[.06] px-3 py-2 text-xs text-white/60 hover:text-white">▧ 사진 첨부</button>
-            <button type="button" className="rounded-full bg-white/[.06] px-3 py-2 text-xs text-white/60 hover:text-white">⌁ 자료 카드 첨부</button>
+            <button type="button" onClick={() => setCardAttachOpen(true)} className="rounded-full bg-white/[.06] px-3 py-2 text-xs text-white/60 hover:text-white">⌁ 자료 카드 첨부</button>
             {fileName && (
               <span className="inline-flex max-w-60 items-center gap-1 rounded-full bg-blue-400/10 py-1 pl-3 pr-1 text-xs text-blue-300">
                 <span className="truncate">{fileName}</span>
@@ -77,6 +82,15 @@ export default function CommunityCreateModal({ stockName, currency = 'KRW', poin
               </span>
             )}
           </div>
+          {savedCard && (
+            <div className="flex items-center justify-between gap-3 rounded-lg border border-blue-400/30 bg-blue-500/10 p-3">
+              <div className="min-w-0">
+                <span className="text-[11px] font-bold text-blue-300">첨부 자료 · {savedCard.stock_name ?? savedCard.stock_code}</span>
+                <p className="mt-1 truncate text-sm font-semibold text-white">{typeof savedCard.snapshot.title === 'string' ? savedCard.snapshot.title : '저장한 자료'}</p>
+              </div>
+              <button type="button" onClick={() => setSavedCard(null)} className="shrink-0 text-xs text-white/45 hover:text-white">첨부 해제</button>
+            </div>
+          )}
           <div className="grid grid-cols-[1fr_125px] gap-4">
             <fieldset><legend className="mb-2 text-xs font-medium text-white/45">내 의견</legend><div className="grid grid-cols-2 gap-2">{(['up', 'down'] as const).map((value) => <button key={value} type="button" onClick={() => setDirection(value)} aria-pressed={direction === value} className={`rounded-lg border py-3 text-sm font-bold ${direction === value ? value === 'up' ? 'border-emerald-400 bg-emerald-400/10 text-emerald-300' : 'border-orange-400 bg-orange-400/10 text-orange-300' : 'border-[#3a414d] bg-[#15181f] text-white/45'}`}>{value === 'up' ? '간다' : '안 간다'}</button>)}</div></fieldset>
             <label className="text-xs font-medium text-white/45">참여 포인트<input inputMode="numeric" value={bet} onChange={(e) => setBet(e.target.value.replace(/\D/g, ''))} className="mt-2 w-full rounded-lg border border-[#3a414d] bg-[#12151b] px-4 py-3 text-sm font-bold text-white outline-none focus:border-blue-400" /></label>
@@ -88,6 +102,7 @@ export default function CommunityCreateModal({ stockName, currency = 'KRW', poin
           <button type="submit" disabled={!canSubmit || submitting} className="w-full rounded-lg bg-[#4d9fff] py-4 text-sm font-bold text-[#07111f] transition hover:bg-[#6aafff] disabled:opacity-40">{submitting ? '커뮤니티 만드는 중...' : `커뮤니티 만들고 ${betNumber.toLocaleString()}P 내기`}</button>
         </div>
       </form>
+      {cardAttachOpen && <CommunityCardAttachModal stockCode={stockCode} selected={savedCard} onClose={() => setCardAttachOpen(false)} onSelect={(item) => { setSavedCard(item); setCardAttachOpen(false); }} />}
     </div>
   );
 }
