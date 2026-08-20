@@ -182,9 +182,9 @@ export default function CommunityFeed({
   }
 
   return (
-    <div>
+    <div className="pb-12">
       {createdMessage && <div role="status" className="status-banner--info fixed left-1/2 top-4 z-[60] -translate-x-1/2 rounded-lg border border-white/10 bg-[#20252f] px-4 py-3 text-xs font-bold text-white shadow-2xl"><span className="mr-2 inline-grid size-4 place-items-center rounded-full bg-white text-[10px] text-[#20252f]">✓</span>{createdMessage}</div>}
-      <div className="mb-5"><TradingViewChart symbol={symbol} height={420} /></div>
+      <div className="mb-5">{symbol ? <TradingViewChart key={symbol} symbol={symbol} height={420} /> : <div className="grid h-[420px] place-items-center rounded-2xl border border-white/[0.06] bg-[#131722]"><div className="text-center"><div className="mx-auto size-7 animate-spin rounded-full border-2 border-white/15 border-t-blue-400" /><p className="mt-3 text-sm text-white/40">종목 차트를 불러오는 중이에요.</p></div></div>}</div>
       <div className="mb-1 flex items-start justify-between gap-4">
         <div><h2 className="text-lg font-bold text-white">{stockName} 커뮤니티</h2><p className="mt-1 text-sm text-white/40">사용자가 만든 방이에요. 판가름 날짜에 결과가 자동으로 정해져요.</p></div>
         <div className="flex shrink-0 items-center gap-2"><span className="rounded border border-black/50 bg-white/3 px-3.5 py-2 text-xs font-bold text-blue-400">진행 중</span><button type="button" onClick={() => { setSubmitError(''); setIsCreateOpen(true); }} className="rounded-lg bg-blue-400 px-6 py-3 text-sm font-semibold text-black">+ 커뮤니티 만들기</button></div>
