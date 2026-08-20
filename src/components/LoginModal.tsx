@@ -74,8 +74,8 @@ export function LoginModal({ onClose, onLoginSuccess }: LoginModalProps) {
   const validateSignup = () => {
     if (!LOGIN_ID_PATTERN.test(loginId))
       return "아이디는 영문 소문자, 숫자, 밑줄만 사용해 4~20자로 입력해주세요.";
-    if (password.length < 8 || password.length > 20)
-      return "비밀번호는 8~20자로 입력해주세요.";
+    if (password.length < 8 || password.length > 64)
+      return "비밀번호는 8~64자로 입력해주세요.";
     if (password !== passwordConfirm)
       return "비밀번호 확인이 일치하지 않습니다.";
     if (nickname.trim().length < 1 || nickname.trim().length > 12)
@@ -197,16 +197,14 @@ export function LoginModal({ onClose, onLoginSuccess }: LoginModalProps) {
               autoComplete={
                 mode === "signup" ? "new-password" : "current-password"
               }
-              minLength={mode === "signup" ? 8 : undefined}
-              maxLength={mode === "signup" ? 20 : undefined}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder={mode === "signup" ? "8~20자" : "비밀번호 입력"}
+              placeholder={mode === "signup" ? "8자 이상" : "비밀번호 입력"}
               className={fieldClass}
             />
             {mode === "signup" && (
               <p className="mb-5 mt-2 text-xs text-[#9aa3b2]">
-                8~20자로 입력해 주세요.
+                8~64자로 입력해 주세요.
               </p>
             )}
             {mode === "signup" && (
@@ -221,8 +219,6 @@ export function LoginModal({ onClose, onLoginSuccess }: LoginModalProps) {
                   id="auth-password-confirm"
                   type="password"
                   autoComplete="new-password"
-                  minLength={8}
-                  maxLength={20}
                   value={passwordConfirm}
                   onChange={(e) => setPasswordConfirm(e.target.value)}
                   className={fieldClass}
