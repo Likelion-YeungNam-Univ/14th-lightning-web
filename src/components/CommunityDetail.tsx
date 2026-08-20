@@ -78,11 +78,12 @@ export default function CommunityDetail({
   const [commentSubmitting, setCommentSubmitting] = useState(false);
   const [commentError, setCommentError] = useState('');
   const [pendingLikeIds, setPendingLikeIds] = useState<Set<string>>(() => new Set());
+  const [pendingDeleteIds, setPendingDeleteIds] = useState<Set<string>>(() => new Set());
   const [participationMessage, setParticipationMessage] = useState('');
   const isDemoRoom = prediction.id.startsWith('demo-') || prediction.id.startsWith('local-created-');
 
   function mapComment(item: CommentApiItem): CommunityComment {
-    return { id: String(item.id), author: item.author_tag, side: item.side === 'down' ? 'down' : 'up', body: item.body ?? '', likes: item.like_count, likedByMe: item.liked_by_me, replies: [], attachedCard: item.saved_card_snapshot };
+    return { id: String(item.id), author: item.author_tag, isMine: item.is_mine, side: item.side === 'down' ? 'down' : 'up', body: item.body ?? '', likes: item.like_count, likedByMe: item.liked_by_me, replies: [], attachedCard: item.saved_card_snapshot };
   }
 
   useEffect(() => {
@@ -186,6 +187,7 @@ export default function CommunityDetail({
           const next = [...prev, {
             id: `local-${Date.now()}`,
             author: '나',
+            isMine: true,
             side: commentSide,
             body,
             likes: 0,
@@ -207,6 +209,37 @@ export default function CommunityDetail({
       setCommentError(error instanceof Error ? error.message : '댓글을 등록하지 못했습니다.');
     } finally {
       setCommentSubmitting(false);
+    }
+  }
+
+  async function deleteComment(commentId: string) {
+    const comment = comments.find((item) => item.id === commentId);
+    if (!comment?.isMine || pendingDeleteIds.has(commentId)) return;
+    if (!window.confirm('이 댓글을 삭제할까요?')) return;
+
+    setPendingDeleteIds((current) => new Set(current).add(commentId));
+    setCommentError('');
+    try {
+      if (!isDemoRoom) {
+        await deleteApi<null>(`/comments/${encodeURIComponent(commentId)}`);
+      }
+      setComments((prev) => {
+        const next = prev.filter((item) => item.id !== commentId);
+        if (isDemoRoom) saveDemoComments(prediction.id, next);
+        return next;
+      });
+      if (replyTargetId === commentId) {
+        setReplyTargetId(null);
+        setReplyDraft('');
+      }
+    } catch (error) {
+      setCommentError(error instanceof Error ? error.message : '댓글을 삭제하지 못했습니다.');
+    } finally {
+      setPendingDeleteIds((current) => {
+        const next = new Set(current);
+        next.delete(commentId);
+        return next;
+      });
     }
   }
 
@@ -338,18 +371,18 @@ export default function CommunityDetail({
       </div>
 
       {/* 댓글 */}
-      <div className="rounded-2xl bg-[#1c2029] border border-white/[0.06] p-6">
-        <div className="flex items-center justify-between mb-5">
-          <h2 className="text-white font-bold text-base">댓글 {comments.length}</h2>
-          <span className="text-xs text-white/30">공개 자료에 대한 근거를 남겨보세요.</span>
+      <div>
+        <div className="mb-5 flex items-center justify-between gap-4">
+          <h2 className="text-base font-bold text-white">댓글 {comments.length}</h2>
+          <span className="text-right text-xs text-white/40">공개 자료에 대한 근거를 남겨보세요.</span>
         </div>
 
-        <div className="space-y-4 mb-5">
+        <div className="mb-5 space-y-2">
           {comments.map((comment) => (
             <div key={comment.id}>
-              <div className="flex items-start gap-2.5">
+              <div className="flex items-start gap-3 rounded-xl bg-[#1c2029] px-4 py-4">
                 <span
-                  className={`text-xs font-bold px-2 py-1 rounded-md shrink-0 mt-0.5 ${
+                  className={`mt-0.5 shrink-0 rounded-md px-2 py-1 text-xs font-bold ${
                     comment.side === 'up'
                       ? 'bg-[#1e3a2f] text-[#4ade80]'
                       : 'bg-[#4a2e17] text-[#fb923c]'
@@ -357,18 +390,20 @@ export default function CommunityDetail({
                 >
                   {comment.side === 'up' ? '간다' : '안 간다'}
                 </span>
-                <div className="flex-1">
-                  <p className="text-sm text-white">
-                    <span className="font-bold">{comment.author}</span>{' '}
-                    <span className="text-white/80">{comment.body}</span>
-                  </p>
-                  {comment.attachedCard && <AttachedCard snapshot={comment.attachedCard} />}
-                  <div className="flex items-center gap-4 mt-1.5">
+                <div className="min-w-0 flex-1 sm:flex sm:items-start sm:justify-between sm:gap-4">
+                  <div className="min-w-0">
+                    <p className="text-sm leading-6 text-white">
+                      <span className="font-bold">{comment.author}</span>{' '}
+                      <span className="text-white/85">{comment.body}</span>
+                    </p>
+                    {comment.attachedCard && <AttachedCard snapshot={comment.attachedCard} />}
+                  </div>
+                  <div className="mt-2 flex shrink-0 items-center gap-4 sm:mt-0">
                     <button
                       type="button"
                       onClick={() => void toggleLike(comment.id)}
                       disabled={pendingLikeIds.has(comment.id)}
-                      className={`text-xs flex items-center gap-1 ${
+                      className={`flex items-center gap-1 text-xs ${
                         comment.likedByMe ? 'text-[#f87171]' : 'text-white/30 hover:text-white/60'
                       }`}
                     >
@@ -381,36 +416,46 @@ export default function CommunityDetail({
                         (setReplyTargetId(replyTargetId === comment.id ? null : comment.id),
                         setReplyDraft(''))
                       }
-                      className="text-xs text-white/30 hover:text-white/60 flex items-center gap-1"
+                      className="flex items-center gap-1 text-xs text-white/30 hover:text-white/60"
                     >
                       ↩ 대댓글
                     </button>
+                    {comment.isMine && (
+                      <button
+                        type="button"
+                        onClick={() => void deleteComment(comment.id)}
+                        disabled={pendingDeleteIds.has(comment.id)}
+                        className="text-xs text-white/30 hover:text-red-300 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {pendingDeleteIds.has(comment.id) ? '삭제 중...' : '삭제'}
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
 
               {/* 답글 목록 */}
               {comment.replies.length > 0 && (
-                <div className="ml-8 mt-2 space-y-1.5">
+                <div className="ml-8 mt-1 space-y-1">
                   {comment.replies.map((reply) => (
-                    <p key={reply.id} className="text-sm text-white/60">
-                      <span className="text-white/30">↳</span>{' '}
-                      <span className="font-bold text-white/80">{reply.author}</span>{' '}
-                      {reply.body}
-                    </p>
+                    <div key={reply.id} className="rounded-lg bg-[#151920] px-4 py-3 text-sm text-white/65">
+                      <span className="mr-2 text-blue-300/70">↳</span>
+                      <span className="font-bold text-white/85">{reply.author}</span>{' '}
+                      <span>{reply.body}</span>
+                    </div>
                   ))}
                 </div>
               )}
 
               {/* 답글 입력창 */}
               {replyTargetId === comment.id && (
-                <div className="ml-8 mt-2 flex gap-2">
+                <div className="ml-8 mt-1 flex gap-2 rounded-lg bg-[#151920] p-2">
                   <input
                     type="text"
                     value={replyDraft}
                     onChange={(e) => setReplyDraft(e.target.value)}
                     placeholder="대댓글을 남겨보세요."
-                    className="flex-1 rounded-lg bg-[#171a21] border border-white/[0.06] px-3 py-2 text-sm text-white placeholder:text-white/30 outline-none focus:border-sky-500/50"
+                    className="min-w-0 flex-1 rounded-lg border border-white/[0.06] bg-[#101319] px-3 py-2 text-sm text-white outline-none placeholder:text-white/30 focus:border-sky-500/50"
                   />
                   <button
                     type="button"
@@ -426,23 +471,24 @@ export default function CommunityDetail({
         </div>
 
         {/* 댓글 입력창 */}
-        <textarea
-          value={commentDraft}
-          onChange={(e) => setCommentDraft(e.target.value.slice(0, 200))}
-          rows={2}
-          disabled={!authenticated}
-          placeholder={authenticated ? '자료를 보고 든 생각을 남겨보세요.' : '로그인하면 댓글을 남길 수 있어요.'}
-          className="w-full resize-none rounded-lg bg-[#171a21] border border-white/[0.06] px-3.5 py-3 text-sm text-white placeholder:text-white/30 outline-none focus:border-sky-500/50 disabled:opacity-60"
-        />
-        {attachedCard && <div className="mt-2 flex items-center justify-between rounded-lg border border-blue-400/30 bg-blue-500/10 p-3"><div className="min-w-0"><span className="text-[11px] font-bold text-blue-300">첨부 자료</span><p className="truncate text-sm font-semibold text-white">{snapshotText(attachedCard.snapshot, 'title') || '저장한 자료'}</p></div><button type="button" onClick={() => setAttachedCard(null)} className="ml-3 text-xs text-white/45 hover:text-white">첨부 해제</button></div>}
-        {commentError && <p role="alert" className="mt-2 text-xs text-red-300">{commentError}</p>}
-        <div className="flex items-center justify-between mt-2.5">
+        <div className="rounded-xl border border-white/10 bg-[#1c2029] p-3.5">
+          <textarea
+            value={commentDraft}
+            onChange={(e) => setCommentDraft(e.target.value.slice(0, 200))}
+            rows={3}
+            disabled={!authenticated}
+            placeholder={authenticated ? '자료를 보고 든 생각을 남겨보세요.' : '로그인하면 댓글을 남길 수 있어요.'}
+            className="w-full resize-none rounded-lg border border-white/10 bg-[#11151b] px-3.5 py-3 text-sm text-white outline-none placeholder:text-white/30 focus:border-sky-500/50 disabled:opacity-60"
+          />
+          {attachedCard && <div className="mt-2 flex items-center justify-between rounded-lg border border-blue-400/30 bg-blue-500/10 p-3"><div className="min-w-0"><span className="text-[11px] font-bold text-blue-300">첨부 자료</span><p className="truncate text-sm font-semibold text-white">{snapshotText(attachedCard.snapshot, 'title') || '저장한 자료'}</p></div><button type="button" onClick={() => setAttachedCard(null)} className="ml-3 text-xs text-white/45 hover:text-white">첨부 해제</button></div>}
+          {commentError && <p role="alert" className="mt-2 text-xs text-red-300">{commentError}</p>}
+          <div className="mt-2.5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-2">
             <button
               type="button"
               disabled={!authenticated}
               onClick={() => setAttachOpen(true)}
-              className="text-xs text-white/50 border border-white/10 rounded-md px-2.5 py-1.5 hover:text-white/80"
+              className="rounded-full border border-white/10 px-3 py-1.5 text-xs text-white/50 hover:text-white/80"
             >
               🔗 자료 카드
             </button>
@@ -471,17 +517,18 @@ export default function CommunityDetail({
             </button>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center justify-end gap-3">
             <span className="text-xs text-white/30">{commentDraft.length}/200 · ⌘/Ctrl+Enter</span>
             <button
               type="button"
               onClick={() => void submitComment()}
               disabled={!authenticated || commentSubmitting || !commentDraft.trim()}
-              className="text-sm font-semibold px-4 py-2 rounded-full bg-[#3b82f6] text-white hover:bg-[#2563eb] disabled:opacity-40"
+              className="rounded-lg bg-[#4d9fff] px-4 py-2 text-sm font-semibold text-[#07111f] hover:bg-[#6aafff] disabled:opacity-40"
             >
               {commentSubmitting ? '등록 중...' : authenticated ? '댓글 남기기' : '로그인하고 댓글 쓰기'}
             </button>
           </div>
+        </div>
         </div>
       </div>
       {attachOpen && <CommunityCardAttachModal stockCode={stockCode} selected={attachedCard} onClose={() => setAttachOpen(false)} onSelect={(item) => { setAttachedCard(item); setAttachOpen(false); }} />}
