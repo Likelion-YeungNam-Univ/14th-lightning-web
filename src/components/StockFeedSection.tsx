@@ -7,6 +7,9 @@ import type { Card, SavedCardItem } from "../types/card";
 
 type StockFeedSectionProps = {
   market: string;
+  stockName: string;
+  stockCode: string;
+  authenticated: boolean;
   tabs?: string[];
   disabled: boolean;
   activeTab: SourceTab;
@@ -22,7 +25,6 @@ type StockFeedSectionProps = {
   cardsError: string;
   cardsReason: string | null;
   cardsDisclaimer: boolean;
-  linkSentence: string | null;
   onToggleSave: (card: Card) => void;
   onOpenCard: (card: Card) => void;
 };
@@ -30,6 +32,9 @@ type StockFeedSectionProps = {
 /** 출처 탭 선택과, 탭에 따라 일반 카드 또는 저장 카드 목록을 전환해 보여준다. */
 export function StockFeedSection({
   market,
+  stockName,
+  stockCode,
+  authenticated,
   tabs,
   disabled,
   activeTab,
@@ -45,7 +50,6 @@ export function StockFeedSection({
   cardsError,
   cardsReason,
   cardsDisclaimer,
-  linkSentence,
   onToggleSave,
   onOpenCard,
 }: StockFeedSectionProps) {
@@ -66,7 +70,12 @@ export function StockFeedSection({
         />
       )}
       {activeTab === "community" ? (
-        <CommunityFeed stockName={market} />
+        <CommunityFeed
+          stockName={stockName}
+          stockCode={stockCode}
+          market={market}
+          authenticated={authenticated}
+        />
       ) : activeTab === "saved" ? (
         <SavedCardFeed
           items={savedItems}
@@ -78,12 +87,12 @@ export function StockFeedSection({
       ) : (
         <CardFeed
           cards={cards}
+          market={market}
           tab={activeTab}
           loading={cardsLoading}
           error={cardsError}
           reason={cardsReason}
           disclaimer={cardsDisclaimer}
-          linkSentence={linkSentence}
           onToggleSave={onToggleSave}
           onOpenCard={onOpenCard}
         />

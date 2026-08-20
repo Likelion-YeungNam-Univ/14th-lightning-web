@@ -5,16 +5,19 @@ import type { Card } from "../types/card";
 export function useCardDetail() {
   const [detailCard, setDetailCard] = useState<Card | null>(null);
   const [detailTab, setDetailTab] = useState("");
+  const [detailLinkSentence, setDetailLinkSentence] = useState<string | null>(null);
 
-  const openDetail = (card: Card, tab: string) => {
+  const openDetail = (card: Card, tab: string, linkSentence: string | null = null) => {
     setDetailCard(card);
     setDetailTab(tab);
+    setDetailLinkSentence(linkSentence);
   };
 
   const closeDetail = () => {
     setDetailCard(null);
     setDetailTab("");
+    setDetailLinkSentence(null);
   };
 
-  return { detailCard, detailTab, setDetailCard, openDetail, closeDetail };
+  return { detailCard, detailTab, detailLinkSentence, setDetailCard, openDetail, closeDetail };
 }

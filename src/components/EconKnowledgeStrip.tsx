@@ -144,7 +144,10 @@ function EconCardDialog({
     const selectionRect = range.getBoundingClientRect();
     const popoverWidth = Math.min(420, window.innerWidth - 32);
     const left = Math.min(
-      Math.max(16, selectionRect.left + selectionRect.width / 2 - popoverWidth / 2),
+      Math.max(
+        16,
+        selectionRect.left + selectionRect.width / 2 - popoverWidth / 2,
+      ),
       window.innerWidth - popoverWidth - 16,
     );
     const estimatedHeight = 230;
@@ -170,25 +173,28 @@ function EconCardDialog({
         role="dialog"
         aria-modal="true"
         aria-labelledby="econ-card-title"
-        className="relative h-[calc(100vh-72px)] w-full max-w-[640px] overflow-y-auto rounded-[20px] border border-[#35425c] bg-[#1d2029] px-10 pb-10 pt-10 shadow-[0_28px_90px_rgba(0,0,0,.6)] max-[640px]:h-[calc(100vh-24px)] max-[640px]:rounded-2xl max-[640px]:px-5 max-[640px]:pb-7 max-[640px]:pt-8"
+        className="relative flex h-[calc(100vh-72px)] w-full max-w-[640px] flex-col overflow-hidden rounded-[20px] border border-[#35425c] bg-[#1d2029] shadow-[0_28px_90px_rgba(0,0,0,.6)] max-[640px]:h-[calc(100vh-24px)] max-[640px]:rounded-2xl"
       >
         <button
           type="button"
           aria-label="경제 상식 닫기"
           onClick={onClose}
-          className="absolute right-9 top-8 grid size-11 place-items-center border-0 bg-transparent text-[38px] font-light text-[#9da6b5] transition hover:text-white max-[640px]:right-3 max-[640px]:top-2"
+          className="absolute right-6 top-6 grid size-12 place-items-center rounded-full border-0 bg-[#2a2f3a] text-[28px] font-light text-[#b9c1ce] transition hover:bg-[#343b48] hover:text-white max-[640px]:right-4 max-[640px]:top-4 max-[640px]:size-10"
         >
           ×
         </button>
-        <h2
-          id="econ-card-title"
-          className="mb-0 mr-14 text-[32px] leading-[1.28] font-bold tracking-[-0.045em] text-[#f4f5f7] max-[640px]:text-[28px]"
-        >
-          {card.title}
-        </h2>
+        <div className="shrink-0 border-b border-[#3a3e48] px-10 pb-7 pt-10 max-[640px]:px-5 max-[640px]:pb-6 max-[640px]:pt-8">
+          <h2
+            id="econ-card-title"
+            className="mb-0 mr-14 text-[28px] font-bold leading-[1.38] tracking-[-0.052em] text-[#f4f6fa] max-[640px]:text-2xl"
+          >
+            {card.title}
+          </h2>
+        </div>
 
-        {loading ? (
-          <div className="mt-12 space-y-3" aria-label="경제 상식 불러오는 중">
+        <div className="min-h-0 flex-1 overflow-y-auto px-10 pb-10 max-[640px]:px-5 max-[640px]:pb-7">
+          {loading ? (
+            <div className="mt-12 space-y-3" aria-label="경제 상식 불러오는 중">
             <div className="h-4 animate-pulse rounded bg-[#2a2f39]" />
             <div className="h-4 animate-pulse rounded bg-[#2a2f39]" />
             <div className="h-4 w-3/4 animate-pulse rounded bg-[#2a2f39]" />
@@ -201,7 +207,7 @@ function EconCardDialog({
               ref={bodyRef}
               onPointerUp={scheduleSelectedTermCapture}
               onKeyUp={scheduleSelectedTermCapture}
-              className="mt-9 border-y border-[#3a3e48] py-7 text-[17px] leading-[1.9] tracking-[-0.025em] text-[#f0f1f4] max-[640px]:mt-8 max-[640px]:py-7"
+              className="border-b border-[#3a3e48] py-7 text-[15px] leading-[1.85] text-[#d9dee7] max-[640px]:py-7"
             >
               {paragraphs.map((paragraph, index) => (
                 <p key={index} className="mb-6 mt-0 last:mb-0">
@@ -209,12 +215,12 @@ function EconCardDialog({
                 </p>
               ))}
             </div>
-            <p className="mb-0 mt-8 text-[18px] text-[#9aacc8] max-[640px]:text-sm">
+            <p className="mb-0 mt-6 text-xs text-[#9aa3b2]">
               모르는 단어를 드래그하면 뜻을 알려드려요
             </p>
             {detail.sources.length > 0 && (
               <div className="mt-12">
-                <h3 className="m-0 text-[19px] font-bold text-[#a7b7d0]">
+                <h3 className="m-0 text-xs font-bold text-[#aab3c1]">
                   원문 출처
                 </h3>
                 <ol className="mb-0 mt-5 space-y-4 p-0">
@@ -223,14 +229,14 @@ function EconCardDialog({
                       key={`${source.number}-${source.url}`}
                       className="flex items-center gap-6 rounded-[20px] bg-[#151820] px-7 py-5 max-[640px]:gap-4 max-[640px]:px-4"
                     >
-                      <strong className="text-xl text-[#6798ff]">
+                      <strong className="text-[17px] text-[#6798ff]">
                         {source.number}
                       </strong>
                       <div className="min-w-0 flex-1">
-                        <strong className="block text-[18px] text-white">
+                        <strong className="block text-sm text-white">
                           {source.org}
                         </strong>
-                        <span className="mt-1 block text-[15px] text-[#9fb0cc]">
+                        <span className="mt-1 block text-xs text-[#9fb0cc]">
                           {source.doc_title}
                         </span>
                       </div>
@@ -239,7 +245,7 @@ function EconCardDialog({
                         target="_blank"
                         rel="noreferrer"
                         aria-label={`${source.org} 원문 열기`}
-                        className="inline-flex shrink-0 items-center gap-3 text-[15px] text-[#a8b8d2] no-underline transition hover:text-[#6fa8ff]"
+                        className="inline-flex shrink-0 items-center gap-3 text-[13px] text-[#a8b8d2] no-underline transition hover:text-[#6fa8ff]"
                       >
                         <span className="max-[640px]:hidden">
                           {sourceHostname(source.url)}
@@ -251,12 +257,13 @@ function EconCardDialog({
                 </ol>
               </div>
             )}
-            <p className="mb-0 mt-12 rounded-[16px] bg-[#273044] px-7 py-6 text-[17px] leading-7 text-[#9db0cf] max-[640px]:px-5 max-[640px]:py-4 max-[640px]:text-sm">
+            <p className="mb-0 mt-12 rounded-[16px] bg-[#273044] px-7 py-6 text-sm leading-6 text-[#9db0cf] max-[640px]:px-5 max-[640px]:py-4">
               위 자료를 바탕으로 assit이 정리한 설명이에요.<br />
               구체적인 수치는 각 출처 탭에서 확인해 주세요.
             </p>
           </>
-        ) : null}
+          ) : null}
+        </div>
       </section>
 
       {selectedTerm && (
@@ -275,22 +282,23 @@ function EconCardDialog({
             ×
           </button>
           <div className="flex items-center gap-4 pr-10">
-            <strong className="text-xl text-white">{selectedTerm}</strong>
+            <strong className="text-sm text-[#e6f1ff]">{selectedTerm}</strong>
             <span className="rounded-xl bg-[#35486c] px-3 py-1.5 text-xs font-bold text-[#70a5ff]">
               경제 상식 맥락
             </span>
           </div>
           {termLoading && (
-            <p className="mb-0 mt-5 text-[15px] text-[#bbc3cf]">
+            <p className="mb-0 mt-5 text-sm text-[#b7c6d9]">
               쉬운 설명을 불러오고 있어요...
             </p>
           )}
           {termResponse && (
             <>
-              <p className="mb-0 mt-5 text-[16px] leading-7 text-[#d7dbe2]">
-                {termResponse.explanation ?? "이 용어는 현재 설명하기 어려워요."}
+              <p className="mb-0 mt-5 text-sm leading-6 text-[#e1e8f2]">
+                {termResponse.explanation ??
+                  "이 용어는 현재 설명하기 어려워요."}
               </p>
-              <p className="mb-0 mt-6 text-xs text-[#959dab]">
+              <p className="mb-0 mt-6 text-[11px] text-[#8fa9c4]">
                 이 카드에 맞춰 설명한 내용이에요
               </p>
             </>
@@ -361,14 +369,10 @@ export function EconKnowledgeStrip() {
         <div className="flex items-center gap-5 px-6 max-[760px]:items-start max-[760px]:gap-2 max-[760px]:px-[18px]">
           <h2
             id="econ-knowledge-title"
-            className="m-0 shrink-0 text-sm font-bold text-[#6fa8ff]"
+            className="m-0 shrink-0 text-base font-bold text-[#6fa8ff]"
           >
             알아두면 좋은 경제 상식
           </h2>
-          <p className="m-0 text-sm text-[#9aa3b2] max-[760px]:text-xs max-[760px]:leading-5">
-            2시간마다 10개가 새로 올라와요 · 왼쪽으로 계속 흘러가고,
-            마우스를 올리면 멈춰요
-          </p>
         </div>
 
         <div className="relative mt-4">

@@ -16,6 +16,7 @@ type Props = {
   onStockAuthRequired: (changes: StockChanges) => void;
   detailCard: Card | null;
   detailTab: string;
+  detailLinkSentence: string | null;
   onDetailClose: () => void;
   onToggleSave: (card: Card, tab: string) => void;
 };
@@ -33,6 +34,7 @@ export function AppModals({
   onStockAuthRequired,
   detailCard,
   detailTab,
+  detailLinkSentence,
   onDetailClose,
   onToggleSave,
 }: Props) {
@@ -54,6 +56,7 @@ export function AppModals({
         <CardDetailSheet
           card={detailCard}
           tab={detailTab}
+          linkSentence={detailLinkSentence}
           onClose={onDetailClose}
           onToggleSave={(card) => onToggleSave(card, detailTab)}
         />

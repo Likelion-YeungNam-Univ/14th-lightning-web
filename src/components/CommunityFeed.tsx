@@ -1,7 +1,10 @@
 import { useState } from 'react';
 import type { CommunityPrediction, CommunityCurrency } from '../types/community';
 import CommunityCard from './CommunityCard';
+import CommunityDetail from './CommunityDetail';
 import CommunityCreateModal, { type CommunityCreateFormData } from './CommunityCreateModal';
+import TradingViewChart from './TradingViewChart';
+import { toTradingViewSymbol } from '../lib/tradingview-symbol';
 
 // 종목별 기준 정보 (실제 API 연결 전까지 쓰는 임시 매핑)
 const STOCK_MOCK_CONFIG: Record<string, { currency: CommunityCurrency; basePrice: number }> = {
@@ -34,6 +37,9 @@ function generatePredictions(stockName: string): CommunityPrediction[] {
       maxParticipants: 4,
       totalPoints: 1500,
       upRatio: 0.75,
+      creatorName: '',
+      post: '',
+      comments: [],
     },
     {
       id: '2',
@@ -47,6 +53,9 @@ function generatePredictions(stockName: string): CommunityPrediction[] {
       maxParticipants: 4,
       totalPoints: 1500,
       upRatio: 0.75,
+      creatorName: '',
+      post: '',
+      comments: [],
     },
     {
       id: '3',
@@ -60,6 +69,9 @@ function generatePredictions(stockName: string): CommunityPrediction[] {
       maxParticipants: 4,
       totalPoints: 2000,
       upRatio: 1,
+      creatorName: '',
+      post: '',
+      comments: [],
     },
     {
       id: '4',
@@ -73,18 +85,47 @@ function generatePredictions(stockName: string): CommunityPrediction[] {
       maxParticipants: 4,
       totalPoints: 500,
       upRatio: 0.25,
+      creatorName: '',
+      post: '',
+      comments: [],
     },
   ];
 }
 
 interface CommunityFeedProps {
   stockName: string;
+  stockCode: string;
+  market: string;
   pointBalance?: number; // 실제 포인트 API 연결 전까지는 기본값 사용
+  authenticated: boolean; 
 }
 
-export default function CommunityFeed({ stockName, pointBalance = 7200 }: CommunityFeedProps) {
+export default function CommunityFeed({
+  stockName,
+  stockCode,
+  market,
+  pointBalance = 7200,
+  authenticated,
+}: CommunityFeedProps) {
   const predictions = generatePredictions(stockName);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  const selectedPrediction = predictions.find((p) => p.id === selectedId) ?? null;
+
+  // 카드 클릭 시 같은 자리에서 상세 화면으로 전환
+  if (selectedPrediction) {
+    return (
+      <CommunityDetail
+        prediction={selectedPrediction}
+        pointBalance={pointBalance}
+        authenticated={authenticated}
+        onBack={() => setSelectedId(null)}
+      />
+    );
+  }
+
+  const symbol = toTradingViewSymbol(stockCode, market);
 
   function handleCreateSubmit(data: CommunityCreateFormData) {
     console.log('제출된 폼 데이터:', data); // TODO: 실제 저장 API 연결 지점 (postApi 등)
@@ -93,6 +134,11 @@ export default function CommunityFeed({ stockName, pointBalance = 7200 }: Commun
 
   return (
     <div>
+      {/* 차트 */}
+      <div className="mb-5">
+        <TradingViewChart symbol={symbol} height={420} />
+      </div>
+
       {/* 헤더 */}
       <div className="flex items-start justify-between mb-1">
         <div>
@@ -105,7 +151,7 @@ export default function CommunityFeed({ stockName, pointBalance = 7200 }: Commun
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
-          <span className="text-xs text-blue-400 font-bold px-3.5 py-2 rounded border border-black/50 bg-white/[0.03]">
+          <span className="text-xs text-blue-400 font-bold px-3.5 py-2 rounded border border-black/50 bg-white/3">
             진행 중
           </span>
           <button
@@ -118,10 +164,14 @@ export default function CommunityFeed({ stockName, pointBalance = 7200 }: Commun
         </div>
       </div>
 
-      {/* 카드 그리드 (전시용) */}
+      {/* 카드 그리드 */}
       <div className="grid grid-cols-2 gap-3 mt-5">
         {predictions.map((prediction) => (
-          <CommunityCard key={prediction.id} prediction={prediction} />
+          <CommunityCard
+            key={prediction.id}
+            prediction={prediction}
+            onClick={setSelectedId}
+          />
         ))}
       </div>
 

@@ -7,6 +7,7 @@ import { canSaveCardFromTab } from "../utils/savedCards";
 type CardDetailSheetProps = {
   card: Card;
   tab?: string;
+  linkSentence?: string | null;
   onClose: () => void;
   onToggleSave: (card: Card) => void;
 };
@@ -66,6 +67,7 @@ function termSourceLabel(source: string) {
 export function CardDetailSheet({
   card,
   tab,
+  linkSentence,
   onClose,
   onToggleSave,
 }: CardDetailSheetProps) {
@@ -269,6 +271,14 @@ export function CardDetailSheet({
           onTouchEnd={captureSelectedTerm}
           className="mt-7 text-[15px] leading-[1.85] text-[#d9dee7]"
         >
+          {linkSentence && (
+            <div className="mb-5 border-l-2 border-[#4d9fff] pl-4">
+              <span className="text-xs font-bold text-[#79b8ff]">내 종목엔</span>
+              <p className="mb-0 mt-1 text-sm leading-6 text-[#d9dee7]">
+                {linkSentence}
+              </p>
+            </div>
+          )}
           {paragraphs.length > 0 ? (
             paragraphs.map((paragraph, index) => (
               <p key={index} className="mb-4 mt-0">
@@ -350,7 +360,7 @@ export function CardDetailSheet({
             {canSaveCard && <button
               type="button"
               onClick={() => onToggleSave(card)}
-              className={`grid size-11 place-items-center rounded-lg border-0 bg-[#282d38] text-xl ${card.is_saved ? "text-[#4d9fff]" : "text-[#c8ccd4]"}`}
+              className={`grid size-11 place-items-center rounded-lg border-0 bg-[#282d38] text-xl transition ${card.is_saved ? "text-[#ffbf00] hover:text-[#ffd24d]" : "text-[#c8ccd4] hover:text-[#f2f3f5]"}`}
               aria-label={card.is_saved ? "즐겨찾기 해제" : "즐겨찾기 추가"}
             >
               {card.is_saved ? "★" : "☆"}
