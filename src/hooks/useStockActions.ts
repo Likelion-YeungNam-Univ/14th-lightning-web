@@ -24,12 +24,10 @@ export function useStockActions({
   const [stockActionError, setStockActionError] = useState("");
   const [stockActionNotice, setStockActionNotice] = useState("");
 
-  useEffect(() => {
-    if (authenticated) return;
-
+  const resetStockActions = () => {
     setStockModalOpen(false);
     setPendingStockChanges(null);
-  }, [authenticated]);
+  };
 
   useEffect(() => {
     if (!stockActionNotice) return;
@@ -124,5 +122,6 @@ export function useStockActions({
     retryPendingStockAdd,
     requireLoginForStocks,
     openStockModal,
+    resetStockActions,
   };
 }
