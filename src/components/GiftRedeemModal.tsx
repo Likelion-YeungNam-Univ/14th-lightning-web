@@ -180,14 +180,13 @@ export default function GiftRedeemModal({
             포인트 모으는 법
           </p>
           <p className="m-0 text-[15px] leading-7 text-[#d9dee7]">
-            참여 결과가 좋으면 상대 진영의 포인트가 넘어와요.
-            <br />
-            4인 방에서 2대2로 이기면 한 판에 500P를 벌어요.
+             예측방에서 이기면 상대 진영의 포인트가 넘어와요.
+          
           </p>
         </div>
 
         <p className="mb-0 mt-6 text-xs text-[#9aa3b2]">
-          교환은 계정당 월 1회, 교환한 기프티콘은 취소·환불되지 않아요.
+          교환한 기프티콘은 취소·환불되지 않아요.
         </p>
           </>
         )}
