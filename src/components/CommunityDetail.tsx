@@ -1,8 +1,18 @@
 import { useEffect, useState } from 'react';
 import { deleteApi, getApi, postApi } from '../api/client';
 import type { SavedCardItem } from '../types/card';
-import type { BettingEntryResponse, CommentApiItem, CommentCreateResponse, CommentLikeResponse, CommentListResponse, CommunityComment, CommunityPrediction, RoomDeleteResponse } from '../types/community';
-import { LOGIN_ID_STORAGE_KEY } from '../types/session';
+import type {
+  BettingEntryResponse,
+  CommentApiItem,
+  CommentCreateResponse,
+  CommentLikeResponse,
+  CommentListResponse,
+  CommunityComment,
+  CommunityPrediction,
+  CommunityReply,
+  RoomDeleteResponse,
+} from '../types/community';
+import { LOGIN_ID_STORAGE_KEY, type SessionResponse } from '../types/session';
 import CommunityCardAttachModal from './CommunityCardAttachModal';
 
 interface CommunityDetailProps {
@@ -22,12 +32,34 @@ function formatPrice(price: number, currency: 'KRW' | 'USD') {
 }
 
 const demoCommentsKey = (roomId: string) => `assit:demo-comments:${roomId}`;
+// 대댓글 API가 아직 없어서, 실제 방의 대댓글은 우선 브라우저에 저장해 새로고침에도 남게 한다.
+// (다른 기기·다른 사용자 화면에는 보이지 않는 임시 조치이며, 백엔드 API가 생기면 이 부분을 교체해야 한다.)
+const localRepliesKey = (roomId: string) => `assit:community-replies:${roomId}`;
+
+function readLocalReplies(roomId: string): Record<string, CommunityReply[]> {
+  try {
+    const saved = JSON.parse(localStorage.getItem(localRepliesKey(roomId)) ?? '{}') as unknown;
+    return saved && typeof saved === 'object' && !Array.isArray(saved)
+      ? (saved as Record<string, CommunityReply[]>)
+      : {};
+  } catch {
+    return {};
+  }
+}
+
+function saveLocalReplies(roomId: string, replies: Record<string, CommunityReply[]>) {
+  try {
+    localStorage.setItem(localRepliesKey(roomId), JSON.stringify(replies));
+  } catch {
+    // 저장 공간을 사용할 수 없어도 현재 화면의 대댓글 기능은 유지한다.
+  }
+}
 
 function initialComments(prediction: CommunityPrediction) {
   if (!prediction.id.startsWith('demo-')) return prediction.comments;
   try {
     const saved = JSON.parse(localStorage.getItem(demoCommentsKey(prediction.id)) ?? 'null') as unknown;
-    return Array.isArray(saved) ? saved as CommunityComment[] : prediction.comments;
+    return Array.isArray(saved) ? (saved as CommunityComment[]) : prediction.comments;
   } catch {
     return prediction.comments;
   }
@@ -71,8 +103,9 @@ export default function CommunityDetail({
   const [myBet, setMyBet] = useState<'up' | 'down' | null>(savedParticipation?.side ?? null);
   const [betSubmitting, setBetSubmitting] = useState(false);
   const [comments, setComments] = useState(() => initialComments(prediction));
+  // 댓글에 실제 로그인 닉네임을 보여주기 위해 세션에서 받아온 값을 보관한다.
+  const [currentNickname, setCurrentNickname] = useState('');
   const [commentDraft, setCommentDraft] = useState('');
-  const [commentSide, setCommentSide] = useState<'up' | 'down'>('up');
   const [replyTargetId, setReplyTargetId] = useState<string | null>(null);
   const [replyDraft, setReplyDraft] = useState('');
   const [attachOpen, setAttachOpen] = useState(false);
@@ -86,17 +119,67 @@ export default function CommunityDetail({
   const [roomDeleteError, setRoomDeleteError] = useState('');
   const isDemoRoom = prediction.id.startsWith('demo-') || prediction.id.startsWith('local-created-');
 
+  // author_tag는 서버 내부 식별자일 뿐 사람이 읽을 닉네임이 아니라서 화면에 그대로 노출하지 않는다.
+  // 내 댓글/대댓글이면 '나'로 표시해두고, 실제 렌더링 시 로그인 닉네임으로 치환한다.
+  // 남의 댓글은 실제 닉네임을 알 방법이 API에 없어서 항상 "익명 사용자"로 보여준다.
+  const displayAuthor = (author: string) => {
+    if (author === '나') return currentNickname || '익명 사용자';
+    return '익명 사용자';
+  };
+
   function mapComment(item: CommentApiItem): CommunityComment {
-    return { id: String(item.id), author: item.author_tag, isMine: item.is_mine, side: item.side === 'down' ? 'down' : 'up', body: item.body ?? '', likes: item.like_count, likedByMe: item.liked_by_me, replies: [], attachedCard: item.saved_card_snapshot };
+    return {
+      id: String(item.id),
+      // 서버가 내려주는 author_tag(예: "c0886c" 같은 내부 식별자)는 화면에 노출하지 않는다.
+      // 내 댓글인지 여부만 반영해서, 렌더링 시 displayAuthor()가 닉네임/익명 처리를 하도록 한다.
+      author: item.is_mine ? '나' : '',
+      isMine: item.is_mine,
+      // 서버 값이 'up'/'down'이 아니면(null 포함) 방향을 선택하지 않은 댓글로 취급한다.
+      side: item.side === 'up' || item.side === 'down' ? item.side : undefined,
+      body: item.body ?? '',
+      createdAt: item.created_at,
+      likes: item.like_count,
+      likedByMe: item.liked_by_me,
+      replies: [],
+      attachedCard: item.saved_card_snapshot,
+    };
   }
+
+  // 로그인 상태가 되면 세션에서 현재 닉네임을 받아와 댓글 작성자 표시에 사용한다.
+  useEffect(() => {
+    if (!authenticated) {
+      setCurrentNickname('');
+      return;
+    }
+    let cancelled = false;
+    void postApi<SessionResponse>('/session')
+      .then((session) => {
+        if (!cancelled) setCurrentNickname(session.nickname?.trim() ?? '');
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [authenticated]);
 
   useEffect(() => {
     if (isDemoRoom) return;
     let cancelled = false;
-    void getApi<CommentListResponse>(`/rooms/${encodeURIComponent(prediction.id)}/comments`)
-      .then((response) => { if (!cancelled) setComments(response.items.filter((item) => !item.deleted).map(mapComment)); })
+    // 오래된 댓글이 먼저 보이도록 정렬해서 요청하고, 응답도 한 번 더 오름차순으로 정렬한다.
+    void getApi<CommentListResponse>(`/rooms/${encodeURIComponent(prediction.id)}/comments?sort=recent`)
+      .then((response) => {
+        if (cancelled) return;
+        const localReplies = readLocalReplies(prediction.id);
+        const sorted = response.items
+          .filter((item) => !item.deleted)
+          .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+          .map((item) => ({ ...mapComment(item), replies: localReplies[String(item.id)] ?? [] }));
+        setComments(sorted);
+      })
       .catch(() => undefined);
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [authenticated, isDemoRoom, prediction.id]);
 
   const totalPeople = prediction.participantCount;
@@ -149,9 +232,11 @@ export default function CommunityDetail({
 
     if (isDemoRoom) {
       setComments((prev) => {
-        const next = prev.map((item) => item.id === commentId
-          ? { ...item, likedByMe: !item.likedByMe, likes: item.likes + (item.likedByMe ? -1 : 1) }
-          : item);
+        const next = prev.map((item) =>
+          item.id === commentId
+            ? { ...item, likedByMe: !item.likedByMe, likes: item.likes + (item.likedByMe ? -1 : 1) }
+            : item,
+        );
         saveDemoComments(prediction.id, next);
         return next;
       });
@@ -165,9 +250,11 @@ export default function CommunityDetail({
       const response = comment.likedByMe
         ? await deleteApi<CommentLikeResponse>(path)
         : await postApi<CommentLikeResponse>(path);
-      setComments((prev) => prev.map((item) => item.id === commentId
-        ? { ...item, likedByMe: response.liked, likes: response.like_count }
-        : item));
+      setComments((prev) =>
+        prev.map((item) =>
+          item.id === commentId ? { ...item, likedByMe: response.liked, likes: response.like_count } : item,
+        ),
+      );
     } catch (error) {
       setCommentError(error instanceof Error ? error.message : '댓글 좋아요를 변경하지 못했습니다.');
     } finally {
@@ -188,16 +275,21 @@ export default function CommunityDetail({
     try {
       if (isDemoRoom) {
         setComments((prev) => {
-          const next = [...prev, {
-            id: `local-${Date.now()}`,
-            author: '나',
-            isMine: true,
-            side: commentSide,
-            body,
-            likes: 0,
-            replies: [],
-            attachedCard: attachedCard?.snapshot ?? null,
-          }];
+          const next = [
+            ...prev,
+            {
+              id: `local-${Date.now()}`,
+              author: '나',
+              isMine: true,
+              // 댓글 작성 시 방향 선택 버튼을 없앴으므로, 참여 중인 베팅 방향을 그대로 쓰고 없으면 선택 안함으로 둔다.
+              side: myBet ?? undefined,
+              body,
+              createdAt: new Date().toISOString(),
+              likes: 0,
+              replies: [],
+              attachedCard: attachedCard?.snapshot ?? null,
+            },
+          ];
           saveDemoComments(prediction.id, next);
           return next;
         });
@@ -205,7 +297,10 @@ export default function CommunityDetail({
         setAttachedCard(null);
         return;
       }
-      const response = await postApi<CommentCreateResponse>(`/rooms/${encodeURIComponent(prediction.id)}/comments`, { body, saved_card_id: attachedCard?.card_id ?? null });
+      const response = await postApi<CommentCreateResponse>(`/rooms/${encodeURIComponent(prediction.id)}/comments`, {
+        body,
+        saved_card_id: attachedCard?.card_id ?? null,
+      });
       setComments((prev) => [...prev, mapComment(response.item)]);
       setCommentDraft('');
       setAttachedCard(null);
@@ -229,7 +324,14 @@ export default function CommunityDetail({
       }
       setComments((prev) => {
         const next = prev.filter((item) => item.id !== commentId);
-        if (isDemoRoom) saveDemoComments(prediction.id, next);
+        if (isDemoRoom) {
+          saveDemoComments(prediction.id, next);
+        } else {
+          // 댓글이 삭제되면 그 댓글에 딸려있던 로컬 대댓글도 같이 정리한다.
+          const localReplies = readLocalReplies(prediction.id);
+          delete localReplies[commentId];
+          saveLocalReplies(prediction.id, localReplies);
+        }
         return next;
       });
       if (replyTargetId === commentId) {
@@ -259,17 +361,20 @@ export default function CommunityDetail({
       onRoomDeleted();
     } catch (error) {
       const code = error && typeof error === 'object' && 'code' in error ? String(error.code) : '';
-      const message = code === 'not_room_owner'
-        ? '방을 만든 사용자만 삭제할 수 있어요.'
-        : code === 'room_has_entrants'
-          ? '다른 참여자가 있는 방은 삭제할 수 없어요.'
-          : code === 'room_not_open'
-            ? '진행 중인 방만 삭제할 수 있어요.'
-            : code === 'room_not_found'
-              ? '이미 삭제되었거나 존재하지 않는 방이에요.'
-              : code === 'login_required'
-                ? '로그인 후 방을 삭제할 수 있어요.'
-                : error instanceof Error ? error.message : '방을 삭제하지 못했습니다.';
+      const message =
+        code === 'not_room_owner'
+          ? '방을 만든 사용자만 삭제할 수 있어요.'
+          : code === 'room_has_entrants'
+            ? '다른 참여자가 있는 방은 삭제할 수 없어요.'
+            : code === 'room_not_open'
+              ? '진행 중인 방만 삭제할 수 있어요.'
+              : code === 'room_not_found'
+                ? '이미 삭제되었거나 존재하지 않는 방이에요.'
+                : code === 'login_required'
+                  ? '로그인 후 방을 삭제할 수 있어요.'
+                  : error instanceof Error
+                    ? error.message
+                    : '방을 삭제하지 못했습니다.';
       setRoomDeleteError(message);
     } finally {
       setRoomDeletePending(false);
@@ -280,13 +385,25 @@ export default function CommunityDetail({
     if (!authenticated) return;
     const body = replyDraft.trim();
     if (!body) return;
-    setComments((prev) =>
-      prev.map((c) =>
+    setComments((prev) => {
+      const next = prev.map((c) =>
         c.id === commentId
           ? { ...c, replies: [...c.replies, { id: `local-reply-${Date.now()}`, author: '나', body }] }
           : c,
-      ),
-    );
+      );
+      if (isDemoRoom) {
+        saveDemoComments(prediction.id, next);
+      } else {
+        // 대댓글 API가 아직 없어서, 댓글별 대댓글 목록을 통째로 브라우저에 저장해둔다.
+        saveLocalReplies(
+          prediction.id,
+          Object.fromEntries(
+            next.filter((comment) => comment.replies.length > 0).map((comment) => [comment.id, comment.replies]),
+          ),
+        );
+      }
+      return next;
+    });
     setReplyDraft('');
     setReplyTargetId(null);
   }
@@ -432,15 +549,17 @@ export default function CommunityDetail({
                   className={`mt-0.5 shrink-0 rounded-md px-2 py-1 text-xs font-bold ${
                     comment.side === 'up'
                       ? 'bg-[#1e3a2f] text-[#4ade80]'
-                      : 'bg-[#4a2e17] text-[#fb923c]'
+                      : comment.side === 'down'
+                        ? 'bg-[#4a2e17] text-[#fb923c]'
+                        : 'bg-white/[0.06] text-white/45'
                   }`}
                 >
-                  {comment.side === 'up' ? '간다' : '안 간다'}
+                  {comment.side === 'up' ? '간다' : comment.side === 'down' ? '안 간다' : '선택 안함'}
                 </span>
                 <div className="min-w-0 flex-1 sm:flex sm:items-start sm:justify-between sm:gap-4">
                   <div className="min-w-0">
                     <p className="text-sm leading-6 text-white">
-                      <span className="font-bold">{comment.author}</span>{' '}
+                      <span className="font-bold">{displayAuthor(comment.author)}</span>{' '}
                       <span className="text-white/85">{comment.body}</span>
                     </p>
                     {comment.attachedCard && <AttachedCard snapshot={comment.attachedCard} />}
@@ -460,8 +579,7 @@ export default function CommunityDetail({
                       type="button"
                       onClick={() =>
                         authenticated &&
-                        (setReplyTargetId(replyTargetId === comment.id ? null : comment.id),
-                        setReplyDraft(''))
+                        (setReplyTargetId(replyTargetId === comment.id ? null : comment.id), setReplyDraft(''))
                       }
                       className="flex items-center gap-1 text-xs text-white/30 hover:text-white/60"
                     >
@@ -487,7 +605,7 @@ export default function CommunityDetail({
                   {comment.replies.map((reply) => (
                     <div key={reply.id} className="rounded-lg bg-[#151920] px-4 py-3 text-sm text-white/65">
                       <span className="mr-2 text-blue-300/70">↳</span>
-                      <span className="font-bold text-white/85">{reply.author}</span>{' '}
+                      <span className="font-bold text-white/85">{displayAuthor(reply.author)}</span>{' '}
                       <span>{reply.body}</span>
                     </div>
                   ))}
@@ -527,59 +645,70 @@ export default function CommunityDetail({
             placeholder={authenticated ? '자료를 보고 든 생각을 남겨보세요.' : '로그인하면 댓글을 남길 수 있어요.'}
             className="w-full resize-none rounded-lg border border-white/10 bg-[#11151b] px-3.5 py-3 text-sm text-white outline-none placeholder:text-white/30 focus:border-sky-500/50 disabled:opacity-60"
           />
-          {attachedCard && <div className="mt-2 flex items-center justify-between rounded-lg border border-blue-400/30 bg-blue-500/10 p-3"><div className="min-w-0"><span className="text-[11px] font-bold text-blue-300">첨부 자료</span><p className="truncate text-sm font-semibold text-white">{snapshotText(attachedCard.snapshot, 'title') || '저장한 자료'}</p></div><button type="button" onClick={() => setAttachedCard(null)} className="ml-3 text-xs text-white/45 hover:text-white">첨부 해제</button></div>}
+          {attachedCard && (
+            <div className="mt-2 flex items-center justify-between rounded-lg border border-blue-400/30 bg-blue-500/10 p-3">
+              <div className="min-w-0">
+                <span className="text-[11px] font-bold text-blue-300">첨부 자료</span>
+                <p className="truncate text-sm font-semibold text-white">
+                  {snapshotText(attachedCard.snapshot, 'title') || '저장한 자료'}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setAttachedCard(null)}
+                className="ml-3 text-xs text-white/45 hover:text-white"
+              >
+                첨부 해제
+              </button>
+            </div>
+          )}
           {commentError && <p role="alert" className="mt-2 text-xs text-red-300">{commentError}</p>}
           <div className="mt-2.5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              disabled={!authenticated}
-              onClick={() => setAttachOpen(true)}
-              className="rounded-full border border-white/10 px-3 py-1.5 text-xs text-white/50 hover:text-white/80"
-            >
-              🔗 자료 카드
-            </button>
-            <span className="text-xs text-white/30">내 의견</span>
-            <button
-              type="button"
-              onClick={() => setCommentSide('up')}
-              className={`text-xs px-3 py-1.5 rounded-full font-semibold ${
-                commentSide === 'up'
-                  ? 'bg-[#1e3a2f] text-[#4ade80] border border-[#2f6b45]'
-                  : 'bg-white/[0.04] text-white/40'
-              }`}
-            >
-              간다
-            </button>
-            <button
-              type="button"
-              onClick={() => setCommentSide('down')}
-              className={`text-xs px-3 py-1.5 rounded-full font-semibold ${
-                commentSide === 'down'
-                  ? 'bg-[#4a2e17] text-[#fb923c] border border-[#7a5330]'
-                  : 'bg-white/[0.04] text-white/40'
-              }`}
-            >
-              안 간다
-            </button>
-          </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                disabled={!authenticated}
+                onClick={() => setAttachOpen(true)}
+                className="rounded-full border border-white/10 px-3 py-1.5 text-xs text-white/50 hover:text-white/80"
+              >
+                🔗 자료 카드
+              </button>
+            </div>
 
-          <div className="flex items-center justify-end gap-3">
-            <span className="text-xs text-white/30">{commentDraft.length}/200 · ⌘/Ctrl+Enter</span>
-            <button
-              type="button"
-              onClick={() => void submitComment()}
-              disabled={!authenticated || commentSubmitting || !commentDraft.trim()}
-              className="rounded-lg bg-[#4d9fff] px-4 py-2 text-sm font-semibold text-[#07111f] hover:bg-[#6aafff] disabled:opacity-40"
-            >
-              {commentSubmitting ? '등록 중...' : authenticated ? '댓글 남기기' : '로그인하고 댓글 쓰기'}
-            </button>
+            <div className="flex items-center justify-end gap-3">
+              <span className="text-xs text-white/30">{commentDraft.length}/200 · ⌘/Ctrl+Enter</span>
+              <button
+                type="button"
+                onClick={() => void submitComment()}
+                disabled={!authenticated || commentSubmitting || !commentDraft.trim()}
+                className="rounded-lg bg-[#4d9fff] px-4 py-2 text-sm font-semibold text-[#07111f] hover:bg-[#6aafff] disabled:opacity-40"
+              >
+                {commentSubmitting ? '등록 중...' : authenticated ? '댓글 남기기' : '로그인하고 댓글 쓰기'}
+              </button>
+            </div>
           </div>
-        </div>
         </div>
       </div>
-      {attachOpen && <CommunityCardAttachModal stockCode={stockCode} selected={attachedCard} onClose={() => setAttachOpen(false)} onSelect={(item) => { setAttachedCard(item); setAttachOpen(false); }} />}
-      {participationMessage && <div role="status" className="status-banner--info fixed bottom-5 left-1/2 z-[80] -translate-x-1/2 rounded-lg border border-white/10 bg-[#20252f] px-4 py-3 text-xs font-bold text-white shadow-2xl"><span className="mr-2">✓</span>{participationMessage}</div>}
+      {attachOpen && (
+        <CommunityCardAttachModal
+          stockCode={stockCode}
+          selected={attachedCard}
+          onClose={() => setAttachOpen(false)}
+          onSelect={(item) => {
+            setAttachedCard(item);
+            setAttachOpen(false);
+          }}
+        />
+      )}
+      {participationMessage && (
+        <div
+          role="status"
+          className="status-banner--info fixed bottom-5 left-1/2 z-[80] -translate-x-1/2 rounded-lg border border-white/10 bg-[#20252f] px-4 py-3 text-xs font-bold text-white shadow-2xl"
+        >
+          <span className="mr-2">✓</span>
+          {participationMessage}
+        </div>
+      )}
     </div>
   );
 }
@@ -607,25 +736,16 @@ function SideBox({
   isUp: boolean;
 }) {
   return (
-    <div
-      className="mb-3 rounded-xl border border-transparent bg-[#171b21] p-4"
-    >
+    <div className="mb-3 rounded-xl border border-transparent bg-[#171b21] p-4">
       <div className="mb-2 flex items-center justify-between">
-        <span className={`text-base font-bold ${isUp ? 'text-[#4ade80]' : 'text-[#fb923c]'}`}>
-          {label}
-        </span>
-        <span className={`text-base font-bold ${isUp ? 'text-[#4ade80]' : 'text-[#fb923c]'}`}>
-          {ratio}%
-        </span>
+        <span className={`text-base font-bold ${isUp ? 'text-[#4ade80]' : 'text-[#fb923c]'}`}>{label}</span>
+        <span className={`text-base font-bold ${isUp ? 'text-[#4ade80]' : 'text-[#fb923c]'}`}>{ratio}%</span>
       </div>
       <p className="mb-2.5 text-xs text-white/45">
         {people}명 · {pool.toLocaleString()}P
       </p>
       <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/[0.1]">
-        <div
-          className={`h-full rounded-full ${isUp ? 'bg-[#4ade80]' : 'bg-[#fb923c]'}`}
-          style={{ width: `${ratio}%` }}
-        />
+        <div className={`h-full rounded-full ${isUp ? 'bg-[#4ade80]' : 'bg-[#fb923c]'}`} style={{ width: `${ratio}%` }} />
       </div>
     </div>
   );
@@ -640,6 +760,23 @@ function AttachedCard({ snapshot }: { snapshot: Record<string, unknown> }) {
   const summary = snapshotText(snapshot, 'summary_short');
   const source = snapshotText(snapshot, 'source_name');
   const url = snapshotText(snapshot, 'origin_url');
-  const content = <><span className="text-[11px] font-bold text-blue-300">🔗 첨부 자료 {source && `· ${source}`}</span><strong className="mt-1 block text-sm text-white">{title}</strong>{summary && <span className="mt-1 block line-clamp-2 text-xs text-white/45">{summary}</span>}</>;
-  return url ? <a href={url} target="_blank" rel="noreferrer" className="mt-2 block rounded-lg border border-blue-400/25 bg-[#12213a] p-3 hover:border-blue-400/50">{content}</a> : <div className="mt-2 rounded-lg border border-blue-400/25 bg-[#12213a] p-3">{content}</div>;
+  const content = (
+    <>
+      <span className="text-[11px] font-bold text-blue-300">🔗 첨부 자료 {source && `· ${source}`}</span>
+      <strong className="mt-1 block text-sm text-white">{title}</strong>
+      {summary && <span className="mt-1 block line-clamp-2 text-xs text-white/45">{summary}</span>}
+    </>
+  );
+  return url ? (
+    <a
+      href={url}
+      target="_blank"
+      rel="noreferrer"
+      className="mt-2 block rounded-lg border border-blue-400/25 bg-[#12213a] p-3 hover:border-blue-400/50"
+    >
+      {content}
+    </a>
+  ) : (
+    <div className="mt-2 rounded-lg border border-blue-400/25 bg-[#12213a] p-3">{content}</div>
+  );
 }

@@ -11,8 +11,9 @@ export interface CommunityComment {
   id: string;
   author: string;
   isMine?: boolean;
-  side: CommunityDirection;
+  side?: CommunityDirection;
   body: string;
+  createdAt?: string;
   likes: number;
   likedByMe?: boolean;
   replies: CommunityReply[];
